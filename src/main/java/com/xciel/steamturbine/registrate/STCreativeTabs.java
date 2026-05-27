@@ -1,13 +1,10 @@
 package com.xciel.steamturbine.registrate;
 
-import com.xciel.steamturbine.AllBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;
@@ -21,15 +18,15 @@ public class STCreativeTabs {
     public static final Supplier<CreativeModeTab> MAIN_TAB = CREATIVE_MODE_TABS.register(MOD_ID, () ->
             CreativeModeTab.builder()
                     .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
-                    .icon(() -> AllBlocks.STEAM_TURBINE.get().asItem().getDefaultInstance())
+                    .icon(() -> STItems.STEAM_TURBINE.get().getDefaultInstance())
                     .title(Component.translatable("itemGroup." + MOD_ID + ".main"))
                     .displayItems((itemDisplayParameters, output) -> {
-                        output.accept(AllBlocks.STEAM_BOILER.get());
-                        output.accept(AllBlocks.STEAM_COMPRESSOR.get());
-                        output.accept(AllBlocks.PRESSURE_PIPE.get());
-                        output.accept(AllBlocks.STEAM_TURBINE.get());
-                        output.accept(AllBlocks.TURBINE_SHAFT.get());
-                        output.accept(AllBlocks.PRESSURE_GAUGE.get());
+                        output.accept(STItems.STEAM_BOILER.get());
+                        output.accept(STItems.STEAM_COMPRESSOR.get());
+                        output.accept(STItems.PRESSURE_PIPE.get());
+                        output.accept(STItems.STEAM_TURBINE.get());
+                        output.accept(STItems.TURBINE_SHAFT.get());
+                        output.accept(STItems.PRESSURE_GAUGE.get());
                     })
                     .build()
     );

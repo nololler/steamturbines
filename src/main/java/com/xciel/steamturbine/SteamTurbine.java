@@ -29,6 +29,7 @@ public class SteamTurbine {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID)
+            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null)
             .setTooltipModifierFactory(item ->
                     new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
                             .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
@@ -43,6 +44,7 @@ public class SteamTurbine {
         SteamTurbineClient.addClientListeners(eventBus);
 
         STBlocks.register();
+        STItems.register();
         STBlockEntityTypes.register();
         STCreativeTabs.register(eventBus);
 
