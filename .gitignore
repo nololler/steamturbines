@@ -1,0 +1,32 @@
+# Gradle
+build/
+.gradle/
+run/
+out/
+*.class
+*.jar
+*.zip
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.metadata/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.log
+*.tmp
+
+# Generated resources (keep src/main/resources)
+src/generated/
+
+# NeoForge specific
+cache/
