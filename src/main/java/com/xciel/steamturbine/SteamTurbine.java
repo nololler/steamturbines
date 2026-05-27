@@ -3,7 +3,6 @@ package com.xciel.steamturbine;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
 import com.xciel.steamturbine.registrate.*;
-import com.xciel.steamturbine.data.PressureData;
 import net.createmod.catnip.lang.FontHelper;
 import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.resources.ResourceKey;

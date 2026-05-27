@@ -1,6 +1,6 @@
 package com.xciel.steamturbine.content.shaft;
 
-import com.xciel.steamturbine.data.PressureData;
+import com.xciel.steamturbine.steam.SteamData;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -9,15 +9,15 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity {
-    private final PressureData pressureData;
+    private final SteamData steamData;
 
     public TurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        this.pressureData = new PressureData();
+        this.steamData = new SteamData();
     }
 
-    public PressureData getPressureData() {
-        return pressureData;
+    public SteamData getSteamData() {
+        return steamData;
     }
 
     @Override
@@ -28,12 +28,12 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity {
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        pressureData.loadFromNBT(tag);
+        steamData.loadFromNBT(tag);
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        pressureData.saveToNBT(tag);
+        steamData.saveToNBT(tag);
     }
 }
