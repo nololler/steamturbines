@@ -29,12 +29,11 @@ public final class SteamHelper {
     }
 
     public static SteamData lerpSteam(SteamData a, SteamData b, float factor) {
-        SteamData result = new SteamData();
-        result.setRaw(
+        return SteamData.of(
             lerp(a.getPressure(), b.getPressure(), factor),
-            lerp(a.getSourceStrength(), b.getSourceStrength(), factor)
+            a.getSteamType(),
+            lerp(a.getQuality(), b.getQuality(), factor)
         );
-        return result;
     }
 
     public static float decayPressure(float pressure) {
@@ -52,7 +51,7 @@ public final class SteamHelper {
     public static boolean shouldSync(float oldPressure, float newPressure) {
         float oldNorm = normalizePressure(oldPressure);
         float newNorm = normalizePressure(newPressure);
-        return Math.abs(oldNorm - newNorm) >= SteamConstants.SYNC_THRESHOLD_CHANGE;
+        return Math.abs(oldNorm - newNorm) >= SteamConstants.SYNC_THRESHOLD;
     }
 
     public static float getVisualPressure(float pressure) {
@@ -68,13 +67,15 @@ public final class SteamHelper {
             return SteamData.empty();
         }
         float extracted = Math.min(source.getPressure(), amount);
-        return SteamData.of(extracted, source.getSourceStrength());
+        return SteamData.of(extracted, source.getSteamType(), source.getQuality());
     }
 
-    public static void receiveSteam(SteamData target, SteamData incoming) {
-        if (incoming.isEmpty()) return;
+    public static SteamData receiveSteam(SteamData target, SteamData incoming) {
+        if (incoming.isEmpty()) return target;
         float combinedPressure = target.getPressure() + incoming.getPressure();
-        float avgStrength = (target.getSourceStrength() + incoming.getSourceStrength()) * 0.5f;
-        target.setRaw(combinedPressure, avgStrength);
+        float avgQuality = (target.getQuality() + incoming.getQuality()) * 0.5f;
+        SteamType type = target.getSteamType().isBetterThan(incoming.getSteamType())
+            ? target.getSteamType() : incoming.getSteamType();
+        return SteamData.of(combinedPressure, type, avgQuality);
     }
 }

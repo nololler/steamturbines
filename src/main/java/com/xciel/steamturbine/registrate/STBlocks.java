@@ -6,7 +6,7 @@ import com.xciel.steamturbine.SteamTurbine;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
 import com.xciel.steamturbine.content.gauge.PressureGaugeBlock;
-import com.xciel.steamturbine.content.pipe.PressurePipeBlock;
+import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -30,7 +30,7 @@ public class STBlocks {
             .build()
             .register();
 
-    public static final BlockEntry<PressurePipeBlock> PRESSURE_PIPE = REGISTRATE.block("pressure_pipe", PressurePipeBlock::new)
+    public static final BlockEntry<PressurizedPipeBlock> PRESSURE_PIPE = REGISTRATE.block("pressure_pipe", PressurizedPipeBlock::new)
             .initialProperties(SharedProperties::stone)
             .properties(p -> p.noOcclusion())
             .transform(pickaxeOnly())

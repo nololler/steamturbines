@@ -5,7 +5,7 @@ import com.xciel.steamturbine.SteamTurbine;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
 import com.xciel.steamturbine.content.gauge.PressureGaugeBlockEntity;
-import com.xciel.steamturbine.content.pipe.PressurePipeBlockEntity;
+import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
@@ -24,8 +24,8 @@ public class STBlockEntityTypes {
             .validBlocks(STBlocks.STEAM_COMPRESSOR)
             .register();
 
-    public static final BlockEntityEntry<PressurePipeBlockEntity> PRESSURE_PIPE = REGISTRATE
-            .blockEntity("pressure_pipe", PressurePipeBlockEntity::new)
+    public static final BlockEntityEntry<PressurizedPipeBlockEntity> PRESSURE_PIPE = REGISTRATE
+            .blockEntity("pressure_pipe", PressurizedPipeBlockEntity::new)
             .validBlocks(STBlocks.PRESSURE_PIPE)
             .register();
 

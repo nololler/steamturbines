@@ -1,42 +1,41 @@
 package com.xciel.steamturbine.steam;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-public class SteamData {
-    private float pressure;
-    private float normalizedPressure;
-    private float sourceStrength;
-    private boolean valid;
-    private boolean empty;
+public final class SteamData {
+    private final float pressure;
+    private final SteamType steamType;
+    private final float quality;
+    private final float sourceStrength;
 
-    public SteamData() {
-        this.pressure = 0f;
-        this.normalizedPressure = 0f;
-        this.sourceStrength = SteamConstants.SOURCE_STRENGTH_DEFAULT;
-        this.valid = false;
-        this.empty = true;
-    }
-
-    public SteamData(float pressure, float sourceStrength) {
-        this.pressure = clampPressure(pressure);
-        this.sourceStrength = clampSourceStrength(sourceStrength);
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
+    private SteamData(float pressure, SteamType steamType, float quality, float sourceStrength) {
+        this.pressure = Math.max(0f, Math.min(pressure, SteamConstants.MAX_PRESSURE));
+        this.steamType = steamType != null ? steamType : SteamType.REGULAR;
+        this.quality = Math.max(0f, Math.min(quality, 1f));
+        this.sourceStrength = Math.max(0f, Math.min(sourceStrength, SteamConstants.SOURCE_STRENGTH_MAX));
     }
 
     public static SteamData empty() {
-        return new SteamData();
+        return new SteamData(0f, SteamType.REGULAR, 0f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
     }
 
     public static SteamData of(float pressure) {
-        return new SteamData(pressure, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+        return new SteamData(pressure, SteamType.REGULAR, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
     }
 
-    public static SteamData of(float pressure, float sourceStrength) {
-        return new SteamData(pressure, sourceStrength);
+    public static SteamData of(float pressure, SteamType steamType) {
+        return new SteamData(pressure, steamType, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+    }
+
+    public static SteamData of(float pressure, SteamType steamType, float quality) {
+        return new SteamData(pressure, steamType, quality, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+    }
+
+    public static SteamData of(float pressure, SteamType steamType, float quality, float sourceStrength) {
+        return new SteamData(pressure, steamType, quality, sourceStrength);
     }
 
     public float getPressure() {
@@ -44,7 +43,16 @@ public class SteamData {
     }
 
     public float getNormalizedPressure() {
-        return normalizedPressure;
+        if (SteamConstants.MAX_PRESSURE <= 0) return 0f;
+        return Math.min(pressure / SteamConstants.MAX_PRESSURE, 1f);
+    }
+
+    public SteamType getSteamType() {
+        return steamType;
+    }
+
+    public float getQuality() {
+        return quality;
     }
 
     public float getSourceStrength() {
@@ -55,78 +63,42 @@ public class SteamData {
         return SteamPressureTier.fromPressure(pressure);
     }
 
-    public boolean isValid() {
-        return valid;
-    }
-
     public boolean isEmpty() {
-        return empty;
+        return pressure <= 0f;
     }
 
-    public void setPressure(float pressure) {
-        this.pressure = clampPressure(pressure);
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
+    public SteamData withPressure(float newPressure) {
+        return new SteamData(newPressure, steamType, quality, sourceStrength);
     }
 
-    public void setSourceStrength(float sourceStrength) {
-        this.sourceStrength = clampSourceStrength(sourceStrength);
+    public SteamData withSteamType(SteamType newType) {
+        return new SteamData(pressure, newType, quality, sourceStrength);
     }
 
-    public void setRaw(float pressure, float sourceStrength) {
-        this.pressure = clampPressure(pressure);
-        this.sourceStrength = clampSourceStrength(sourceStrength);
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
+    public SteamData withQuality(float newQuality) {
+        return new SteamData(pressure, steamType, newQuality, sourceStrength);
     }
 
-    public void copyFrom(SteamData other) {
-        this.pressure = other.pressure;
-        this.normalizedPressure = other.normalizedPressure;
-        this.sourceStrength = other.sourceStrength;
-        this.valid = other.valid;
-        this.empty = other.empty;
-    }
-
-    public SteamData copy() {
-        SteamData copy = new SteamData();
-        copy.copyFrom(this);
-        return copy;
-    }
-
-    public void lerpTo(SteamData target, float factor) {
-        this.pressure = lerp(this.pressure, target.pressure, factor);
-        this.sourceStrength = lerp(this.sourceStrength, target.sourceStrength, factor);
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
-    }
-
-    public void decay() {
-        this.pressure *= SteamConstants.TRANSFER_DECAY;
-        if (this.pressure < SteamConstants.MINIMUM_PROPAGATION_THRESHOLD) {
-            this.pressure = 0f;
+    public SteamData withPropagationLoss() {
+        float newPressure = pressure * SteamConstants.PROPAGATION_FACTOR;
+        float newQuality = quality * SteamConstants.QUALITY_DECAY;
+        if (newPressure < SteamConstants.MINIMUM_PROPAGATION_THRESHOLD) {
+            newPressure = 0f;
         }
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
+        return new SteamData(newPressure, steamType, newQuality, sourceStrength);
     }
 
-    public void saveToNBT(CompoundTag nbt) {
-        nbt.putFloat("Pressure", pressure);
-        nbt.putFloat("SourceStrength", sourceStrength);
+    public SteamData withDecay() {
+        float newPressure = pressure * SteamConstants.DECAY_FACTOR;
+        float newQuality = quality * SteamConstants.QUALITY_DECAY;
+        if (newPressure < SteamConstants.MINIMUM_PROPAGATION_THRESHOLD) {
+            newPressure = 0f;
+        }
+        return new SteamData(newPressure, steamType, newQuality, sourceStrength);
     }
 
-    public void loadFromNBT(CompoundTag nbt) {
-        this.pressure = nbt.contains("Pressure") ? nbt.getFloat("Pressure") : 0f;
-        this.sourceStrength = nbt.contains("SourceStrength") ? nbt.getFloat("SourceStrength") : SteamConstants.SOURCE_STRENGTH_DEFAULT;
-        this.pressure = clampPressure(this.pressure);
-        this.sourceStrength = clampSourceStrength(this.sourceStrength);
-        this.normalizedPressure = this.pressure / SteamConstants.MAX_PRESSURE;
-        this.valid = this.pressure > 0;
-        this.empty = this.pressure <= 0;
+    public boolean shouldPropagate() {
+        return pressure >= SteamConstants.PROPAGATION_THRESHOLD;
     }
 
     public MutableComponent getTierName() {
@@ -139,15 +111,25 @@ public class SteamData {
         };
     }
 
-    private static float clampPressure(float pressure) {
-        return Math.max(0f, Math.min(pressure, SteamConstants.MAX_PRESSURE));
+    public void saveToNBT(CompoundTag nbt, HolderLookup.Provider registries) {
+        nbt.putFloat("Pressure", pressure);
+        nbt.putString("SteamType", steamType.name());
+        nbt.putFloat("Quality", quality);
+        nbt.putFloat("SourceStrength", sourceStrength);
     }
 
-    private static float clampSourceStrength(float strength) {
-        return Math.max(0f, Math.min(strength, SteamConstants.SOURCE_STRENGTH_MAX));
-    }
-
-    private static float lerp(float a, float b, float factor) {
-        return a + (b - a) * factor;
+    public static SteamData loadFromNBT(CompoundTag nbt, HolderLookup.Provider registries) {
+        float pressure = nbt.contains("Pressure") ? nbt.getFloat("Pressure") : 0f;
+        SteamType steamType = SteamType.REGULAR;
+        if (nbt.contains("SteamType")) {
+            try {
+                steamType = SteamType.valueOf(nbt.getString("SteamType"));
+            } catch (IllegalArgumentException ignored) {}
+        }
+        float quality = nbt.contains("Quality") ? nbt.getFloat("Quality") : 1f;
+        float sourceStrength = nbt.contains("SourceStrength")
+            ? nbt.getFloat("SourceStrength")
+            : SteamConstants.SOURCE_STRENGTH_DEFAULT;
+        return new SteamData(pressure, steamType, quality, sourceStrength);
     }
 }
