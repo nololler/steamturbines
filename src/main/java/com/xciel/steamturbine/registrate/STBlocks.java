@@ -21,32 +21,44 @@ public class STBlocks {
     public static final BlockEntry<SteamBoilerBlock> STEAM_BOILER = REGISTRATE.block("steam_boiler", SteamBoilerBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static final BlockEntry<SteamCompressorBlock> STEAM_COMPRESSOR = REGISTRATE.block("steam_compressor", SteamCompressorBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static final BlockEntry<PressurizedPipeBlock> PRESSURE_PIPE = REGISTRATE.block("pressure_pipe", PressurizedPipeBlock::new)
             .initialProperties(SharedProperties::stone)
             .properties(p -> p.noOcclusion())
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static final BlockEntry<SteamTurbineBlock> STEAM_TURBINE = REGISTRATE.block("steam_turbine", SteamTurbineBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static final BlockEntry<TurbineShaftBlock> TURBINE_SHAFT = REGISTRATE.block("turbine_shaft", TurbineShaftBlock::new)
             .initialProperties(SharedProperties::stone)
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static final BlockEntry<PressureGaugeBlock> PRESSURE_GAUGE = REGISTRATE.block("pressure_gauge", PressureGaugeBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
+            .item()
+            .build()
             .register();
 
     public static void register() {}

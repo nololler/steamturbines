@@ -44,7 +44,6 @@ public class SteamTurbine {
         SteamTurbineClient.addClientListeners(eventBus);
 
         STBlocks.register();
-        STItems.register();
         STBlockEntityTypes.register();
         STCreativeTabs.register(eventBus);
 

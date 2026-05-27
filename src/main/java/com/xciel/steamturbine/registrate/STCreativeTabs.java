@@ -18,15 +18,15 @@ public class STCreativeTabs {
     public static final Supplier<CreativeModeTab> MAIN_TAB = CREATIVE_MODE_TABS.register(MOD_ID, () ->
             CreativeModeTab.builder()
                     .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
-                    .icon(() -> STItems.STEAM_TURBINE.get().getDefaultInstance())
+                    .icon(() -> STBlocks.STEAM_TURBINE.get().asItem().getDefaultInstance())
                     .title(Component.translatable("itemGroup." + MOD_ID + ".main"))
                     .displayItems((itemDisplayParameters, output) -> {
-                        output.accept(STItems.STEAM_BOILER.get());
-                        output.accept(STItems.STEAM_COMPRESSOR.get());
-                        output.accept(STItems.PRESSURE_PIPE.get());
-                        output.accept(STItems.STEAM_TURBINE.get());
-                        output.accept(STItems.TURBINE_SHAFT.get());
-                        output.accept(STItems.PRESSURE_GAUGE.get());
+                        output.accept(STBlocks.STEAM_BOILER.get());
+                        output.accept(STBlocks.STEAM_COMPRESSOR.get());
+                        output.accept(STBlocks.PRESSURE_PIPE.get());
+                        output.accept(STBlocks.STEAM_TURBINE.get());
+                        output.accept(STBlocks.TURBINE_SHAFT.get());
+                        output.accept(STBlocks.PRESSURE_GAUGE.get());
                     })
                     .build()
     );
