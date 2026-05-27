@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": {"model": "steamturbine:block/pressure_pipe"}
+  }
+}

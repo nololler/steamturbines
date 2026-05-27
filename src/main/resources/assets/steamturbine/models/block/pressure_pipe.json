@@ -1,0 +1,7 @@
+{
+  "parent": "steamturbine:block/pipe_core",
+  "textures": {
+    "particle": "steamturbine:block/pipe/pressurized-pipe",
+    "texture": "steamturbine:block/pipe/pressurized-pipe"
+  }
+}

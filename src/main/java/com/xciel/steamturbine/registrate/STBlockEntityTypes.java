@@ -1,14 +1,14 @@
 package com.xciel.steamturbine.registrate;
 
-import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
-import com.xciel.steamturbine.SteamTurbine;
+import com.xciel.steamturbine.client.render.PressurizedPipeRenderer;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
 import com.xciel.steamturbine.content.gauge.PressureGaugeBlockEntity;
-import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity;
+import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
 import static com.xciel.steamturbine.SteamTurbine.REGISTRATE;
 
@@ -27,6 +27,7 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<PressurizedPipeBlockEntity> PRESSURE_PIPE = REGISTRATE
             .blockEntity("pressure_pipe", PressurizedPipeBlockEntity::new)
             .validBlocks(STBlocks.PRESSURE_PIPE)
+            .renderer(() -> ctx -> new PressurizedPipeRenderer(ctx))
             .register();
 
     public static final BlockEntityEntry<SteamTurbineBlockEntity> STEAM_TURBINE = REGISTRATE
