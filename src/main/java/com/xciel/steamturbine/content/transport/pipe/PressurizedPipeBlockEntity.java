@@ -69,7 +69,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         }
     }
 
-    private void updateConnectionStates() {
+    void updateConnectionStates() {
         if (level == null) return;
 
         BlockState state = getBlockState();
