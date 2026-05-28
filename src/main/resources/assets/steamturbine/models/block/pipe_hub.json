@@ -1,8 +1,9 @@
 {
   "parent": "minecraft:block/block",
+  "texture_size": [32, 32],
   "textures": {
-    "particle": "steamturbine:block/pipe/pressurized-pipe",
-    "texture": "steamturbine:block/pipe/pressurized-pipe"
+    "particle": "steamturbine:block/pipe/pressured-pipe",
+    "texture": "steamturbine:block/pipe/pressured-pipe"
   },
   "elements": [
     {
