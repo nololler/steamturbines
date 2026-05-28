@@ -10,6 +10,7 @@ import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.SoundType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
@@ -34,7 +35,7 @@ public class STBlocks {
 
     public static final BlockEntry<PressurizedPipeBlock> PRESSURE_PIPE = REGISTRATE.block("pressure_pipe", PressurizedPipeBlock::new)
             .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion())
+            .properties(p -> p.noOcclusion().sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
             .item()
             .build()

@@ -11,6 +11,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity> {
 
@@ -20,6 +24,8 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
     public static final BooleanProperty WEST = BooleanProperty.create("west");
     public static final BooleanProperty UP = BooleanProperty.create("up");
     public static final BooleanProperty DOWN = BooleanProperty.create("down");
+
+    private static final VoxelShape PIPE_SHAPE = Shapes.box(4/16.0, 4/16.0, 4/16.0, 12/16.0, 12/16.0, 12/16.0);
 
     public PressurizedPipeBlock(Properties properties) {
         super(properties);
@@ -72,5 +78,15 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
             case UP -> state.setValue(UP, connected);
             case DOWN -> state.setValue(DOWN, connected);
         };
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return PIPE_SHAPE;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return PIPE_SHAPE;
     }
 }

@@ -1,3 +1,4 @@
 {
-  "itemGroup.steamturbine.main": "Steam Turbine"
+  "itemGroup.steamturbine.main": "Steam Turbine",
+  "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe"
 }
