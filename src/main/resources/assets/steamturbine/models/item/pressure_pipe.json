@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:item/handheld",
-  "texture_size": [16, 16],
-  "textures": {
-    "layer0": "steamturbine:block/pipe/pressurized-pipe-core"
-  }
-}

@@ -4,11 +4,14 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -53,8 +56,47 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             clientVisualUpdate();
         } else {
             serverPropagation();
+            updateConnectionStates();
         }
         lazyTickCounter = 10;
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!level.isClientSide) {
+            updateConnectionStates();
+        }
+    }
+
+    private void updateConnectionStates() {
+        if (level == null) return;
+
+        BlockState state = getBlockState();
+        boolean changed = false;
+
+        for (Direction dir : Direction.values()) {
+            boolean isConnected = hasNeighborPipe(dir);
+            boolean wasConnected = PressurizedPipeBlock.getConnection(state, dir);
+
+            if (isConnected != wasConnected) {
+                state = PressurizedPipeBlock.setConnection(state, dir, isConnected);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            level.setBlock(getBlockPos(), state, Block.UPDATE_ALL);
+        }
+    }
+
+    private boolean hasNeighborPipe(Direction dir) {
+        BlockPos neighborPos = getBlockPos().relative(dir);
+        if (!level.isLoaded(neighborPos)) return false;
+
+        BlockState neighborState = level.getBlockState(neighborPos);
+        Block neighborBlock = neighborState.getBlock();
+        return neighborBlock instanceof PressurizedPipeBlock;
     }
 
     private void serverPropagation() {
@@ -77,7 +119,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         var neighbor = level.getBlockEntity(neighborPos);
         if (neighbor instanceof PressurizedPipeBlockEntity pipe) {
             pipe.receiveSteam(dir.getOpposite(), propagated);
-        } else if (neighbor instanceof com.xciel.steamturbine.steam.transfer.ISteamConsumer consumer) {
+        } else if (neighbor instanceof ISteamConsumer consumer) {
             if (consumer.canReceive(dir.getOpposite())) {
                 consumer.receiveSteam(dir.getOpposite(), propagated);
             }
