@@ -5,6 +5,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
+import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -96,7 +97,16 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
         BlockState neighborState = level.getBlockState(neighborPos);
         Block neighborBlock = neighborState.getBlock();
-        return neighborBlock instanceof PressurizedPipeBlock;
+
+        if (neighborBlock instanceof PressurizedPipeBlock) return true;
+
+        var neighborBE = level.getBlockEntity(neighborPos);
+        if (neighborBE instanceof ISteamEndpoint endpoint) {
+            Direction opposite = dir.getOpposite();
+            return endpoint.canConnect(opposite);
+        }
+
+        return false;
     }
 
     private void serverPropagation() {
@@ -119,6 +129,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         var neighbor = level.getBlockEntity(neighborPos);
         if (neighbor instanceof PressurizedPipeBlockEntity pipe) {
             pipe.receiveSteam(dir.getOpposite(), propagated);
+        } else if (neighbor instanceof ISteamTransport transport) {
+            transport.pushSteam(dir.getOpposite(), propagated);
         } else if (neighbor instanceof ISteamConsumer consumer) {
             if (consumer.canReceive(dir.getOpposite())) {
                 consumer.receiveSteam(dir.getOpposite(), propagated);

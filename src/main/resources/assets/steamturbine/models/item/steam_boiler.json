@@ -1,0 +1,7 @@
+{
+	"credit": "Made with Blockbench",
+	"parent": "steamturbine:block/boiler/steam_boiler",
+	"textures": {
+		"particle": "steamturbine:block/boiler/misc"
+	}
+}
