@@ -41,8 +41,6 @@ public class SteamTurbine {
         eventBus.addListener(this::setup);
         eventBus.addListener(this::doClientStuff);
 
-        SteamTurbineClient.addClientListeners(eventBus);
-
         STBlocks.register();
         STBlockEntityTypes.register();
         STCreativeTabs.register(eventBus);
@@ -54,6 +52,7 @@ public class SteamTurbine {
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
+        SteamTurbineClient.addClientListeners(event);
     }
 
     public static ResourceLocation rl(String path) {
