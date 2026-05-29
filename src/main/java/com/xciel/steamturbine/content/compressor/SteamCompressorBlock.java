@@ -123,14 +123,11 @@ public class SteamCompressorBlock extends Block implements IBE<SteamCompressorBl
 
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
-        Direction facing = state.getValue(FACING);
-        return facing.getAxis() == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
+        return Direction.Axis.X;
     }
 
     @Override
     public boolean hasShaftTowards(LevelReader level, BlockPos pos, BlockState state, Direction face) {
-        Direction.Axis faceAxis = face.getAxis();
-        Direction.Axis rotationAxis = getRotationAxis(state);
-        return faceAxis != rotationAxis;
+        return face.getAxis() == Direction.Axis.X;
     }
 }
