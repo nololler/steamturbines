@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.simibubi.create.AllPartialModels;
+import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
@@ -13,6 +14,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.FlatLit;
 import dev.engine_room.flywheel.lib.model.Models;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompressorBlockEntity> {
 
@@ -21,12 +23,17 @@ public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompres
     public SteamCompressorVisual(VisualizationContext context, SteamCompressorBlockEntity blockEntity, float partialTick) {
         super(context, blockEntity, partialTick);
 
+        BlockState state = blockEntity.getBlockState();
+        Direction.Axis rotationAxis = ((IRotate) state.getBlock()).getRotationAxis(state);
+
         var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING,
             Models.partial(AllPartialModels.SHAFT_HALF));
 
         for (Direction direction : Direction.values()) {
+            if (direction.getAxis() == rotationAxis) continue;
+
             RotatingInstance instance = instancer.createInstance();
-            instance.setup(blockEntity, Direction.Axis.Z, blockEntity.getSpeed())
+            instance.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
                 .setPosition(getVisualPosition())
                 .rotateToFace(Direction.SOUTH, direction)
                 .setChanged();
@@ -37,8 +44,10 @@ public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompres
     @Override
     public void update(float partialTick) {
         float speed = blockEntity.getSpeed();
+        BlockState state = blockEntity.getBlockState();
+        Direction.Axis rotationAxis = ((IRotate) state.getBlock()).getRotationAxis(state);
         for (RotatingInstance shaft : shafts.values()) {
-            shaft.setup(blockEntity, Direction.Axis.Z, speed).setChanged();
+            shaft.setup(blockEntity, rotationAxis, speed).setChanged();
         }
     }
 
