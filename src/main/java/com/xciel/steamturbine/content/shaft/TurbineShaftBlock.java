@@ -23,35 +23,35 @@ public class TurbineShaftBlock extends Block implements IBE<TurbineShaftBlockEnt
     public static final Property<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape SHAPE_NORTH = Shapes.or(
-        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
         Block.box(2.0, 3.0, 2.0, 14.0, 15.0, 14.0),
-        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),  // shaft casing north
-        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0), // input from south
-        Block.box(14.0, 3.0, 3.0, 16.0, 13.0, 13.0)  // exhaust east
+        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(14.0, 3.0, 3.0, 16.0, 13.0, 13.0),
+        Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0),
+        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0)
     );
 
     private static final VoxelShape SHAPE_EAST = Shapes.or(
-        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
         Block.box(2.0, 3.0, 2.0, 14.0, 15.0, 14.0),
-        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0), // shaft casing east
-        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),   // input from west
-        Block.box(3.0, 3.0, 0.0, 13.0, 13.0, 2.0)    // exhaust north
+        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(3.0, 3.0, 14.0, 13.0, 13.0, 16.0),
+        Block.box(13.0, 5.0, 5.0, 15.0, 11.0, 11.0),
+        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0)
     );
 
     private static final VoxelShape SHAPE_SOUTH = Shapes.or(
-        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
         Block.box(2.0, 3.0, 2.0, 14.0, 15.0, 14.0),
-        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0), // shaft casing south
-        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),   // input from north
-        Block.box(0.0, 3.0, 3.0, 2.0, 13.0, 13.0)    // exhaust west
+        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(0.0, 3.0, 3.0, 2.0, 13.0, 13.0),
+        Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0),
+        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0)
     );
 
     private static final VoxelShape SHAPE_WEST = Shapes.or(
-        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
         Block.box(2.0, 3.0, 2.0, 14.0, 15.0, 14.0),
-        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),   // shaft casing west
-        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0), // input from east
-        Block.box(3.0, 3.0, 14.0, 13.0, 13.0, 16.0)  // exhaust south
+        Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(3.0, 3.0, 0.0, 13.0, 13.0, 2.0),
+        Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0),
+        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0)
     );
 
     public TurbineShaftBlock(Properties properties) {

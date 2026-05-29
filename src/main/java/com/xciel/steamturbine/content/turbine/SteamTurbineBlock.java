@@ -22,46 +22,46 @@ public class SteamTurbineBlock extends Block implements IBE<SteamTurbineBlockEnt
 
     private static final VoxelShape SHAPE_NORTH = Shapes.or(
         Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),
+        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0),
         Block.box(4.0, 3.0, 1.0, 12.0, 12.0, 15.0),
-        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),   // steam input (north)
-        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0), // exhaust (south)
-        Block.box(1.0, 3.0, 8.0, 15.0, 15.0, 10.0),  // fanstack center south
-        Block.box(2.0, 3.0, 6.0, 14.0, 14.0, 8.0),   // fanstack center north
-        Block.box(0.0, 3.0, 11.0, 16.0, 16.0, 14.0), // fanstack south
-        Block.box(0.0, 3.0, 2.0, 16.0, 16.0, 5.0)    // fanstack north
+        Block.box(1.0, 3.0, 8.0, 15.0, 15.0, 10.0),
+        Block.box(2.0, 3.0, 6.0, 14.0, 14.0, 8.0),
+        Block.box(0.0, 3.0, 11.0, 16.0, 16.0, 14.0),
+        Block.box(0.0, 3.0, 2.0, 16.0, 16.0, 5.0)
     );
 
     private static final VoxelShape SHAPE_EAST = Shapes.or(
         Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0),
+        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),
         Block.box(1.0, 3.0, 4.0, 15.0, 12.0, 12.0),
-        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0), // steam input (east)
-        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),   // exhaust (west)
-        Block.box(6.0, 3.0, 1.0, 8.0, 15.0, 15.0),   // fanstack center south
-        Block.box(8.0, 3.0, 2.0, 10.0, 14.0, 14.0),  // fanstack center north
-        Block.box(2.0, 3.0, 0.0, 5.0, 16.0, 16.0),   // fanstack south
-        Block.box(11.0, 3.0, 0.0, 14.0, 16.0, 16.0)  // fanstack north
+        Block.box(6.0, 3.0, 1.0, 8.0, 15.0, 15.0),
+        Block.box(8.0, 3.0, 2.0, 10.0, 14.0, 14.0),
+        Block.box(2.0, 3.0, 0.0, 5.0, 16.0, 16.0),
+        Block.box(11.0, 3.0, 0.0, 14.0, 16.0, 16.0)
     );
 
     private static final VoxelShape SHAPE_SOUTH = Shapes.or(
         Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0),
+        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),
         Block.box(4.0, 3.0, 1.0, 12.0, 12.0, 15.0),
-        Block.box(5.0, 5.0, 14.0, 11.0, 11.0, 16.0), // steam input (south)
-        Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 2.0),   // exhaust (north)
-        Block.box(1.0, 3.0, 6.0, 15.0, 15.0, 8.0),   // fanstack center south
-        Block.box(2.0, 3.0, 8.0, 14.0, 14.0, 10.0),  // fanstack center north
-        Block.box(0.0, 3.0, 2.0, 16.0, 16.0, 5.0),   // fanstack south
-        Block.box(0.0, 3.0, 11.0, 16.0, 16.0, 14.0)  // fanstack north
+        Block.box(1.0, 3.0, 6.0, 15.0, 15.0, 8.0),
+        Block.box(2.0, 3.0, 8.0, 14.0, 14.0, 10.0),
+        Block.box(0.0, 3.0, 2.0, 16.0, 16.0, 5.0),
+        Block.box(0.0, 3.0, 11.0, 16.0, 16.0, 14.0)
     );
 
     private static final VoxelShape SHAPE_WEST = Shapes.or(
         Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),
+        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0),
         Block.box(1.0, 3.0, 4.0, 15.0, 12.0, 12.0),
-        Block.box(0.0, 5.0, 5.0, 2.0, 11.0, 11.0),   // steam input (west)
-        Block.box(14.0, 5.0, 5.0, 16.0, 11.0, 11.0), // exhaust (east)
-        Block.box(8.0, 3.0, 1.0, 10.0, 15.0, 15.0),  // fanstack center south
-        Block.box(6.0, 3.0, 2.0, 8.0, 14.0, 14.0),   // fanstack center north
-        Block.box(11.0, 3.0, 0.0, 14.0, 16.0, 16.0), // fanstack south
-        Block.box(2.0, 3.0, 0.0, 5.0, 16.0, 16.0)    // fanstack north
+        Block.box(8.0, 3.0, 1.0, 10.0, 15.0, 15.0),
+        Block.box(6.0, 3.0, 2.0, 8.0, 14.0, 14.0),
+        Block.box(11.0, 3.0, 0.0, 14.0, 16.0, 16.0),
+        Block.box(2.0, 3.0, 0.0, 5.0, 16.0, 16.0)
     );
 
     public SteamTurbineBlock(Properties properties) {
