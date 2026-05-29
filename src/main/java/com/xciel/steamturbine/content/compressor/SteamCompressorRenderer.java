@@ -33,9 +33,7 @@ public class SteamCompressorRenderer extends KineticBlockEntityRenderer<SteamCom
 
         Direction.Axis rotationAxis = ((IRotate) state.getBlock()).getRotationAxis(state);
 
-        for (Direction direction : Iterate.directions) {
-            if (direction.getAxis() == rotationAxis) continue;
-
+        for (Direction direction : Iterate.directionsInAxis(rotationAxis)) {
             float offset = getRotationOffsetForPosition(be, pos, rotationAxis);
             float angle = (time * be.getSpeed() * 3f / 10) % 360;
             angle += offset;
@@ -43,7 +41,7 @@ public class SteamCompressorRenderer extends KineticBlockEntityRenderer<SteamCom
 
             SuperByteBuffer shaftBuffer = CachedBuffers.partialFacing(
                 AllPartialModels.SHAFT_HALF, state, direction);
-            kineticRotationTransform(shaftBuffer, be, direction.getAxis(), angle, light);
+            kineticRotationTransform(shaftBuffer, be, rotationAxis, angle, light);
             shaftBuffer.renderInto(ms, buffer.getBuffer(RenderType.solid()));
         }
     }

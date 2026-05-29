@@ -13,6 +13,7 @@ import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.FlatLit;
 import dev.engine_room.flywheel.lib.model.Models;
+import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -29,9 +30,7 @@ public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompres
         var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING,
             Models.partial(AllPartialModels.SHAFT_HALF));
 
-        for (Direction direction : Direction.values()) {
-            if (direction.getAxis() == rotationAxis) continue;
-
+        for (Direction direction : Iterate.directionsInAxis(rotationAxis)) {
             RotatingInstance instance = instancer.createInstance();
             instance.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
                 .setPosition(getVisualPosition())
