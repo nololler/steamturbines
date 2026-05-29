@@ -5,7 +5,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
-import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;

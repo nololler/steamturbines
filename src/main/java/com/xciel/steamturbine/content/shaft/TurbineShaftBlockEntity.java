@@ -11,7 +11,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -49,25 +48,30 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     private void updateFromConnectedTurbines() {
         BlockState state = getBlockState();
-        Direction inputDir = ((TurbineShaftBlock) state.getBlock()).getTurbineInputDirection(state);
-        BlockPos inputPos = worldPosition.relative(inputDir);
+        Direction facing = state.getValue(TurbineShaftBlock.FACING);
 
-        float maxSpeed = 0f;
+        // Walk chain backward from shaft: shaft ← turbine ← turbine ← ...
+        // The chain flows forward (exhaust in FACING direction), so we walk opposite FACING
+        Direction walkDir = facing.getOpposite();
+        BlockPos current = worldPosition.relative(walkDir);
+
+        float totalSpeed = 0f;
         int count = 0;
 
-        // Check immediate input neighbor for turbine
-        if (level.isLoaded(inputPos)) {
-            BlockEntity be = level.getBlockEntity(inputPos);
+        while (level.isLoaded(current)) {
+            var be = level.getBlockEntity(current);
             if (be instanceof SteamTurbineBlockEntity turbine) {
-                maxSpeed = Math.max(maxSpeed, Math.abs(turbine.getTurbineSpeed()));
+                totalSpeed += Math.abs(turbine.getTurbineSpeed());
                 count++;
+                current = current.relative(walkDir);
+            } else {
+                break;
             }
         }
 
-        aggregatedSpeed = maxSpeed;
+        aggregatedSpeed = totalSpeed;
         connectedTurbineCount = count;
 
-        // Notify kinetic network if speed changed
         float generated = getGeneratedSpeed();
         if (Math.abs(generated - aggregatedSpeed) > 0.01f) {
             updateGeneratedRotation();

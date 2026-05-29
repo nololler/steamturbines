@@ -17,22 +17,21 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.EnumMap;
 import java.util.List;
 
 public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamConsumer, ISteamEndpoint, IHaveGoggleInformation {
     private static final float MAX_RPM = 256f;
     private static final float MIN_PRESSURE_FOR_OPERATION = 0.5f;
+    private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
 
-    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
     private float inputPressure = 0f;
     private float turbineSpeed = 0f;
+    private float exhaustPressure = 0f;
+    private int stageNumber = 0;
+    private float stageEfficiency = 1.0f;
 
     public SteamTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        for (Direction dir : Direction.values()) {
-            receivedSteam.put(dir, SteamData.empty());
-        }
     }
 
     @Override
@@ -49,6 +48,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
         float maxPressure = 0f;
 
+        // Pull steam from pipes on both faces
         for (Direction dir : new Direction[]{facing, facing.getOpposite()}) {
             BlockPos neighborPos = worldPosition.relative(dir);
             if (!level.isLoaded(neighborPos)) continue;
@@ -62,24 +62,57 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
                 }
             }
         }
+
+        // Also accept exhaust from previous turbine (behind us)
+        BlockPos behindPos = worldPosition.relative(facing.getOpposite());
+        if (level.isLoaded(behindPos)) {
+            var behindBE = level.getBlockEntity(behindPos);
+            if (behindBE instanceof SteamTurbineBlockEntity prevTurbine) {
+                maxPressure = Math.max(maxPressure, prevTurbine.exhaustPressure);
+            }
+        }
+
+        // Determine stage number by counting turbines behind us
+        stageNumber = countTurbinesBehind(worldPosition, facing);
+
+        // Apply per-stage efficiency
+        int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
+        stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
+
         inputPressure = maxPressure;
 
         if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
             float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
-            turbineSpeed = MAX_RPM * pressureFactor;
+            turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
+            // Exhaust: lose extracted energy, propagate forward
+            exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
         } else {
             turbineSpeed = 0f;
+            exhaustPressure = 0f;
         }
 
         setChanged();
         sendData();
     }
 
+    private int countTurbinesBehind(BlockPos start, Direction facing) {
+        int count = 0;
+        BlockPos current = start.relative(facing.getOpposite());
+        while (level != null && level.isLoaded(current)) {
+            var be = level.getBlockEntity(current);
+            if (be instanceof SteamTurbineBlockEntity) {
+                count++;
+                current = current.relative(facing.getOpposite());
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+
     @Override
     public void receiveSteam(Direction direction, SteamData steam) {
-        if (steam.isEmpty()) return;
-        receivedSteam.put(direction, steam);
-        setChanged();
+        // Turbine uses pull-based consumption; this is kept for interface compliance
     }
 
     @Override
@@ -104,6 +137,11 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         tooltip.add(Component.literal("Encased Turbine").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("  Stage: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.valueOf(stageNumber + 1)).withStyle(ChatFormatting.WHITE)));
+        tooltip.add(Component.literal("  Efficiency: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.0f", stageEfficiency * 100) + "%").withStyle(
+                stageEfficiency >= 0.7f ? ChatFormatting.GREEN : stageEfficiency >= 0.5f ? ChatFormatting.YELLOW : ChatFormatting.RED)));
         tooltip.add(Component.literal("  Input Pressure: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.1f", inputPressure)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("  Turbine RPM: ").withStyle(ChatFormatting.GRAY)
@@ -123,11 +161,22 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         return inputPressure;
     }
 
+    public float getExhaustPressure() {
+        return exhaustPressure;
+    }
+
+    public int getStageNumber() {
+        return stageNumber;
+    }
+
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         inputPressure = tag.getFloat("InputPressure");
         turbineSpeed = tag.getFloat("TurbineSpeed");
+        exhaustPressure = tag.getFloat("ExhaustPressure");
+        stageNumber = tag.getInt("StageNumber");
+        stageEfficiency = tag.getFloat("StageEfficiency");
     }
 
     @Override
@@ -135,5 +184,8 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         super.write(tag, registries, clientPacket);
         tag.putFloat("InputPressure", inputPressure);
         tag.putFloat("TurbineSpeed", turbineSpeed);
+        tag.putFloat("ExhaustPressure", exhaustPressure);
+        tag.putInt("StageNumber", stageNumber);
+        tag.putFloat("StageEfficiency", stageEfficiency);
     }
 }
