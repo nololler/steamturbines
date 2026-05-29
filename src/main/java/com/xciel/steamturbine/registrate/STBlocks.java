@@ -4,7 +4,6 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
-import com.xciel.steamturbine.content.gauge.PressureGaugeBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
@@ -52,13 +51,6 @@ public class STBlocks {
 
     public static final BlockEntry<TurbineShaftBlock> TURBINE_SHAFT = REGISTRATE.block("turbine_shaft", TurbineShaftBlock::new)
             .initialProperties(SharedProperties::stone)
-            .transform(pickaxeOnly())
-            .item()
-            .build()
-            .register();
-
-    public static final BlockEntry<PressureGaugeBlock> PRESSURE_GAUGE = REGISTRATE.block("pressure_gauge", PressureGaugeBlock::new)
-            .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
             .item()
             .build()

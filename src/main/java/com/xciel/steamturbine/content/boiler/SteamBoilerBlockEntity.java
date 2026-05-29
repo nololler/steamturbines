@@ -106,9 +106,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private boolean isValidConnection(Block block, Direction dir) {
         if (block instanceof PressurizedPipeBlock) return true;
         if (block instanceof SteamBoilerBlock) return true;
-        if (block instanceof com.xciel.steamturbine.content.compressor.SteamCompressorBlock) return true;
-        if (block instanceof com.xciel.steamturbine.content.turbine.SteamTurbineBlock) return true;
-        if (block instanceof com.xciel.steamturbine.content.gauge.PressureGaugeBlock) return true;
         return false;
     }
 

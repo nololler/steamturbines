@@ -116,12 +116,19 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     private void serverPropagation() {
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.shouldPropagate()) {
-                propagateToNeighbor(dir, steam);
+        BlockState state = getBlockState();
+        for (Direction inDir : Direction.values()) {
+            SteamData steam = receivedSteam.get(inDir);
+            if (steam == null || !steam.shouldPropagate()) {
+                receivedSteam.put(inDir, SteamData.empty());
+                continue;
             }
-            receivedSteam.put(dir, SteamData.empty());
+            for (Direction outDir : Direction.values()) {
+                if (outDir == inDir) continue;
+                if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                propagateToNeighbor(outDir, steam);
+            }
+            receivedSteam.put(inDir, SteamData.empty());
         }
     }
 

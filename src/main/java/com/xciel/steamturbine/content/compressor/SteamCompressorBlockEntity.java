@@ -48,9 +48,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     public void tick() {
         super.tick();
-        if (level != null && !level.isClientSide) {
-            serverTick();
-        }
+        // Kinetic speed sync handled by super.tick(); steam logic runs in lazyTick()
     }
 
     @Override

@@ -2,5 +2,7 @@
   "itemGroup.steamturbine.main": "Steam Turbine",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
-  "block.steamturbine.steam_compressor": "Steam Compressor"
+  "block.steamturbine.steam_compressor": "Steam Compressor",
+  "block.steamturbine.steam_turbine": "Encased Turbine",
+  "block.steamturbine.turbine_shaft": "Turbine Shaft"
 }
