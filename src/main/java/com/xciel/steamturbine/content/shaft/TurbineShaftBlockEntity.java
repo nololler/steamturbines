@@ -71,9 +71,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         aggregatedSpeed = totalSpeed;
         connectedTurbineCount = count;
 
-        if (Math.abs(prevSpeed - aggregatedSpeed) > 0.01f) {
-            updateGeneratedRotation();
-        }
+        updateGeneratedRotation();
     }
 
     @Override
