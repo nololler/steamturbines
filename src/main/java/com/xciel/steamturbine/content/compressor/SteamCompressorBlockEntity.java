@@ -46,6 +46,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (level != null && !level.isClientSide) {
+            serverTick();
+        }
+    }
+
+    @Override
     public void lazyTick() {
         super.lazyTick();
         if (level != null && !level.isClientSide) {
