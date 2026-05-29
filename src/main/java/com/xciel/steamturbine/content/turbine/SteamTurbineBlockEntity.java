@@ -81,7 +81,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     public boolean canReceive(Direction direction) {
         BlockState state = getBlockState();
         Direction facing = state.getValue(SteamTurbineBlock.FACING);
-        return direction == facing; // Steam input from front (FACING direction)
+        return direction == facing || direction == facing.getOpposite();
     }
 
     @Override
@@ -91,7 +91,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public boolean canConnect(Direction direction) {
-        return canReceive(direction);
+        BlockState state = getBlockState();
+        Direction facing = state.getValue(SteamTurbineBlock.FACING);
+        return direction == facing || direction == facing.getOpposite();
     }
 
     @Override

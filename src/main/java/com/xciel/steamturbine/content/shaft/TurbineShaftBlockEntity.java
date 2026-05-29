@@ -4,6 +4,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
+import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
-public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation {
+public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation, ISteamEndpoint {
     private static final float BASE_STRESS_CAPACITY = 4.0f; // SU per RPM
 
     private float aggregatedSpeed = 0f;
@@ -76,6 +77,13 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     public float getGeneratedSpeed() {
         return aggregatedSpeed;
+    }
+
+    @Override
+    public boolean canConnect(Direction direction) {
+        BlockState state = getBlockState();
+        Direction facing = state.getValue(TurbineShaftBlock.FACING);
+        return direction == facing.getOpposite() || direction == facing.getClockWise();
     }
 
     @Override
