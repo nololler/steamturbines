@@ -4,20 +4,28 @@ import com.xciel.steamturbine.AllBlockEntityTypes;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntity> {
 
@@ -129,6 +137,29 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (level.isClientSide)
+            return ItemInteractionResult.SUCCESS;
+
+        if (stack.isEmpty())
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        SteamBoilerBlockEntity be = getBlockEntity(level, pos);
+        if (be == null)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        IItemHandler handler = be.getItemHandler();
+        ItemStack remainder = ItemHandlerHelper.insertItem(handler, stack.copy(), false);
+        if (remainder.getCount() != stack.getCount()) {
+            player.setItemInHand(hand, remainder);
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
