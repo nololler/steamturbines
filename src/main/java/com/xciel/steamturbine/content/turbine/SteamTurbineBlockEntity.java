@@ -7,6 +7,7 @@ import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
+import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -43,27 +44,31 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         super.lazyTick();
         if (level == null || level.isClientSide) return;
 
-        // Calculate input pressure from received steam (take max from all directions)
+        BlockState state = getBlockState();
+        Direction facing = state.getValue(SteamTurbineBlock.FACING);
+
         float maxPressure = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && !steam.isEmpty()) {
-                maxPressure = Math.max(maxPressure, steam.getPressure());
+
+        for (Direction dir : new Direction[]{facing, facing.getOpposite()}) {
+            BlockPos neighborPos = worldPosition.relative(dir);
+            if (!level.isLoaded(neighborPos)) continue;
+            var neighborBE = level.getBlockEntity(neighborPos);
+            if (neighborBE instanceof ISteamTransport transport) {
+                if (transport.canConnect(dir.getOpposite())) {
+                    SteamData pulled = transport.pullSteam(dir.getOpposite(), getMaxReceiveRate(dir));
+                    if (pulled != null && !pulled.isEmpty()) {
+                        maxPressure = Math.max(maxPressure, pulled.getPressure());
+                    }
+                }
             }
         }
         inputPressure = maxPressure;
 
-        // Calculate turbine speed from pressure
         if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
             float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
             turbineSpeed = MAX_RPM * pressureFactor;
         } else {
             turbineSpeed = 0f;
-        }
-
-        // Clear received steam for next cycle
-        for (Direction dir : Direction.values()) {
-            receivedSteam.put(dir, SteamData.empty());
         }
 
         setChanged();

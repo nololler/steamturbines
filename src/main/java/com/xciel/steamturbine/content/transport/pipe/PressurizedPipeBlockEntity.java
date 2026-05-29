@@ -2,6 +2,7 @@ package com.xciel.steamturbine.content.transport.pipe;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
@@ -144,10 +145,6 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             pipe.receiveSteam(dir.getOpposite(), propagated);
         } else if (neighbor instanceof ISteamTransport transport) {
             transport.pushSteam(dir.getOpposite(), propagated);
-        } else if (neighbor instanceof ISteamConsumer consumer) {
-            if (consumer.canReceive(dir.getOpposite())) {
-                consumer.receiveSteam(dir.getOpposite(), propagated);
-            }
         }
     }
 
@@ -235,6 +232,12 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             return SteamData.empty();
         }
         float extracted = Math.min(steam.getPressure(), amount);
+        float remaining = steam.getPressure() - extracted;
+        if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
+            receivedSteam.put(direction, SteamData.empty());
+        } else {
+            receivedSteam.put(direction, steam.withPressure(remaining));
+        }
         return SteamData.of(extracted, steam.getSteamType(), steam.getQuality());
     }
 
