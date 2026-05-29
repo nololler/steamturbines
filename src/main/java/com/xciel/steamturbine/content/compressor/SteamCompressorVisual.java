@@ -1,0 +1,59 @@
+package com.xciel.steamturbine.content.compressor;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import com.simibubi.create.AllPartialModels;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
+import com.simibubi.create.content.kinetics.base.RotatingInstance;
+import com.simibubi.create.foundation.render.AllInstanceTypes;
+import dev.engine_room.flywheel.api.instance.Instance;
+import dev.engine_room.flywheel.api.visualization.VisualizationContext;
+import dev.engine_room.flywheel.lib.instance.FlatLit;
+import dev.engine_room.flywheel.lib.model.Models;
+import net.minecraft.core.Direction;
+
+public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompressorBlockEntity> {
+
+    private final Map<Direction, RotatingInstance> shafts = new EnumMap<>(Direction.class);
+
+    public SteamCompressorVisual(VisualizationContext context, SteamCompressorBlockEntity blockEntity, float partialTick) {
+        super(context, blockEntity, partialTick);
+
+        var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING,
+            Models.partial(AllPartialModels.SHAFT_HALF));
+
+        for (Direction direction : Direction.values()) {
+            RotatingInstance instance = instancer.createInstance();
+            instance.setup(blockEntity, Direction.Axis.Z, blockEntity.getSpeed())
+                .setPosition(getVisualPosition())
+                .rotateToFace(Direction.SOUTH, direction)
+                .setChanged();
+            shafts.put(direction, instance);
+        }
+    }
+
+    @Override
+    public void update(float partialTick) {
+        float speed = blockEntity.getSpeed();
+        for (RotatingInstance shaft : shafts.values()) {
+            shaft.setup(blockEntity, Direction.Axis.Z, speed).setChanged();
+        }
+    }
+
+    @Override
+    protected void _delete() {
+        shafts.values().forEach(RotatingInstance::delete);
+    }
+
+    @Override
+    public void updateLight(float partialTick) {
+        relight(shafts.values().toArray(FlatLit[]::new));
+    }
+
+    @Override
+    public void collectCrumblingInstances(Consumer<Instance> consumer) {
+        shafts.values().forEach(consumer);
+    }
+}

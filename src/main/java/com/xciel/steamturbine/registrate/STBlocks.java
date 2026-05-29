@@ -29,6 +29,7 @@ public class STBlocks {
 
     public static final BlockEntry<SteamCompressorBlock> STEAM_COMPRESSOR = REGISTRATE.block("steam_compressor", SteamCompressorBlock::new)
             .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
             .item()
             .build()

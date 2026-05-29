@@ -7,6 +7,7 @@ import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
+import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -101,9 +102,14 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         if (neighborBlock instanceof PressurizedPipeBlock) return true;
 
         var neighborBE = level.getBlockEntity(neighborPos);
+        Direction opposite = dir.getOpposite();
+
         if (neighborBE instanceof ISteamEndpoint endpoint) {
-            Direction opposite = dir.getOpposite();
-            return endpoint.canConnect(opposite);
+            if (endpoint.canConnect(opposite)) return true;
+        }
+
+        if (neighborBE instanceof ITurbineEndpoint turbineEndpoint) {
+            if (turbineEndpoint.canTurbineConnect(opposite)) return true;
         }
 
         return false;
