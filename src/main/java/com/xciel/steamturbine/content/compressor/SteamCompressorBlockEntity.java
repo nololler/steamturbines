@@ -71,53 +71,25 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
         if (currentRPM < 1f) {
-            inputSteam = SteamData.empty();
             outputSteam = SteamData.empty();
             return;
         }
 
-        // Pull steam from input side (FACING.opposite)
-        Direction inputDir = getSteamInputDirection();
-        BlockPos inputPos = worldPosition.relative(inputDir);
-        float pulledPressure = 0f;
-
-        if (level.isLoaded(inputPos)) {
-            var neighborBE = level.getBlockEntity(inputPos);
-            if (neighborBE instanceof ISteamTransport transport) {
-                if (transport.canConnect(inputDir.getOpposite())) {
-                    SteamData pulled = transport.pullSteam(inputDir.getOpposite(), getMaxPullRate());
-                    if (pulled != null && !pulled.isEmpty()) {
-                        pulledPressure = pulled.getPressure();
-                    }
-                }
-            }
-            // Also accept from boiler producer
-            if (neighborBE instanceof ISteamProducer producer) {
-                if (producer.canProduce(inputDir.getOpposite())) {
-                    SteamData prod = producer.produceSteam(inputDir.getOpposite());
-                    if (prod != null && !prod.isEmpty()) {
-                        pulledPressure = Math.max(pulledPressure, prod.getPressure());
-                    }
-                }
-            }
+        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+            outputSteam = SteamData.empty();
+            return;
         }
 
-        inputSteam = pulledPressure > 0 ? SteamData.of(pulledPressure) : SteamData.empty();
+        float pulledPressure = inputSteam.getPressure();
 
         // Amplify: pressure boost proportional to RPM
-        if (pulledPressure > 0) {
-            float rpmFactor = currentRPM / 64f;
-            float amplified = pulledPressure * (1f + rpmFactor * AMPLIFICATION_FACTOR);
-            outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f);
-        } else {
-            outputSteam = SteamData.empty();
-        }
+        float rpmFactor = currentRPM / 64f;
+        float amplified = pulledPressure * (1f + rpmFactor * AMPLIFICATION_FACTOR);
+        outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f);
+
+        inputSteam = SteamData.empty();
 
         setChanged();
-    }
-
-    private float getMaxPullRate() {
-        return 100f;
     }
 
     private void pushSteam() {
@@ -203,7 +175,9 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     // ISteamTransport
     @Override
     public void pushSteam(Direction direction, SteamData steam) {
-        // Compressor is a producer, not a conduit
+        if (steam == null || steam.isEmpty()) return;
+        inputSteam = steam;
+        setChanged();
     }
 
     @Override

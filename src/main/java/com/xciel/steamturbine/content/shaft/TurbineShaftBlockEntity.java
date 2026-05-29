@@ -50,8 +50,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         BlockState state = getBlockState();
         Direction facing = state.getValue(TurbineShaftBlock.FACING);
 
-        // Walk chain backward from shaft: shaft ← turbine ← turbine ← ...
-        // The chain flows forward (exhaust in FACING direction), so we walk opposite FACING
         Direction walkDir = facing.getOpposite();
         BlockPos current = worldPosition.relative(walkDir);
 
@@ -69,11 +67,11 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
             }
         }
 
+        float prevSpeed = aggregatedSpeed;
         aggregatedSpeed = totalSpeed;
         connectedTurbineCount = count;
 
-        float generated = getGeneratedSpeed();
-        if (Math.abs(generated - aggregatedSpeed) > 0.01f) {
+        if (Math.abs(prevSpeed - aggregatedSpeed) > 0.01f) {
             updateGeneratedRotation();
         }
     }

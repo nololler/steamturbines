@@ -25,6 +25,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
 
     private float inputPressure = 0f;
+    private float receivedPressure = 0f;
     private float turbineSpeed = 0f;
     private float exhaustPressure = 0f;
     private int stageNumber = 0;
@@ -46,7 +47,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         BlockState state = getBlockState();
         Direction facing = state.getValue(SteamTurbineBlock.FACING);
 
-        float maxPressure = 0f;
+        float maxPressure = receivedPressure;
 
         // Pull steam from pipes on both faces
         for (Direction dir : new Direction[]{facing, facing.getOpposite()}) {
@@ -91,6 +92,8 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             exhaustPressure = 0f;
         }
 
+        receivedPressure = 0f;
+
         setChanged();
         sendData();
     }
@@ -112,7 +115,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public void receiveSteam(Direction direction, SteamData steam) {
-        // Turbine uses pull-based consumption; this is kept for interface compliance
+        if (steam == null || steam.isEmpty()) return;
+        receivedPressure = Math.max(receivedPressure, steam.getPressure());
+        setChanged();
     }
 
     @Override
@@ -177,6 +182,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         exhaustPressure = tag.getFloat("ExhaustPressure");
         stageNumber = tag.getInt("StageNumber");
         stageEfficiency = tag.getFloat("StageEfficiency");
+        receivedPressure = tag.getFloat("ReceivedPressure");
     }
 
     @Override
@@ -187,5 +193,6 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         tag.putFloat("ExhaustPressure", exhaustPressure);
         tag.putInt("StageNumber", stageNumber);
         tag.putFloat("StageEfficiency", stageEfficiency);
+        tag.putFloat("ReceivedPressure", receivedPressure);
     }
 }
