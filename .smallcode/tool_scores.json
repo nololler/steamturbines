@@ -1,0 +1,29 @@
+{
+  "list_projects:editing": {
+    "tool_name": "list_projects",
+    "task_type": "editing",
+    "success_count": 1,
+    "failure_count": 0,
+    "total_calls": 1,
+    "confidence": 0.6666666666666666,
+    "last_error": null
+  },
+  "find_files:editing": {
+    "tool_name": "find_files",
+    "task_type": "editing",
+    "success_count": 1,
+    "failure_count": 0,
+    "total_calls": 1,
+    "confidence": 0.6666666666666666,
+    "last_error": null
+  },
+  "read_file:editing": {
+    "tool_name": "read_file",
+    "task_type": "editing",
+    "success_count": 1,
+    "failure_count": 0,
+    "total_calls": 1,
+    "confidence": 0.6666666666666666,
+    "last_error": null
+  }
+}

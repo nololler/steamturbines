@@ -1,7 +1,3 @@
 {
-	"credit": "Made with Blockbench",
-	"parent": "steamturbine:block/compressor/steam_compressor",
-	"textures": {
-		"particle": "steamturbine:block/compressor/base"
-	}
+	"parent": "steamturbine:block/compressor/item"
 }
