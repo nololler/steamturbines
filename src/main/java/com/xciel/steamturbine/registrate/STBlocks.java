@@ -21,6 +21,7 @@ public class STBlocks {
 
     public static final BlockEntry<SteamBoilerBlock> STEAM_BOILER = REGISTRATE.block("steam_boiler", SteamBoilerBlock::new)
             .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
             .item()
             .build()
