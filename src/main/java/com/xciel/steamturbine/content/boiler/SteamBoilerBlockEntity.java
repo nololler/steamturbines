@@ -43,7 +43,7 @@ import java.util.Map;
 
 public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer, IHaveGoggleInformation {
     private static final int WATER_TANK_CAPACITY = 2000;
-    private static final int WATER_PER_STEAM = 50;
+    private static final int WATER_PER_STEAM = 250;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);

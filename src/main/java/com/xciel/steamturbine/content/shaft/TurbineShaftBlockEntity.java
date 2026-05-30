@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 
 public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation, ISteamEndpoint {
-    private static final float BASE_STRESS_CAPACITY = 78.0f; // SU per RPM
+    private static final float BASE_STRESS_CAPACITY = 390.0f; // SU per RPM
 
     private float aggregatedSpeed = 0f;
     private float aggregatedThroughput = 0f;
