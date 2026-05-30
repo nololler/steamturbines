@@ -49,17 +49,15 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
         float maxPressure = receivedPressure;
 
-        // Pull steam from pipes on both faces
-        for (Direction dir : new Direction[]{facing, facing.getOpposite()}) {
+        // Pull steam from ALL adjacent pipes (all 6 directions), not just facing/opposite
+        for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
             if (!level.isLoaded(neighborPos)) continue;
             var neighborBE = level.getBlockEntity(neighborPos);
             if (neighborBE instanceof ISteamTransport transport) {
-                if (transport.canConnect(dir.getOpposite())) {
-                    SteamData pulled = transport.pullSteam(dir.getOpposite(), getMaxReceiveRate(dir));
-                    if (pulled != null && !pulled.isEmpty()) {
-                        maxPressure = Math.max(maxPressure, pulled.getPressure());
-                    }
+                SteamData pulled = transport.pullSteam(dir.getOpposite(), getMaxReceiveRate(dir));
+                if (pulled != null && !pulled.isEmpty()) {
+                    maxPressure = Math.max(maxPressure, pulled.getPressure());
                 }
             }
         }

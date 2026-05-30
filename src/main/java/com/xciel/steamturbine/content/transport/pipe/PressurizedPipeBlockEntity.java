@@ -58,8 +58,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         if (level.isClientSide) {
             clientVisualUpdate();
         } else {
-            serverPropagation();
             updateConnectionStates();
+            serverPropagation();
         }
         lazyTickCounter = 10;
     }
