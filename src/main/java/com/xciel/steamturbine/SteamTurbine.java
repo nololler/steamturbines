@@ -2,6 +2,7 @@ package com.xciel.steamturbine;
 
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
+import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.createmod.ponder.foundation.PonderIndex;
@@ -14,6 +15,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 import com.simibubi.create.foundation.item.ItemDescription;
@@ -40,6 +43,7 @@ public class SteamTurbine {
 
         eventBus.addListener(this::setup);
         eventBus.addListener(this::doClientStuff);
+        eventBus.addListener(this::registerCapabilities);
 
         STBlocks.register();
         STBlockEntityTypes.register();
@@ -53,6 +57,19 @@ public class SteamTurbine {
 
     private void doClientStuff(final FMLClientSetupEvent event) {
         SteamTurbineClient.addClientListeners(event);
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            AllBlockEntityTypes.STEAM_BOILER.get(),
+            (be, context) -> be.getFluidHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            AllBlockEntityTypes.STEAM_BOILER.get(),
+            (be, context) -> be.getItemHandler()
+        );
     }
 
     public static ResourceLocation rl(String path) {

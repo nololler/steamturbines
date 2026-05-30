@@ -2,16 +2,21 @@ package com.xciel.steamturbine.content.transport.pipe;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.util.RandomSource;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -20,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumMap;
 import java.util.List;
 
-public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport {
+public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
 
@@ -47,7 +52,12 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     public void receiveSteam(Direction from, SteamData steam) {
         if (steam.isEmpty()) return;
-        receivedSteam.put(from, steam);
+        SteamData existing = receivedSteam.get(from);
+        if (existing != null && !existing.isEmpty()) {
+            receivedSteam.put(from, existing.withThroughput(existing.getThroughput() + steam.getThroughput()));
+        } else {
+            receivedSteam.put(from, steam);
+        }
         setChanged();
     }
 
@@ -57,16 +67,17 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         if (level.isClientSide) {
             clientVisualUpdate();
         } else {
-            serverPropagation();
             updateConnectionStates();
+            serverPropagation();
         }
-        lazyTickCounter = 10;
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
         if (!level.isClientSide) {
+            lazyTickCounter = 1 + (int)(System.identityHashCode(this) % 10);
+            if (lazyTickCounter <= 0) lazyTickCounter = 10;
             updateConnectionStates();
         }
     }
@@ -116,12 +127,19 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     private void serverPropagation() {
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.shouldPropagate()) {
-                propagateToNeighbor(dir, steam);
+        BlockState state = getBlockState();
+        for (Direction inDir : Direction.values()) {
+            SteamData steam = receivedSteam.get(inDir);
+            if (steam == null || !steam.shouldPropagate()) {
+                receivedSteam.put(inDir, SteamData.empty());
+                continue;
             }
-            receivedSteam.put(dir, SteamData.empty());
+            for (Direction outDir : Direction.values()) {
+                if (outDir == inDir) continue;
+                if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                propagateToNeighbor(outDir, steam);
+            }
+            receivedSteam.put(inDir, SteamData.empty());
         }
     }
 
@@ -129,18 +147,15 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         BlockPos neighborPos = worldPosition.relative(dir);
         if (!level.isLoaded(neighborPos)) return;
 
-        SteamData propagated = steam.withPropagationLoss();
-        if (!propagated.shouldPropagate()) return;
+        if (!steam.shouldPropagate()) return;
 
         var neighbor = level.getBlockEntity(neighborPos);
         if (neighbor instanceof PressurizedPipeBlockEntity pipe) {
-            pipe.receiveSteam(dir.getOpposite(), propagated);
+            pipe.receiveSteam(dir.getOpposite(), steam);
         } else if (neighbor instanceof ISteamTransport transport) {
-            transport.pushSteam(dir.getOpposite(), propagated);
+            transport.pushSteam(dir.getOpposite(), steam);
         } else if (neighbor instanceof ISteamConsumer consumer) {
-            if (consumer.canReceive(dir.getOpposite())) {
-                consumer.receiveSteam(dir.getOpposite(), propagated);
-            }
+            consumer.receiveSteam(dir.getOpposite(), steam);
         }
     }
 
@@ -177,9 +192,10 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 float p = tag.getFloat(prefix + "P");
                 String typeStr = tag.contains(prefix + "T") ? tag.getString(prefix + "T") : "REGULAR";
                 float q = tag.contains(prefix + "Q") ? tag.getFloat(prefix + "Q") : 1f;
+                float tp = tag.contains(prefix + "TP") ? tag.getFloat(prefix + "TP") : 0f;
                 SteamType type = SteamType.REGULAR;
                 try { type = SteamType.valueOf(typeStr); } catch (Exception ignored) {}
-                SteamData steam = SteamData.of(p, type, q);
+                SteamData steam = SteamData.of(p, type, q, 1f, tp);
                 visualPressure.put(dir, p);
                 visualSteamType.put(dir, type);
                 visualQuality.put(dir, q);
@@ -193,9 +209,13 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         super.write(tag, registries, clientPacket);
         for (Direction dir : Direction.values()) {
             String prefix = "S_" + dir.getName() + "_";
-            tag.putFloat(prefix + "P", visualPressure.get(dir));
-            tag.putString(prefix + "T", visualSteamType.get(dir).name());
-            tag.putFloat(prefix + "Q", visualQuality.get(dir));
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null) {
+                tag.putFloat(prefix + "P", steam.getPressure());
+                tag.putString(prefix + "T", steam.getSteamType().name());
+                tag.putFloat(prefix + "Q", steam.getQuality());
+                tag.putFloat(prefix + "TP", steam.getThroughput());
+            }
         }
     }
 
@@ -228,16 +248,113 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             return SteamData.empty();
         }
         float extracted = Math.min(steam.getPressure(), amount);
-        return SteamData.of(extracted, steam.getSteamType(), steam.getQuality());
+        float remaining = steam.getPressure() - extracted;
+        float extractedThroughput = Math.min(steam.getThroughput(), amount);
+        float remainingThroughput = steam.getThroughput() - extractedThroughput;
+        if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
+            receivedSteam.put(direction, SteamData.empty());
+        } else {
+            receivedSteam.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
+        }
+        return SteamData.of(extracted, steam.getSteamType(), steam.getQuality(), 1f, extractedThroughput);
     }
 
     @Override
     public float getFlowRate(Direction direction) {
-        return visualPressure.getOrDefault(direction, 0f);
+        SteamData steam = receivedSteam.get(direction);
+        if (steam == null) return 0f;
+        return steam.getThroughput();
     }
 
     public float getOutboundPressure(Direction direction) {
         return visualPressure.getOrDefault(direction, 0f);
+    }
+
+    public float getActualThroughput() {
+        float total = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null) {
+                total += steam.getThroughput();
+            }
+        }
+        return total;
+    }
+
+    public float getTotalPressure() {
+        float total = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null) {
+                total += steam.getPressure();
+            }
+        }
+        return total;
+    }
+
+    public float getMaxThroughput() {
+        float max = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null && steam.getThroughput() > max) {
+                max = steam.getThroughput();
+            }
+        }
+        return max;
+    }
+
+    public float getMaxPressure() {
+        float max = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null && steam.getPressure() > max) {
+                max = steam.getPressure();
+            }
+        }
+        return max;
+    }
+
+    public int getActiveDirectionCount() {
+        int count = 0;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null && steam.getPressure() > 0.001f) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // IHaveGoggleInformation
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        tooltip.add(Component.translatable("steamturbine.goggles.pipe.header")
+                .withStyle(ChatFormatting.GOLD));
+
+        float totalPressure = getTotalPressure();
+        float totalThroughput = getActualThroughput();
+        int activeDirs = getActiveDirectionCount();
+
+        tooltip.add(Component.translatable("steamturbine.goggles.pipe.throughput",
+                        String.format("%.2f", totalThroughput),
+                        String.format("%.2f", getMaxThroughput()))
+                .withStyle(ChatFormatting.AQUA));
+
+        tooltip.add(Component.translatable("steamturbine.goggles.pipe.pressure",
+                        String.format("%.1f", totalPressure),
+                        String.format("%.1f", getMaxPressure()))
+                .withStyle(ChatFormatting.GRAY));
+
+        if (activeDirs > 0) {
+            tooltip.add(Component.translatable("steamturbine.goggles.pipe.active_dirs",
+                            activeDirs)
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            tooltip.add(Component.translatable("steamturbine.goggles.pipe.idle")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        return true;
     }
 
     public void clearState() {

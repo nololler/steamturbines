@@ -10,32 +10,42 @@ public final class SteamData {
     private final SteamType steamType;
     private final float quality;
     private final float sourceStrength;
+    private final float throughput;
 
-    private SteamData(float pressure, SteamType steamType, float quality, float sourceStrength) {
+    private SteamData(float pressure, SteamType steamType, float quality, float sourceStrength, float throughput) {
         this.pressure = Math.max(0f, Math.min(pressure, SteamConstants.MAX_PRESSURE));
         this.steamType = steamType != null ? steamType : SteamType.REGULAR;
         this.quality = Math.max(0f, Math.min(quality, 1f));
         this.sourceStrength = Math.max(0f, Math.min(sourceStrength, SteamConstants.SOURCE_STRENGTH_MAX));
+        this.throughput = Math.max(0f, throughput);
     }
 
     public static SteamData empty() {
-        return new SteamData(0f, SteamType.REGULAR, 0f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+        return new SteamData(0f, SteamType.REGULAR, 0f, SteamConstants.SOURCE_STRENGTH_DEFAULT, 0f);
     }
 
     public static SteamData of(float pressure) {
-        return new SteamData(pressure, SteamType.REGULAR, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+        return new SteamData(pressure, SteamType.REGULAR, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT, 0f);
+    }
+
+    public static SteamData of(float pressure, float throughput) {
+        return new SteamData(pressure, SteamType.REGULAR, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT, throughput);
     }
 
     public static SteamData of(float pressure, SteamType steamType) {
-        return new SteamData(pressure, steamType, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+        return new SteamData(pressure, steamType, 1f, SteamConstants.SOURCE_STRENGTH_DEFAULT, 0f);
     }
 
     public static SteamData of(float pressure, SteamType steamType, float quality) {
-        return new SteamData(pressure, steamType, quality, SteamConstants.SOURCE_STRENGTH_DEFAULT);
+        return new SteamData(pressure, steamType, quality, SteamConstants.SOURCE_STRENGTH_DEFAULT, 0f);
     }
 
     public static SteamData of(float pressure, SteamType steamType, float quality, float sourceStrength) {
-        return new SteamData(pressure, steamType, quality, sourceStrength);
+        return new SteamData(pressure, steamType, quality, sourceStrength, 0f);
+    }
+
+    public static SteamData of(float pressure, SteamType steamType, float quality, float sourceStrength, float throughput) {
+        return new SteamData(pressure, steamType, quality, sourceStrength, throughput);
     }
 
     public float getPressure() {
@@ -59,6 +69,10 @@ public final class SteamData {
         return sourceStrength;
     }
 
+    public float getThroughput() {
+        return throughput;
+    }
+
     public SteamPressureTier getPressureTier() {
         return SteamPressureTier.fromPressure(pressure);
     }
@@ -68,33 +82,47 @@ public final class SteamData {
     }
 
     public SteamData withPressure(float newPressure) {
-        return new SteamData(newPressure, steamType, quality, sourceStrength);
+        return new SteamData(newPressure, steamType, quality, sourceStrength, throughput);
+    }
+
+    public SteamData withThroughput(float newThroughput) {
+        return new SteamData(pressure, steamType, quality, sourceStrength, newThroughput);
+    }
+
+    public SteamData withPressureAndThroughputAdded(float addedPressure, float addedThroughput) {
+        float newPressure = Math.max(pressure, addedPressure);
+        float newThroughput = throughput + addedThroughput;
+        return new SteamData(newPressure, steamType, quality, sourceStrength, newThroughput);
     }
 
     public SteamData withSteamType(SteamType newType) {
-        return new SteamData(pressure, newType, quality, sourceStrength);
+        return new SteamData(pressure, newType, quality, sourceStrength, throughput);
     }
 
     public SteamData withQuality(float newQuality) {
-        return new SteamData(pressure, steamType, newQuality, sourceStrength);
+        return new SteamData(pressure, steamType, newQuality, sourceStrength, throughput);
     }
 
     public SteamData withPropagationLoss() {
         float newPressure = pressure * SteamConstants.PROPAGATION_FACTOR;
         float newQuality = quality * SteamConstants.QUALITY_DECAY;
+        float newThroughput = throughput * SteamConstants.PROPAGATION_FACTOR;
         if (newPressure < SteamConstants.MINIMUM_PROPAGATION_THRESHOLD) {
             newPressure = 0f;
+            newThroughput = 0f;
         }
-        return new SteamData(newPressure, steamType, newQuality, sourceStrength);
+        return new SteamData(newPressure, steamType, newQuality, sourceStrength, newThroughput);
     }
 
     public SteamData withDecay() {
         float newPressure = pressure * SteamConstants.DECAY_FACTOR;
         float newQuality = quality * SteamConstants.QUALITY_DECAY;
+        float newThroughput = throughput * SteamConstants.DECAY_FACTOR;
         if (newPressure < SteamConstants.MINIMUM_PROPAGATION_THRESHOLD) {
             newPressure = 0f;
+            newThroughput = 0f;
         }
-        return new SteamData(newPressure, steamType, newQuality, sourceStrength);
+        return new SteamData(newPressure, steamType, newQuality, sourceStrength, newThroughput);
     }
 
     public boolean shouldPropagate() {
@@ -116,6 +144,7 @@ public final class SteamData {
         nbt.putString("SteamType", steamType.name());
         nbt.putFloat("Quality", quality);
         nbt.putFloat("SourceStrength", sourceStrength);
+        nbt.putFloat("Throughput", throughput);
     }
 
     public static SteamData loadFromNBT(CompoundTag nbt, HolderLookup.Provider registries) {
@@ -130,6 +159,7 @@ public final class SteamData {
         float sourceStrength = nbt.contains("SourceStrength")
             ? nbt.getFloat("SourceStrength")
             : SteamConstants.SOURCE_STRENGTH_DEFAULT;
-        return new SteamData(pressure, steamType, quality, sourceStrength);
+        float throughput = nbt.contains("Throughput") ? nbt.getFloat("Throughput") : 0f;
+        return new SteamData(pressure, steamType, quality, sourceStrength, throughput);
     }
 }

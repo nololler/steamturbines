@@ -4,20 +4,30 @@ import com.xciel.steamturbine.AllBlockEntityTypes;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntity> {
 
@@ -132,6 +142,54 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
     }
 
     @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (level.isClientSide)
+            return ItemInteractionResult.SUCCESS;
+
+        SteamBoilerBlockEntity be = getBlockEntity(level, pos);
+        if (be == null)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        IItemHandler handler = be.getItemHandler();
+        IItemHandlerModifiable modHandler = (IItemHandlerModifiable) handler;
+        ItemStack currentSlot = handler.getStackInSlot(0);
+
+        if (stack.isEmpty()) {
+            if (!currentSlot.isEmpty()) {
+                ItemStack toGive = currentSlot.copy();
+                modHandler.setStackInSlot(0, ItemStack.EMPTY);
+                if (player.getInventory().add(toGive)) {
+                    level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, player.getSoundSource(), 0.5f, 1.2f);
+                }
+                be.setChanged();
+                be.sendData();
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        int maxInsert = handler.getSlotLimit(0);
+        int canAccept = maxInsert - currentSlot.getCount();
+        if (canAccept <= 0)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        ItemStack toInsert = stack.copy();
+        toInsert.setCount(Math.min(stack.getCount(), canAccept));
+
+        ItemStack remainder = ItemHandlerHelper.insertItem(handler, toInsert, false);
+        int inserted = stack.getCount() - remainder.getCount();
+        if (inserted > 0) {
+            stack.shrink(inserted);
+            player.setItemInHand(hand, stack);
+            be.setChanged();
+            be.sendData();
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, neighborPos, isMoving);
         if (level.isClientSide) return;
@@ -139,6 +197,22 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
         if (be instanceof SteamBoilerBlockEntity boiler) {
             boiler.updateConnectionStates();
         }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.hasBlockEntity() || level.isClientSide)
+            return;
+        if (newState.is(state.getBlock()))
+            return;
+        SteamBoilerBlockEntity be = getBlockEntity(level, pos);
+        if (be != null) {
+            ItemStack fuel = be.getItemHandler().getStackInSlot(0);
+            if (!fuel.isEmpty()) {
+                Block.popResource(level, pos, fuel);
+            }
+        }
+        level.removeBlockEntity(pos);
     }
 
     @Override

@@ -2,5 +2,22 @@
   "itemGroup.steamturbine.main": "Steam Turbine",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
-  "block.steamturbine.steam_compressor": "Steam Compressor"
+  "block.steamturbine.steam_compressor": "Steam Compressor",
+  "block.steamturbine.steam_turbine": "Encased Turbine",
+  "block.steamturbine.turbine_shaft": "Turbine Shaft",
+  "steamturbine.goggles.boiler.header": " Steam Boiler  ",
+  "steamturbine.goggles.boiler.status.active": "  Status: Active  ",
+  "steamturbine.goggles.boiler.status.heating": " Status: Heating  ",
+  "steamturbine.goggles.boiler.status.inactive": "  Status: Inactive  ",
+  "steamturbine.goggles.boiler.fuel": " Fuel: %s x%d  ",
+  "steamturbine.goggles.boiler.burn_time": "  Burn: %s / %s ",
+  "steamturbine.goggles.boiler.fuel_empty": " Fuel: Empty ",
+  "steamturbine.goggles.boiler.water": "  Water: %d / %d mB ",
+  "steamturbine.goggles.boiler.steam_output": "  Steam: %.1f @ %.2f/t  ",
+  "steamturbine.goggles.boiler.heat": " Heat: %s  ",
+  "steamturbine.goggles.pipe.header": " Steam Pipe  ",
+  "steamturbine.goggles.pipe.throughput": "  Throughput: %s/t (max %.2f)  ",
+  "steamturbine.goggles.pipe.pressure": "  Pressure: %s (max %.1f)  ",
+  "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
+  "steamturbine.goggles.pipe.idle": "  Idle  "
 }
