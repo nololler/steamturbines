@@ -36,7 +36,7 @@ public class STBlocks {
 
     public static final BlockEntry<PressurizedPipeBlock> PRESSURE_PIPE = REGISTRATE.block("pressure_pipe", PressurizedPipeBlock::new)
             .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().sound(SoundType.NETHERITE_BLOCK))
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
             .item()
             .build()

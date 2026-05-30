@@ -97,7 +97,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("Turbine Shaft").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("   Turbine Shaft   ").withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("  Connected Turbines: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("  Output Speed: ").withStyle(ChatFormatting.GRAY)

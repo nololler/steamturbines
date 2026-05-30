@@ -4,6 +4,7 @@ import com.xciel.steamturbine.AllBlockEntityTypes;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntity> {
@@ -145,17 +147,42 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
         if (level.isClientSide)
             return ItemInteractionResult.SUCCESS;
 
-        if (stack.isEmpty())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-
         SteamBoilerBlockEntity be = getBlockEntity(level, pos);
         if (be == null)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
         IItemHandler handler = be.getItemHandler();
-        ItemStack remainder = ItemHandlerHelper.insertItem(handler, stack.copy(), false);
-        if (remainder.getCount() != stack.getCount()) {
-            player.setItemInHand(hand, remainder);
+        IItemHandlerModifiable modHandler = (IItemHandlerModifiable) handler;
+        ItemStack currentSlot = handler.getStackInSlot(0);
+
+        if (stack.isEmpty()) {
+            if (!currentSlot.isEmpty()) {
+                ItemStack toGive = currentSlot.copy();
+                modHandler.setStackInSlot(0, ItemStack.EMPTY);
+                if (player.getInventory().add(toGive)) {
+                    level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, player.getSoundSource(), 0.5f, 1.2f);
+                }
+                be.setChanged();
+                be.sendData();
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        int maxInsert = handler.getSlotLimit(0);
+        int canAccept = maxInsert - currentSlot.getCount();
+        if (canAccept <= 0)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        ItemStack toInsert = stack.copy();
+        toInsert.setCount(Math.min(stack.getCount(), canAccept));
+
+        ItemStack remainder = ItemHandlerHelper.insertItem(handler, toInsert, false);
+        int inserted = stack.getCount() - remainder.getCount();
+        if (inserted > 0) {
+            stack.shrink(inserted);
+            player.setItemInHand(hand, stack);
+            be.setChanged();
+            be.sendData();
             return ItemInteractionResult.SUCCESS;
         }
 
@@ -170,6 +197,22 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
         if (be instanceof SteamBoilerBlockEntity boiler) {
             boiler.updateConnectionStates();
         }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.hasBlockEntity() || level.isClientSide)
+            return;
+        if (newState.is(state.getBlock()))
+            return;
+        SteamBoilerBlockEntity be = getBlockEntity(level, pos);
+        if (be != null) {
+            ItemStack fuel = be.getItemHandler().getStackInSlot(0);
+            if (!fuel.isEmpty()) {
+                Block.popResource(level, pos, fuel);
+            }
+        }
+        level.removeBlockEntity(pos);
     }
 
     @Override

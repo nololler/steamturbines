@@ -15,6 +15,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.item.context.BlockPlaceContext;
 
 public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity> {
 
@@ -89,4 +90,11 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return PIPE_SHAPE;
     }
+
+    @Override
+    public boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
+        return false;
+    }
 }
+
+    

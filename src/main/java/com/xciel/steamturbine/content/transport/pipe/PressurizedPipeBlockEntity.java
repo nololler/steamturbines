@@ -2,6 +2,7 @@ package com.xciel.steamturbine.content.transport.pipe;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
@@ -9,10 +10,12 @@ import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -21,7 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumMap;
 import java.util.List;
 
-public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport {
+public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
 
@@ -250,6 +253,66 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     public float getOutboundPressure(Direction direction) {
         return visualPressure.getOrDefault(direction, 0f);
+    }
+
+    public float getActualThroughput() {
+        float total = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null) {
+                total += steam.getPressure();
+            }
+        }
+        return total;
+    }
+
+    public float getMaxPressure() {
+        float max = 0f;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null && steam.getPressure() > max) {
+                max = steam.getPressure();
+            }
+        }
+        return max;
+    }
+
+    public int getActiveDirectionCount() {
+        int count = 0;
+        for (Direction dir : Direction.values()) {
+            SteamData steam = receivedSteam.get(dir);
+            if (steam != null && steam.getPressure() > 0.01f) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // IHaveGoggleInformation
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        tooltip.add(Component.translatable("steamturbine.goggles.pipe.header")
+                .withStyle(ChatFormatting.GOLD));
+
+        float totalIn = getActualThroughput();
+        float maxIn = getMaxPressure();
+        int activeDirs = getActiveDirectionCount();
+
+        tooltip.add(Component.translatable("steamturbine.goggles.pipe.throughput",
+                        String.format("%.1f", totalIn),
+                        String.format("%.1f", maxIn))
+                .withStyle(ChatFormatting.AQUA));
+
+        if (activeDirs > 0) {
+            tooltip.add(Component.translatable("steamturbine.goggles.pipe.active_dirs",
+                            activeDirs)
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            tooltip.add(Component.translatable("steamturbine.goggles.pipe.idle")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        return true;
     }
 
     public void clearState() {

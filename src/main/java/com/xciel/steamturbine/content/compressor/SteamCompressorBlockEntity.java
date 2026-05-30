@@ -70,19 +70,23 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
-        if (currentRPM < 1f) {
+        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
             outputSteam = SteamData.empty();
+            inputSteam = SteamData.empty();
+            setChanged();
+            sendData();
             return;
         }
 
-        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+        if (currentRPM < 1f) {
             outputSteam = SteamData.empty();
+            setChanged();
+            sendData();
             return;
         }
 
         float pulledPressure = inputSteam.getPressure();
 
-        // Amplify: pressure boost proportional to RPM
         float rpmFactor = currentRPM / 64f;
         float amplified = pulledPressure * (1f + rpmFactor * AMPLIFICATION_FACTOR);
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f);
@@ -90,6 +94,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         inputSteam = SteamData.empty();
 
         setChanged();
+        sendData();
     }
 
     private void pushSteam() {
@@ -193,7 +198,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     // Goggles
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("Steam Compressor").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("  Steam Compressor  ").withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("  RPM: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.0f", currentRPM)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("  Input Pressure: ").withStyle(ChatFormatting.GRAY)

@@ -6,6 +6,7 @@ import com.simibubi.create.api.registry.CreateDataMaps;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
@@ -14,10 +15,13 @@ import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -37,7 +41,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer {
+public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer, IHaveGoggleInformation {
     private static final int WATER_TANK_CAPACITY = 2000;
     private static final int WATER_PER_STEAM = 50;
 
@@ -119,17 +123,29 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     }
 
     private void updateFuel() {
+        ItemStack fuelStack = fuelInventory.getStackInSlot(0);
+
         if (remainingBurnTime > 0) {
             remainingBurnTime--;
             if (remainingBurnTime == 0) {
                 activeFuel = FuelType.NONE;
-                tryConsumeFuel();
+                if (!fuelStack.isEmpty()) {
+                    tryConsumeFuel();
+                }
             }
         } else {
-            tryConsumeFuel();
+            if (!fuelStack.isEmpty()) {
+                tryConsumeFuel();
+            } else {
+                activeFuel = FuelType.NONE;
+            }
         }
 
         if (remainingBurnTime <= 0) {
+            activeFuel = FuelType.NONE;
+        }
+
+        if (fuelStack.isEmpty() && remainingBurnTime <= 0) {
             activeFuel = FuelType.NONE;
         }
     }
@@ -145,7 +161,11 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (burnTime <= 0) return;
 
         fuelStack.shrink(1);
-        fuelInventory.setStackInSlot(0, fuelStack.copy());
+        if (fuelStack.isEmpty()) {
+            fuelInventory.setStackInSlot(0, ItemStack.EMPTY);
+        } else {
+            fuelInventory.setStackInSlot(0, fuelStack);
+        }
         remainingBurnTime = burnTime;
 
         var holder = fuelStack.getItem().builtInRegistryHolder();
@@ -158,6 +178,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             activeFuel = FuelType.NORMAL;
         }
         setChanged();
+        sendData();
     }
 
     @SuppressWarnings("removal")
@@ -229,6 +250,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         } else {
             outputSteam = SteamData.empty();
         }
+        setChanged();
+        sendData();
     }
 
     private void pushSteamOutput() {
@@ -320,6 +343,12 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         return outputSteam;
     }
 
+    public int getNextFuelBurnTime() {
+        ItemStack stack = fuelInventory.getStackInSlot(0);
+        if (stack.isEmpty()) return 0;
+        return getFuelBurnTime(stack);
+    }
+
     // ISteamEndpoint
     @Override
     public boolean canConnect(Direction direction) {
@@ -375,6 +404,64 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     @Override
     public boolean canProduce(Direction direction) {
         return isOutputSide(direction);
+    }
+
+    // IHaveGoggleInformation
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        tooltip.add(Component.translatable("steamturbine.goggles.boiler.header")
+                .withStyle(ChatFormatting.GOLD));
+
+        if (boilerActive) {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.active")
+                    .withStyle(ChatFormatting.GREEN));
+        } else if (remainingBurnTime > 0) {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.heating")
+                    .withStyle(ChatFormatting.YELLOW));
+        } else {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.inactive")
+                    .withStyle(ChatFormatting.GRAY));
+        }
+
+        ItemStack fuelStack = fuelInventory.getStackInSlot(0);
+        if (!fuelStack.isEmpty()) {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.fuel",
+                            fuelStack.getHoverName(),
+                            fuelStack.getCount())
+                    .withStyle(ChatFormatting.GRAY));
+            if (remainingBurnTime > 0) {
+                int totalBurn = remainingBurnTime + (fuelStack.getCount() * getNextFuelBurnTime());
+                int remaining = remainingBurnTime;
+                tooltip.add(Component.translatable("steamturbine.goggles.boiler.burn_time",
+                                formatSeconds(remaining),
+                                formatSeconds(totalBurn))
+                        .withStyle(ChatFormatting.DARK_GRAY));
+            }
+        } else {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        tooltip.add(Component.translatable("steamturbine.goggles.boiler.water",
+                        waterTank.getFluidAmount(),
+                        WATER_TANK_CAPACITY)
+                .withStyle(ChatFormatting.GRAY));
+
+        if (outputSteam.shouldPropagate()) {
+            tooltip.add(Component.translatable("steamturbine.goggles.boiler.steam_output",
+                            String.format("%.1f", outputSteam.getPressure()))
+                    .withStyle(ChatFormatting.AQUA));
+        }
+
+        tooltip.add(Component.translatable("steamturbine.goggles.boiler.heat",
+                        String.format("%.1f", heatLevel))
+                .withStyle(ChatFormatting.RED));
+
+        return true;
+    }
+
+    private String formatSeconds(int ticks) {
+        return String.format("%.1fs", ticks / 20.0f);
     }
 
     // NBT
