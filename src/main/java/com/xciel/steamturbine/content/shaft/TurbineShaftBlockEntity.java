@@ -4,6 +4,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
+import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -17,9 +18,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 
 public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation, ISteamEndpoint {
-    private static final float BASE_STRESS_CAPACITY = 4.0f; // SU per RPM
+    private static final float BASE_STRESS_CAPACITY = 78.0f; // SU per RPM
 
     private float aggregatedSpeed = 0f;
+    private float aggregatedThroughput = 0f;
     private int connectedTurbineCount = 0;
 
     public TurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -54,12 +56,14 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         BlockPos current = worldPosition.relative(walkDir);
 
         float totalSpeed = 0f;
+        float totalThroughput = 0f;
         int count = 0;
 
         while (level.isLoaded(current)) {
             var be = level.getBlockEntity(current);
             if (be instanceof SteamTurbineBlockEntity turbine) {
                 totalSpeed += Math.abs(turbine.getTurbineSpeed());
+                totalThroughput += turbine.getInputThroughput();
                 count++;
                 current = current.relative(walkDir);
             } else {
@@ -69,6 +73,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
         float prevSpeed = aggregatedSpeed;
         aggregatedSpeed = totalSpeed;
+        aggregatedThroughput = totalThroughput;
         connectedTurbineCount = count;
 
         updateGeneratedRotation();
@@ -88,7 +93,8 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float calculateAddedStressCapacity() {
-        return BASE_STRESS_CAPACITY;
+        if (aggregatedSpeed <= 0f) return 0f;
+        return Math.max(aggregatedSpeed * BASE_STRESS_CAPACITY / 256f, BASE_STRESS_CAPACITY / 256f);
     }
 
     public void onNeighborChanged() {
@@ -102,8 +108,9 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("  Output Speed: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.0f", aggregatedSpeed) + " RPM").withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Output Capacity: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", Math.abs(aggregatedSpeed * BASE_STRESS_CAPACITY)) + " SU").withStyle(ChatFormatting.WHITE)));
+        float suCapacity = Math.abs(aggregatedSpeed * calculateAddedStressCapacity());
+        tooltip.add(Component.literal("  SU Capacity: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.0f", suCapacity) + " SU").withStyle(ChatFormatting.AQUA)));
         return true;
     }
 
@@ -111,6 +118,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         aggregatedSpeed = tag.getFloat("AggregatedSpeed");
+        aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
     }
 
@@ -118,6 +126,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putFloat("AggregatedSpeed", aggregatedSpeed);
+        tag.putFloat("AggregatedThroughput", aggregatedThroughput);
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
     }
 }

@@ -79,9 +79,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             @Override
             protected void onContentsChanged(int slot) {
                 setChanged();
-                if (remainingBurnTime <= 0 && activeFuel == FuelType.NONE) {
-                    tryConsumeFuel();
-                }
             }
         };
         waterTank = new FluidTank(WATER_TANK_CAPACITY, fluidStack -> fluidStack.getFluid() == Fluids.WATER) {
@@ -246,7 +243,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
         if (boilerActive) {
             waterTank.drain(WATER_PER_STEAM, IFluidHandler.FluidAction.EXECUTE);
-            outputSteam = SteamData.of(heatLevel, SteamType.REGULAR, 1f);
+            float throughput = heatLevel * SteamConstants.BASE_THROUGHPUT_PER_TICK;
+            outputSteam = SteamData.of(heatLevel, SteamType.REGULAR, 1f, 1f, throughput);
         } else {
             outputSteam = SteamData.empty();
         }
@@ -386,7 +384,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
     @Override
     public float getFlowRate(Direction direction) {
-        return outputSteam.getPressure();
+        return outputSteam.getThroughput();
     }
 
     // ISteamProducer
@@ -449,7 +447,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
         if (outputSteam.shouldPropagate()) {
             tooltip.add(Component.translatable("steamturbine.goggles.boiler.steam_output",
-                            String.format("%.1f", outputSteam.getPressure()))
+                            String.format("%.1f", outputSteam.getPressure()),
+                            String.format("%.2f", outputSteam.getThroughput()))
                     .withStyle(ChatFormatting.AQUA));
         }
 

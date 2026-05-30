@@ -31,4 +31,11 @@ public final class SteamConstants {
     public static final float MIN_HEAT_FOR_STEAM = 0.25f;
     public static final int WATER_PER_STEAM = 50;
     public static final int WATER_TANK_CAPACITY = 2000;
+
+    // Throughput: base steam output per tick at max heat
+    public static final float BASE_THROUGHPUT_PER_TICK = 1.0f;
+    public static final float MAX_THROUGHPUT = 3.0f;
+
+    // Su calculation: SU = throughput * pressure * efficiency
+    public static final float SU_PER_THROUGHPUT_PRESSURE = 2.0f;
 }

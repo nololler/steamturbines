@@ -13,10 +13,11 @@
   "steamturbine.goggles.boiler.burn_time": "  Burn: %s / %s ",
   "steamturbine.goggles.boiler.fuel_empty": " Fuel: Empty ",
   "steamturbine.goggles.boiler.water": "  Water: %d / %d mB ",
-  "steamturbine.goggles.boiler.steam_output": " Steam Output: %s pressure  ",
+  "steamturbine.goggles.boiler.steam_output": "  Steam: %.1f @ %.2f/t  ",
   "steamturbine.goggles.boiler.heat": " Heat: %s  ",
   "steamturbine.goggles.pipe.header": " Steam Pipe  ",
-  "steamturbine.goggles.pipe.throughput": "  Throughput: %s (max %.1f)  ",
+  "steamturbine.goggles.pipe.throughput": "  Throughput: %s/t (max %.2f)  ",
+  "steamturbine.goggles.pipe.pressure": "  Pressure: %s (max %.1f)  ",
   "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
   "steamturbine.goggles.pipe.idle": "  Idle  "
 }
