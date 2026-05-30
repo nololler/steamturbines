@@ -89,6 +89,12 @@ public final class SteamData {
         return new SteamData(pressure, steamType, quality, sourceStrength, newThroughput);
     }
 
+    public SteamData withPressureAndThroughputAdded(float addedPressure, float addedThroughput) {
+        float newPressure = Math.max(pressure, addedPressure);
+        float newThroughput = throughput + addedThroughput;
+        return new SteamData(newPressure, steamType, quality, sourceStrength, newThroughput);
+    }
+
     public SteamData withSteamType(SteamType newType) {
         return new SteamData(pressure, newType, quality, sourceStrength, throughput);
     }

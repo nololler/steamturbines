@@ -14,6 +14,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.util.RandomSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
@@ -69,13 +70,14 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             updateConnectionStates();
             serverPropagation();
         }
-        lazyTickCounter = 10;
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
         if (!level.isClientSide) {
+            lazyTickCounter = 1 + (int)(System.identityHashCode(this) % 10);
+            if (lazyTickCounter <= 0) lazyTickCounter = 10;
             updateConnectionStates();
         }
     }

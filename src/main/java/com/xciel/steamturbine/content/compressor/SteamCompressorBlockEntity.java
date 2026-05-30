@@ -6,9 +6,11 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
+import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
@@ -28,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SteamCompressorBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamProducer, ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
-    private static final float AMPLIFICATION_FACTOR = 0.5f;
+    private static final float AMPLIFICATION_FACTOR = 1.0f;
 
     private final EnumMap<Direction, Boolean> steamConnections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Boolean> turbineConnections = new EnumMap<>(Direction.class);
@@ -38,7 +40,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     public SteamCompressorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        setLazyTickRate(5);
+        setLazyTickRate(1);
         for (Direction dir : Direction.values()) {
             steamConnections.put(dir, false);
             turbineConnections.put(dir, false);
@@ -52,14 +54,10 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     public void tick() {
         super.tick();
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (level != null && !level.isClientSide) {
-            serverTick();
-        }
+        if (level == null || level.isClientSide) return;
+        updateConnectionStates();
+        processSteam();
+        pushSteam();
     }
 
     private void serverTick() {
@@ -78,22 +76,21 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             return;
         }
 
-        if (currentRPM < 1f) {
-            outputSteam = SteamData.empty();
-            setChanged();
-            sendData();
-            return;
-        }
-
         float pulledPressure = inputSteam.getPressure();
         float inputThroughput = inputSteam.getThroughput();
 
         float rpmFactor = currentRPM / 64f;
-        float amplified = pulledPressure * (1f + rpmFactor * AMPLIFICATION_FACTOR);
-        float amplifiedThroughput = inputThroughput * (1f + rpmFactor * AMPLIFICATION_FACTOR);
+        float amplification = 1f + rpmFactor * AMPLIFICATION_FACTOR;
+        float amplified = pulledPressure * amplification;
+        float amplifiedThroughput = inputThroughput * amplification;
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f, 1f, amplifiedThroughput);
 
-        inputSteam = SteamData.empty();
+        float remainingThroughput = inputThroughput - amplifiedThroughput;
+        if (remainingThroughput > 0) {
+            inputSteam = inputSteam.withThroughput(remainingThroughput);
+        } else {
+            inputSteam = SteamData.empty();
+        }
 
         setChanged();
         sendData();
@@ -111,6 +108,8 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             if (transport.canConnect(outputDir.getOpposite())) {
                 transport.pushSteam(outputDir.getOpposite(), outputSteam);
             }
+        } else if (neighbor instanceof SteamTurbineBlockEntity) {
+            ((ISteamConsumer) neighbor).receiveSteam(outputDir.getOpposite(), outputSteam);
         }
     }
 
@@ -183,7 +182,11 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     public void pushSteam(Direction direction, SteamData steam) {
         if (steam == null || steam.isEmpty()) return;
-        inputSteam = steam;
+        if (inputSteam.isEmpty()) {
+            inputSteam = steam;
+        } else {
+            inputSteam = inputSteam.withPressureAndThroughputAdded(steam.getPressure(), steam.getThroughput());
+        }
         setChanged();
     }
 
@@ -232,9 +235,6 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        if (tag.contains("InputSteam")) {
-            inputSteam = SteamData.loadFromNBT(tag.getCompound("InputSteam"), registries);
-        }
         if (tag.contains("OutputSteam")) {
             outputSteam = SteamData.loadFromNBT(tag.getCompound("OutputSteam"), registries);
         }
@@ -248,9 +248,6 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        CompoundTag inputTag = new CompoundTag();
-        inputSteam.saveToNBT(inputTag, registries);
-        tag.put("InputSteam", inputTag);
         CompoundTag outputTag = new CompoundTag();
         outputSteam.saveToNBT(outputTag, registries);
         tag.put("OutputSteam", outputTag);

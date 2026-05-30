@@ -56,13 +56,16 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         BlockPos current = worldPosition.relative(walkDir);
 
         float totalSpeed = 0f;
+        float maxSpeed = 0f;
         float totalThroughput = 0f;
         int count = 0;
 
         while (level.isLoaded(current)) {
             var be = level.getBlockEntity(current);
             if (be instanceof SteamTurbineBlockEntity turbine) {
-                totalSpeed += Math.abs(turbine.getTurbineSpeed());
+                float turbineSpeed = Math.abs(turbine.getTurbineSpeed());
+                totalSpeed += turbineSpeed;
+                if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
                 totalThroughput += turbine.getInputThroughput();
                 count++;
                 current = current.relative(walkDir);
@@ -81,7 +84,11 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float getGeneratedSpeed() {
-        return aggregatedSpeed;
+        return Math.min(aggregatedSpeed, 256f);
+    }
+
+    public float getCappedSpeed() {
+        return Math.min(256f, Math.max(1f, aggregatedSpeed));
     }
 
     @Override
@@ -107,8 +114,8 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         tooltip.add(Component.literal("  Connected Turbines: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("  Output Speed: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", aggregatedSpeed) + " RPM").withStyle(ChatFormatting.WHITE)));
-        float suCapacity = Math.abs(aggregatedSpeed * calculateAddedStressCapacity());
+            .append(Component.literal(String.format("%.0f", getGeneratedSpeed()) + " RPM").withStyle(ChatFormatting.WHITE)));
+        float suCapacity = Math.abs(getGeneratedSpeed() * calculateAddedStressCapacity());
         tooltip.add(Component.literal("  SU Capacity: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.0f", suCapacity) + " SU").withStyle(ChatFormatting.AQUA)));
         return true;
