@@ -63,7 +63,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         pushSteam();
     }
 
-    private static final float MAX_THROUGHPUT = 1024.0f;
+    private static final float MAX_THROUGHPUT = 512.0f;
 
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
@@ -88,7 +88,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f, 1f, amplifiedThroughput);
         lastProducedSteam = outputSteam;
 
-        float remainingThroughput = Math.max(0, inputThroughput - amplifiedThroughput);
+        float remainingThroughput = inputThroughput - amplifiedThroughput;
         if (remainingThroughput > 0) {
             inputSteam = inputSteam.withThroughput(remainingThroughput);
         } else {
@@ -107,6 +107,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         if (!level.isLoaded(neighborPos)) return;
 
         var neighbor = level.getBlockEntity(neighborPos);
+        if (neighbor instanceof ICompressorEndpoint) return;  // Don't chain compressors
         if (neighbor instanceof ISteamTransport transport) {
             if (transport.canConnect(outputDir.getOpposite())) {
                 transport.pushSteam(outputDir.getOpposite(), outputSteam);
@@ -118,6 +119,17 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     public void updateConnectionStates() {
         if (level == null) return;
+
+        Direction inputDir = getSteamInputDirection();
+        BlockPos inputPos = worldPosition.relative(inputDir);
+        boolean hadInputConnection = false;
+
+        // Check if we had a valid steam connection before
+        if (level.isLoaded(inputPos)) {
+            BlockState neighborState = level.getBlockState(inputPos);
+            Block neighborBlock = neighborState.getBlock();
+            hadInputConnection = isValidSteamConnection(neighborBlock, inputDir);
+        }
 
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
@@ -132,6 +144,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             boolean turbineConn = isValidTurbineConnection(neighborBlock, dir);
             turbineConnections.put(dir, turbineConn);
         }
+
+        // Clear steam if we lost our input connection
+        boolean hasInputConnectionNow = steamConnections.getOrDefault(inputDir, false);
+        if (hadInputConnection && !hasInputConnectionNow) {
+            inputSteam = SteamData.empty();
+            outputSteam = SteamData.empty();
+        }
+
         setChanged();
     }
 
@@ -183,7 +203,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     @Override
     public SteamData produceTurbineSteam(Direction from) {
-        return SteamData.empty();
+        return SteamData.empty();  // Compressor is not a turbine
     }
 
     // ICompressorEndpoint

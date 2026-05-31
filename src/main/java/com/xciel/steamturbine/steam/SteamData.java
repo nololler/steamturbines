@@ -129,6 +129,13 @@ public final class SteamData {
         return pressure >= SteamConstants.PROPAGATION_THRESHOLD;
     }
 
+    public boolean similarTo(SteamData other) {
+        if (other == null) return false;
+        return Math.abs(this.pressure - other.pressure) < 0.01f
+            && Math.abs(this.throughput - other.throughput) < 0.01f
+            && this.steamType == other.steamType;
+    }
+
     public MutableComponent getTierName() {
         return switch (getPressureTier()) {
             case NONE -> Component.translatable("steam.tier.none");

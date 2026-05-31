@@ -6,6 +6,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
 import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
@@ -29,7 +30,7 @@ import java.util.List;
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 1024.0f;
+    private static final float MAX_THROUGHPUT = 1.0f;  // Pipes act as bottlenecks - low throughput limit
 
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
@@ -55,19 +56,21 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     public void receiveSteam(Direction from, SteamData steam) {
         if (steam.isEmpty()) return;
         SteamData existing = receivedSteam.get(from);
-        float newThroughput = steam.getThroughput();
+        float newThroughput = Math.min(steam.getThroughput(), MAX_THROUGHPUT);
         if (existing != null && !existing.isEmpty()) {
-            newThroughput = Math.min(existing.getThroughput() + steam.getThroughput(), MAX_THROUGHPUT);
-            receivedSteam.put(from, existing.withThroughput(newThroughput));
+            float combinedThroughput = existing.getThroughput() + newThroughput;
+            combinedThroughput = Math.min(combinedThroughput, MAX_THROUGHPUT);
+            receivedSteam.put(from, existing.withThroughput(combinedThroughput));
         } else {
-            receivedSteam.put(from, steam.withThroughput(Math.min(newThroughput, MAX_THROUGHPUT)));
+            receivedSteam.put(from, steam.withThroughput(newThroughput));
         }
         SteamData buffered = runtimeBuffer.get(from);
         if (buffered != null && !buffered.isEmpty()) {
-            float bufferedThroughput = Math.min(buffered.getThroughput() + steam.getThroughput(), MAX_THROUGHPUT);
+            float bufferedThroughput = buffered.getThroughput() + newThroughput;
+            bufferedThroughput = Math.min(bufferedThroughput, MAX_THROUGHPUT);
             runtimeBuffer.put(from, buffered.withThroughput(bufferedThroughput));
         } else {
-            runtimeBuffer.put(from, steam.withThroughput(Math.min(newThroughput, MAX_THROUGHPUT)));
+            runtimeBuffer.put(from, steam.withThroughput(newThroughput));
         }
         setChanged();
     }
@@ -98,12 +101,18 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         boolean changed = false;
 
         for (Direction dir : Direction.values()) {
-            boolean isConnected = hasNeighborPipe(dir);
             boolean wasConnected = PressurizedPipeBlock.getConnection(state, dir);
+            boolean isConnected = hasNeighborPipe(dir);
 
             if (isConnected != wasConnected) {
                 state = PressurizedPipeBlock.setConnection(state, dir, isConnected);
                 changed = true;
+            }
+
+            // Clear steam when source connection is lost
+            if (wasConnected && !isConnected) {
+                receivedSteam.put(dir, SteamData.empty());
+                runtimeBuffer.put(dir, SteamData.empty());
             }
         }
 
@@ -152,6 +161,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 for (Direction outDir : Direction.values()) {
                     if (outDir == inDir) continue;
                     if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                    if (wouldCreateCompressorLoop(inDir, outDir, steam)) continue;
                     propagateToNeighbor(outDir, steam);
                 }
                 receivedSteam.put(inDir, SteamData.empty());
@@ -162,11 +172,35 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 for (Direction outDir : Direction.values()) {
                     if (outDir == inDir) continue;
                     if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                    if (wouldCreateCompressorLoop(inDir, outDir, buffered)) continue;
                     propagateToNeighbor(outDir, buffered);
                 }
             }
             runtimeBuffer.put(inDir, SteamData.empty());
         }
+    }
+
+    private boolean wouldCreateCompressorLoop(Direction inDir, Direction outDir, SteamData steam) {
+        Direction oppositeIn = inDir.getOpposite();
+        Direction oppositeOut = outDir.getOpposite();
+
+        BlockPos inNeighborPos = worldPosition.relative(oppositeIn);
+        BlockPos outNeighborPos = worldPosition.relative(oppositeOut);
+        if (!level.isLoaded(inNeighborPos) || !level.isLoaded(outNeighborPos)) return false;
+
+        var inNeighbor = level.getBlockEntity(inNeighborPos);
+        var outNeighbor = level.getBlockEntity(outNeighborPos);
+
+        boolean inFromCompressorOutput = inNeighbor instanceof ICompressorEndpoint inComp
+            && inComp.getCompressorOutputDirection() == oppositeIn;
+        boolean outToCompressorInput = outNeighbor instanceof SteamCompressorBlockEntity outComp
+            && outComp.getSteamInputDirection() == oppositeOut;
+
+        if (inFromCompressorOutput && outToCompressorInput) {
+            return true;
+        }
+
+        return false;
     }
 
     private void propagateToNeighbor(Direction dir, SteamData steam) {
