@@ -86,9 +86,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         inputPressure = maxPressure;
         inputThroughput = Math.min(totalThroughput, MAX_THROUGHPUT);
 
-        if (inputThroughput > 0) {
-            lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
-        }
+        lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
 
         if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
             float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
