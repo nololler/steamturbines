@@ -37,8 +37,8 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     private SteamData inputSteam = SteamData.empty();
     private SteamData outputSteam = SteamData.empty();
     private float currentRPM = 0f;
-    private SteamData displayInputSteam = SteamData.empty();
-    private SteamData displayOutputSteam = SteamData.empty();
+    private SteamData lastReceivedSteam = SteamData.empty();
+    private SteamData lastProducedSteam = SteamData.empty();
 
     public SteamCompressorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -68,14 +68,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         currentRPM = Math.abs(getSpeed());
 
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
-            displayInputSteam = inputSteam;
-            displayOutputSteam = outputSteam;
             outputSteam = SteamData.empty();
             inputSteam = SteamData.empty();
             setChanged();
             sendData();
             return;
         }
+
+        lastReceivedSteam = inputSteam.withThroughput(Math.min(inputSteam.getThroughput(), MAX_THROUGHPUT));
 
         float pulledPressure = inputSteam.getPressure();
         float inputThroughput = Math.min(inputSteam.getThroughput(), MAX_THROUGHPUT);
@@ -85,6 +85,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         float amplified = pulledPressure * amplification;
         float amplifiedThroughput = Math.min(inputThroughput * amplification, MAX_THROUGHPUT);
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f, 1f, amplifiedThroughput);
+        lastProducedSteam = outputSteam;
 
         float remainingThroughput = inputThroughput - amplifiedThroughput;
         if (remainingThroughput > 0) {
@@ -92,9 +93,6 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         } else {
             inputSteam = SteamData.empty();
         }
-
-        displayInputSteam = inputSteam;
-        displayOutputSteam = outputSteam;
 
         setChanged();
         sendData();
@@ -210,10 +208,10 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         tooltip.add(Component.literal("    Steam Compressor:  ").withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("    Input: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", displayInputSteam.getPressure(), displayInputSteam.getThroughput())).withStyle(ChatFormatting.DARK_GRAY)));
+            .append(Component.literal(String.format("%.1f @ %.2f/t", lastReceivedSteam.getPressure(), lastReceivedSteam.getThroughput())).withStyle(ChatFormatting.DARK_GRAY)));
         tooltip.add(Component.literal("    Output: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", displayOutputSteam.getPressure(), displayOutputSteam.getThroughput())).withStyle(
-                displayOutputSteam.getPressure() > SteamConstants.MAX_PRESSURE * 0.5f ? ChatFormatting.RED : ChatFormatting.DARK_GRAY)));
+            .append(Component.literal(String.format("%.1f @ %.2f/t", lastProducedSteam.getPressure(), lastProducedSteam.getThroughput())).withStyle(
+                lastProducedSteam.getPressure() > SteamConstants.MAX_PRESSURE * 0.5f ? ChatFormatting.RED : ChatFormatting.DARK_GRAY)));
         return true;
     }
 
@@ -242,8 +240,12 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             outputSteam = SteamData.loadFromNBT(tag.getCompound("OutputSteam"), registries);
         }
         if (clientPacket) {
-            displayInputSteam = inputSteam;
-            displayOutputSteam = outputSteam;
+            if (tag.contains("LastReceivedSteam")) {
+                lastReceivedSteam = SteamData.loadFromNBT(tag.getCompound("LastReceivedSteam"), registries);
+            }
+            if (tag.contains("LastProducedSteam")) {
+                lastProducedSteam = SteamData.loadFromNBT(tag.getCompound("LastProducedSteam"), registries);
+            }
         }
         currentRPM = tag.getFloat("CurrentRPM");
         for (Direction dir : Direction.values()) {
@@ -258,6 +260,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         CompoundTag outputTag = new CompoundTag();
         outputSteam.saveToNBT(outputTag, registries);
         tag.put("OutputSteam", outputTag);
+        if (clientPacket) {
+            CompoundTag lastReceivedTag = new CompoundTag();
+            lastReceivedSteam.saveToNBT(lastReceivedTag, registries);
+            tag.put("LastReceivedSteam", lastReceivedTag);
+            CompoundTag lastProducedTag = new CompoundTag();
+            lastProducedSteam.saveToNBT(lastProducedTag, registries);
+            tag.put("LastProducedSteam", lastProducedTag);
+        }
         tag.putFloat("CurrentRPM", currentRPM);
         for (Direction dir : Direction.values()) {
             tag.putBoolean("steam_" + dir.getName(), steamConnections.getOrDefault(dir, false));
