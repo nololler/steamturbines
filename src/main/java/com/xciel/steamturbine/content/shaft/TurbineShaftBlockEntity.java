@@ -99,10 +99,10 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         return direction == facing.getOpposite() || direction == facing.getClockWise();
     }
 
-    @Override
+@Override
     public float calculateAddedStressCapacity() {
         if (aggregatedSpeed <= 0f) return 0f;
-        return aggregatedSpeed * aggregatedThroughput * 5.42f;
+        return aggregatedSpeed * aggregatedThroughput * 0.525f;
     }
 
     public void onNeighborChanged() {
