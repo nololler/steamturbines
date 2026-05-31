@@ -180,6 +180,11 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         return direction == getTurbineOutputDirection();
     }
 
+    @Override
+    public SteamData produceTurbineSteam(Direction from) {
+        return SteamData.empty();
+    }
+
     // ISteamTransport
     @Override
     public void pushSteam(Direction direction, SteamData steam) {
