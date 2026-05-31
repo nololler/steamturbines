@@ -56,6 +56,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
             inputSteam = SteamData.empty();
+            lastInputSteam = SteamData.empty();
+            lastExhaustSteam = SteamData.empty();
+            turbineSpeed = 0f;
             setChanged();
             sendData();
             return;
@@ -79,7 +82,11 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
                 if (level.isLoaded(frontPos)) {
                     var frontBE = level.getBlockEntity(frontPos);
                     if (frontBE instanceof ITurbineEndpoint nextTurbine && nextTurbine.canTurbineConnect(facing.getOpposite())) {
-                        ((ISteamConsumer) nextTurbine).receiveSteam(facing.getOpposite(), lastExhaustSteam);
+                        if (nextTurbine instanceof ISteamConsumer consumer) {
+                            consumer.receiveSteam(facing.getOpposite(), lastExhaustSteam);
+                        } else if (nextTurbine instanceof ISteamTransport transport) {
+                            transport.pushSteam(facing.getOpposite(), lastExhaustSteam);
+                        }
                     }
                 }
             }

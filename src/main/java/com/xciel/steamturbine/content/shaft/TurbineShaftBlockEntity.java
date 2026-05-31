@@ -99,11 +99,14 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         return direction == facing.getOpposite() || direction == facing.getClockWise();
     }
 
-@Override
+    @Override
     public float calculateAddedStressCapacity() {
         if (aggregatedSpeed <= 0f) return 0f;
-        float stageMultiplier = (0.05f + connectedTurbineCount) * 0.525f;
-        return aggregatedSpeed * aggregatedThroughput * stageMultiplier;
+
+        float maxStressCapacity = 900000f;
+        float stageMultiplier = 0.52f + (connectedTurbineCount * 0.00545f);
+        float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
+        return Math.round(calculatedStressCapacity);
     }
 
     public void onNeighborChanged() {
