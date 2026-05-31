@@ -67,7 +67,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
                 float turbineSpeed = Math.abs(turbine.getTurbineSpeed());
                 totalSpeed += turbineSpeed;
                 if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
-                totalThroughput += turbine.getInputThroughput();
+                totalThroughput += turbine.getExhaustThroughput();
                 count++;
                 current = current.relative(walkDir);
             } else {

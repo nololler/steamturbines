@@ -122,12 +122,6 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public SteamData produceTurbineSteam(Direction from) {
-        if (lastExhaustSteam.isEmpty()) return SteamData.empty();
-        if (inputSteam.isEmpty()) {
-            inputSteam = lastExhaustSteam;
-        } else {
-            inputSteam = inputSteam.withPressureAndThroughputAdded(lastExhaustSteam.getPressure(), lastExhaustSteam.getThroughput());
-        }
         return lastExhaustSteam;
     }
 
