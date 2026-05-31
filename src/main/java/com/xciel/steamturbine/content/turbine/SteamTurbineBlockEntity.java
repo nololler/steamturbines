@@ -5,6 +5,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
+import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
@@ -22,6 +23,7 @@ import java.util.List;
 public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamConsumer, ISteamEndpoint, IHaveGoggleInformation {
     private static final float MAX_RPM = 256f;
     private static final float MIN_PRESSURE_FOR_OPERATION = 0.5f;
+    private static final float MAX_THROUGHPUT = 2048.0f;
     private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
 
     private float inputPressure = 0f;
@@ -32,6 +34,8 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     private float exhaustThroughput = 0f;
     private int stageNumber = 0;
     private float stageEfficiency = 1.0f;
+    private SteamData lastInputSteam = SteamData.empty();
+    private SteamData lastExhaustSteam = SteamData.empty();
 
     public SteamTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -52,7 +56,6 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         float maxPressure = receivedPressure;
         float totalThroughput = 0f;
 
-        // Pull steam from ALL adjacent pipes (all 6 directions), track throughput
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
             if (!level.isLoaded(neighborPos)) continue;
@@ -66,33 +69,33 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             }
         }
 
-        // Also accept exhaust from previous turbine (behind us)
         BlockPos behindPos = worldPosition.relative(facing.getOpposite());
         if (level.isLoaded(behindPos)) {
             var behindBE = level.getBlockEntity(behindPos);
             if (behindBE instanceof SteamTurbineBlockEntity prevTurbine) {
                 maxPressure = Math.max(maxPressure, prevTurbine.exhaustPressure);
-                // Exhaust carries throughput from previous stage
                 totalThroughput += prevTurbine.exhaustThroughput;
             }
         }
 
-        // Determine stage number by counting turbines behind us
         stageNumber = countTurbinesBehind(worldPosition, facing);
 
-        // Apply per-stage efficiency
         int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
         stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
 
         inputPressure = maxPressure;
-        inputThroughput = totalThroughput;
+        inputThroughput = Math.min(totalThroughput, MAX_THROUGHPUT);
+
+        if (inputThroughput > 0) {
+            lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
+        }
 
         if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
             float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
             turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
-            // Exhaust: lose extracted energy, propagate forward
             exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
-            exhaustThroughput = inputThroughput * stageEfficiency;
+            exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
+            lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
         } else {
             turbineSpeed = 0f;
             exhaustPressure = 0f;
@@ -153,9 +156,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             .append(Component.literal(String.format("%.0f", stageEfficiency * 100) + "%").withStyle(
                 stageEfficiency >= 0.7f ? ChatFormatting.GREEN : stageEfficiency >= 0.5f ? ChatFormatting.YELLOW : ChatFormatting.RED)));
         tooltip.add(Component.literal("    Input: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", inputPressure, inputThroughput)).withStyle(ChatFormatting.DARK_GRAY)));
+            .append(Component.literal(String.format("%.1f @ %.2f/t", lastInputSteam.getPressure(), lastInputSteam.getThroughput())).withStyle(ChatFormatting.DARK_GRAY)));
         tooltip.add(Component.literal("    Exhaust: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", exhaustPressure, exhaustThroughput)).withStyle(ChatFormatting.DARK_GRAY)));
+            .append(Component.literal(String.format("%.1f @ %.2f/t", lastExhaustSteam.getPressure(), lastExhaustSteam.getThroughput())).withStyle(ChatFormatting.DARK_GRAY)));
         return true;
     }
 
@@ -198,10 +201,18 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         stageNumber = tag.getInt("StageNumber");
         stageEfficiency = tag.getFloat("StageEfficiency");
         receivedPressure = tag.getFloat("ReceivedPressure");
+        if (clientPacket) {
+            if (tag.contains("LastInputSteam")) {
+                lastInputSteam = SteamData.loadFromNBT(tag.getCompound("LastInputSteam"), registries);
+            }
+            if (tag.contains("LastExhaustSteam")) {
+                lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
+            }
+        }
     }
 
     @Override
-    public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putFloat("InputPressure", inputPressure);
         tag.putFloat("InputThroughput", inputThroughput);
@@ -211,5 +222,11 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         tag.putInt("StageNumber", stageNumber);
         tag.putFloat("StageEfficiency", stageEfficiency);
         tag.putFloat("ReceivedPressure", receivedPressure);
+        CompoundTag lastInputTag = new CompoundTag();
+        lastInputSteam.saveToNBT(lastInputTag, registries);
+        tag.put("LastInputSteam", lastInputTag);
+        CompoundTag lastExhaustTag = new CompoundTag();
+        lastExhaustSteam.saveToNBT(lastExhaustTag, registries);
+        tag.put("LastExhaustSteam", lastExhaustTag);
     }
 }

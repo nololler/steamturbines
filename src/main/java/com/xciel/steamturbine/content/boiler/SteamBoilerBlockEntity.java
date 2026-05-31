@@ -43,7 +43,7 @@ import java.util.Map;
 
 public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer, IHaveGoggleInformation {
     private static final int WATER_TANK_CAPACITY = 2000;
-    private static final int WATER_PER_STEAM = 250;
+    private static final int WATER_PER_STEAM = 5;
     private static final int INFINITE_THRESHOLD = 20 * 3600 * 24 * 30;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
@@ -54,6 +54,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private final FluidTank waterTank;
     private final IFluidHandler waterHandler;
     private int remainingBurnTime;
+    private int clientRemainingBurnTime;
+    private int clientTotalBurnTime;
     private FuelType activeFuel;
     private float heatLevel;
     private boolean boilerActive;
@@ -90,6 +92,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         };
         waterHandler = waterTank;
         remainingBurnTime = 0;
+        clientRemainingBurnTime = 0;
+        clientTotalBurnTime = 0;
         activeFuel = FuelType.NONE;
         heatLevel = 0f;
         boilerActive = false;
@@ -100,23 +104,26 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (!level.isClientSide) {
+            updateFuel();
+            updateHeat();
+            generateSteam();
+        }
+    }
+
+    @Override
     public void lazyTick() {
         super.lazyTick();
         if (level.isClientSide) {
             clientVisualUpdate();
         } else {
-            serverTick();
-        }
-    }
-
-    private void serverTick() {
-        updateFuel();
-        updateHeat();
-        generateSteam();
-        updateConnectionStates();
-        pushSteamOutput();
-        for (Direction dir : Direction.values()) {
-            receivedSteam.put(dir, SteamData.empty());
+            pushSteamOutput();
+            updateConnectionStates();
+            for (Direction dir : Direction.values()) {
+                receivedSteam.put(dir, SteamData.empty());
+            }
         }
     }
 
@@ -168,7 +175,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
         var holder = fuelStack.getItem().builtInRegistryHolder();
         BlazeBurnerFuel superheated = holder.getData(CreateDataMaps.SUPERHEATED_BLAZE_BURNER_FUELS);
-        if (superheated != null) {
+        BlazeBurnerFuel regular = holder.getData(CreateDataMaps.REGULAR_BLAZE_BURNER_FUELS);
+        if (superheated != null || regular != null) {
             activeFuel = FuelType.SPECIAL;
         } else if (AllTags.AllItemTags.BLAZE_BURNER_FUEL_SPECIAL.matches(fuelStack)) {
             activeFuel = FuelType.SPECIAL;
@@ -438,7 +446,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (boilerActive) {
             tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.status.active")
                     .withStyle(ChatFormatting.GREEN)));
-        } else if (remainingBurnTime > 0) {
+        } else if (clientRemainingBurnTime > 0) {
             tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.status.heating")
                     .withStyle(ChatFormatting.YELLOW)));
         } else {
@@ -452,27 +460,27 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
                             fuelStack.getHoverName(),
                             fuelStack.getCount())
                     .withStyle(ChatFormatting.GRAY)));
-            if (remainingBurnTime > 0) {
+            if (clientRemainingBurnTime > 0) {
                 if (isTotalFuelInfinite()) {
                     tooltip.add(Component.literal("    ").append(Component.translatable("steamturbine.goggles.boiler.burn_time_infinite")
                             .withStyle(ChatFormatting.DARK_GRAY)));
                 } else {
                     tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.burn_time",
-                                    formatTime(remainingBurnTime),
-                                    formatTime(getTotalBurnTime()))
+                                    formatTime(clientRemainingBurnTime),
+                                    formatTime(clientTotalBurnTime))
                             .withStyle(ChatFormatting.DARK_GRAY)));
                 }
             }
-        } else if (remainingBurnTime > 0) {
+        } else if (clientRemainingBurnTime > 0) {
             tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
                     .withStyle(ChatFormatting.DARK_GRAY)));
             if (isCurrentFuelInfinite()) {
-                tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.burn_time_infinite")
+                tooltip.add(Component.literal("    ").append(Component.translatable("steamturbine.goggles.boiler.burn_time_infinite")
                         .withStyle(ChatFormatting.DARK_GRAY)));
             } else {
                 tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.burn_time",
-                                formatTime(remainingBurnTime),
-                                formatTime(remainingBurnTime))
+                                formatTime(clientRemainingBurnTime),
+                                formatTime(clientRemainingBurnTime))
                         .withStyle(ChatFormatting.DARK_GRAY)));
             }
         } else {
@@ -528,6 +536,10 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         super.read(tag, registries, clientPacket);
         outputSteam = SteamData.loadFromNBT(tag, registries);
         remainingBurnTime = tag.getInt("RemainingBurnTime");
+        if (clientPacket) {
+            clientRemainingBurnTime = tag.getInt("ClientRemainingBurnTime");
+            clientTotalBurnTime = tag.getInt("ClientTotalBurnTime");
+        }
         activeFuel = FuelType.valueOf(tag.contains("ActiveFuel") ? tag.getString("ActiveFuel") : "NONE");
         heatLevel = tag.getFloat("HeatLevel");
         boilerActive = tag.getBoolean("BoilerActive");
@@ -543,6 +555,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         super.write(tag, registries, clientPacket);
         outputSteam.saveToNBT(tag, registries);
         tag.putInt("RemainingBurnTime", remainingBurnTime);
+        tag.putInt("ClientRemainingBurnTime", remainingBurnTime);
+        tag.putInt("ClientTotalBurnTime", getTotalBurnTime());
         tag.putString("ActiveFuel", activeFuel.name());
         tag.putFloat("HeatLevel", heatLevel);
         tag.putBoolean("BoilerActive", boilerActive);
