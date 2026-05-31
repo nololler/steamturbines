@@ -23,7 +23,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     private float aggregatedSpeed = 0f;
     private float aggregatedThroughput = 0f;
-    private float aggregatedContribution = 0f;  // sum of (speed * throughput) per turbine
     private int connectedTurbineCount = 0;
 
     public TurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -60,18 +59,15 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         float totalSpeed = 0f;
         float maxSpeed = 0f;
         float totalThroughput = 0f;
-        float totalContribution = 0f;
         int count = 0;
 
         while (level.isLoaded(current)) {
             var be = level.getBlockEntity(current);
             if (be instanceof SteamTurbineBlockEntity turbine) {
                 float turbineSpeed = Math.abs(turbine.getTurbineSpeed());
-                float turbineExhaustThroughput = turbine.getExhaustThroughput();
                 totalSpeed += turbineSpeed;
                 if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
-                totalThroughput += turbineExhaustThroughput;
-                totalContribution += turbineSpeed * turbineExhaustThroughput;
+                totalThroughput += turbine.getExhaustThroughput();
                 count++;
                 current = current.relative(walkDir);
             } else {
@@ -82,7 +78,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         float prevSpeed = aggregatedSpeed;
         aggregatedSpeed = totalSpeed;
         aggregatedThroughput = totalThroughput;
-        aggregatedContribution = totalContribution;
         connectedTurbineCount = count;
 
         updateGeneratedRotation();
@@ -106,8 +101,8 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float calculateAddedStressCapacity() {
-        if (aggregatedContribution <= 0f) return 0f;
-        return Math.max(aggregatedContribution, BASE_STRESS_CAPACITY / 256f);
+        if (aggregatedSpeed <= 0f) return 0f;
+        return aggregatedSpeed * aggregatedThroughput * 5.42f;
     }
 
     public void onNeighborChanged() {
@@ -128,7 +123,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         super.read(tag, registries, clientPacket);
         aggregatedSpeed = tag.getFloat("AggregatedSpeed");
         aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
-        aggregatedContribution = tag.contains("AggregatedContribution") ? tag.getFloat("AggregatedContribution") : 0f;
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
     }
 
@@ -137,7 +131,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         super.write(tag, registries, clientPacket);
         tag.putFloat("AggregatedSpeed", aggregatedSpeed);
         tag.putFloat("AggregatedThroughput", aggregatedThroughput);
-        tag.putFloat("AggregatedContribution", aggregatedContribution);
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
     }
 }
