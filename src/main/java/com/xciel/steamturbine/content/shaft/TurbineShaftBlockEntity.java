@@ -106,6 +106,11 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         float maxStressCapacity = 900000f;
         float stageMultiplier = 0.52f + (connectedTurbineCount * 0.00545f);
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
+
+        if (calculatedStressCapacity > maxStressCapacity) {
+            calculatedStressCapacity = maxStressCapacity * maxStressCapacity / calculatedStressCapacity;
+        }
+
         return Math.round(calculatedStressCapacity);
     }
 
