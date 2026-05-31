@@ -37,6 +37,8 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     private SteamData inputSteam = SteamData.empty();
     private SteamData outputSteam = SteamData.empty();
     private float currentRPM = 0f;
+    private SteamData displayInputSteam = SteamData.empty();
+    private SteamData displayOutputSteam = SteamData.empty();
 
     public SteamCompressorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -60,15 +62,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         pushSteam();
     }
 
-    private void serverTick() {
-        updateConnectionStates();
-        processSteam();
-        pushSteam();
-    }
+    private static final float MAX_THROUGHPUT = 512.0f;
 
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
+
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+            displayInputSteam = inputSteam;
+            displayOutputSteam = outputSteam;
             outputSteam = SteamData.empty();
             inputSteam = SteamData.empty();
             setChanged();
@@ -77,12 +78,12 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         }
 
         float pulledPressure = inputSteam.getPressure();
-        float inputThroughput = inputSteam.getThroughput();
+        float inputThroughput = Math.min(inputSteam.getThroughput(), MAX_THROUGHPUT);
 
         float rpmFactor = currentRPM / 64f;
         float amplification = 1f + rpmFactor * AMPLIFICATION_FACTOR;
         float amplified = pulledPressure * amplification;
-        float amplifiedThroughput = inputThroughput * amplification;
+        float amplifiedThroughput = Math.min(inputThroughput * amplification, MAX_THROUGHPUT);
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f, 1f, amplifiedThroughput);
 
         float remainingThroughput = inputThroughput - amplifiedThroughput;
@@ -91,6 +92,9 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         } else {
             inputSteam = SteamData.empty();
         }
+
+        displayInputSteam = inputSteam;
+        displayOutputSteam = outputSteam;
 
         setChanged();
         sendData();
@@ -203,14 +207,13 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     // Goggles
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("  Steam Compressor  ").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("  RPM: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", currentRPM)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Input: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", inputSteam.getPressure(), inputSteam.getThroughput())).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Output: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", outputSteam.getPressure(), outputSteam.getThroughput())).withStyle(
-                outputSteam.getPressure() > SteamConstants.MAX_PRESSURE * 0.5f ? ChatFormatting.RED : ChatFormatting.WHITE)));
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        tooltip.add(Component.literal("    Steam Compressor:  ").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    Input: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.1f @ %.2f/t", displayInputSteam.getPressure(), displayInputSteam.getThroughput())).withStyle(ChatFormatting.DARK_GRAY)));
+        tooltip.add(Component.literal("    Output: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.1f @ %.2f/t", displayOutputSteam.getPressure(), displayOutputSteam.getThroughput())).withStyle(
+                displayOutputSteam.getPressure() > SteamConstants.MAX_PRESSURE * 0.5f ? ChatFormatting.RED : ChatFormatting.DARK_GRAY)));
         return true;
     }
 
@@ -237,6 +240,10 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         super.read(tag, registries, clientPacket);
         if (tag.contains("OutputSteam")) {
             outputSteam = SteamData.loadFromNBT(tag.getCompound("OutputSteam"), registries);
+        }
+        if (clientPacket) {
+            displayInputSteam = inputSteam;
+            displayOutputSteam = outputSteam;
         }
         currentRPM = tag.getFloat("CurrentRPM");
         for (Direction dir : Direction.values()) {

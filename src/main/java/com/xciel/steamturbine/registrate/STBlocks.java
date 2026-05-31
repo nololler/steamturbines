@@ -30,6 +30,7 @@ public class STBlocks {
             .initialProperties(SharedProperties::softMetal)
             .properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 8.0))
             .item()
             .build()
             .register();
@@ -52,6 +53,7 @@ public class STBlocks {
     public static final BlockEntry<TurbineShaftBlock> TURBINE_SHAFT = REGISTRATE.block("turbine_shaft", TurbineShaftBlock::new)
             .initialProperties(SharedProperties::stone)
             .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 256.0))
             .item()
             .build()
             .register();

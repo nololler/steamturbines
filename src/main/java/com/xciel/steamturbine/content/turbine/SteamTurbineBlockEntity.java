@@ -146,17 +146,15 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("Encased Turbine").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("  Stage: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.literal("    Encased Turbine").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    Stage: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(stageNumber + 1)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Efficiency: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.literal("    Efficiency: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.0f", stageEfficiency * 100) + "%").withStyle(
                 stageEfficiency >= 0.7f ? ChatFormatting.GREEN : stageEfficiency >= 0.5f ? ChatFormatting.YELLOW : ChatFormatting.RED)));
-        tooltip.add(Component.literal("  Input: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f @ %.2f/t", inputPressure, inputThroughput)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Turbine RPM: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", turbineSpeed)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Exhaust: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.literal("    Input: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.1f @ %.2f/t", inputPressure, inputThroughput)).withStyle(ChatFormatting.DARK_GRAY)));
+        tooltip.add(Component.literal("    Exhaust: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.format("%.1f @ %.2f/t", exhaustPressure, exhaustThroughput)).withStyle(ChatFormatting.DARK_GRAY)));
         return true;
     }

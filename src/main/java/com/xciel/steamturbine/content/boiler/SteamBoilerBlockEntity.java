@@ -44,6 +44,7 @@ import java.util.Map;
 public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer, IHaveGoggleInformation {
     private static final int WATER_TANK_CAPACITY = 2000;
     private static final int WATER_PER_STEAM = 250;
+    private static final int INFINITE_THRESHOLD = 20 * 3600 * 24 * 30;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
@@ -178,6 +179,30 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         sendData();
     }
 
+    private int getBurnTime(ItemStack stack) {
+        return stack.getBurnTime(net.minecraft.world.item.crafting.RecipeType.SMELTING);
+    }
+
+    public boolean isCurrentFuelInfinite() {
+        return this.remainingBurnTime >= INFINITE_THRESHOLD;
+    }
+
+    public boolean isTotalFuelInfinite() {
+        return this.isCurrentFuelInfinite() || getItemBurnTime(this.fuelInventory.getStackInSlot(0)) >= INFINITE_THRESHOLD;
+    }
+
+    public int getCurrentBurnTime() {
+        return this.remainingBurnTime;
+    }
+
+    public int getItemBurnTime(ItemStack stack) {
+        return getBurnTime(stack);
+    }
+
+    public int getTotalBurnTime() {
+        return this.remainingBurnTime + (this.fuelInventory.getStackInSlot(0).getCount() * getItemBurnTime(this.fuelInventory.getStackInSlot(0)));
+    }
+
     @SuppressWarnings("removal")
     private int getFuelBurnTime(ItemStack stack) {
         var holder = stack.getItem().builtInRegistryHolder();
@@ -190,7 +215,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
         if (AllTags.AllItemTags.BLAZE_BURNER_FUEL_SPECIAL.matches(stack)) return 3200;
 
-        int vanillaBurn = stack.getBurnTime(null);
+        int vanillaBurn = getBurnTime(stack);
         if (vanillaBurn > 0) return vanillaBurn;
 
         if (AllTags.AllItemTags.BLAZE_BURNER_FUEL_REGULAR.matches(stack)) return 1600;
@@ -407,60 +432,94 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     // IHaveGoggleInformation
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.translatable("steamturbine.goggles.boiler.header")
-                .withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.header")
+                .withStyle(ChatFormatting.GOLD)));
 
         if (boilerActive) {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.active")
-                    .withStyle(ChatFormatting.GREEN));
+            tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.status.active")
+                    .withStyle(ChatFormatting.GREEN)));
         } else if (remainingBurnTime > 0) {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.heating")
-                    .withStyle(ChatFormatting.YELLOW));
+            tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.status.heating")
+                    .withStyle(ChatFormatting.YELLOW)));
         } else {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.status.inactive")
-                    .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.status.inactive")
+                    .withStyle(ChatFormatting.GRAY)));
         }
 
         ItemStack fuelStack = fuelInventory.getStackInSlot(0);
         if (!fuelStack.isEmpty()) {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.fuel",
+            tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel",
                             fuelStack.getHoverName(),
                             fuelStack.getCount())
-                    .withStyle(ChatFormatting.GRAY));
+                    .withStyle(ChatFormatting.GRAY)));
             if (remainingBurnTime > 0) {
-                int totalBurn = remainingBurnTime + (fuelStack.getCount() * getNextFuelBurnTime());
-                int remaining = remainingBurnTime;
-                tooltip.add(Component.translatable("steamturbine.goggles.boiler.burn_time",
-                                formatSeconds(remaining),
-                                formatSeconds(totalBurn))
-                        .withStyle(ChatFormatting.DARK_GRAY));
+                if (isTotalFuelInfinite()) {
+                    tooltip.add(Component.literal("    ").append(Component.translatable("steamturbine.goggles.boiler.burn_time_infinite")
+                            .withStyle(ChatFormatting.DARK_GRAY)));
+                } else {
+                    tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.burn_time",
+                                    formatTime(remainingBurnTime),
+                                    formatTime(getTotalBurnTime()))
+                            .withStyle(ChatFormatting.DARK_GRAY)));
+                }
+            }
+        } else if (remainingBurnTime > 0) {
+            tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
+                    .withStyle(ChatFormatting.DARK_GRAY)));
+            if (isCurrentFuelInfinite()) {
+                tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.burn_time_infinite")
+                        .withStyle(ChatFormatting.DARK_GRAY)));
+            } else {
+                tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.burn_time",
+                                formatTime(remainingBurnTime),
+                                formatTime(remainingBurnTime))
+                        .withStyle(ChatFormatting.DARK_GRAY)));
             }
         } else {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
+                    .withStyle(ChatFormatting.DARK_GRAY)));
         }
 
-        tooltip.add(Component.translatable("steamturbine.goggles.boiler.water",
+        tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.water",
                         waterTank.getFluidAmount(),
                         WATER_TANK_CAPACITY)
-                .withStyle(ChatFormatting.GRAY));
+                .withStyle(ChatFormatting.GRAY)));
 
         if (outputSteam.shouldPropagate()) {
-            tooltip.add(Component.translatable("steamturbine.goggles.boiler.steam_output",
+            tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.steam_output",
                             String.format("%.1f", outputSteam.getPressure()),
                             String.format("%.2f", outputSteam.getThroughput()))
-                    .withStyle(ChatFormatting.AQUA));
+                    .withStyle(ChatFormatting.AQUA)));
         }
 
-        tooltip.add(Component.translatable("steamturbine.goggles.boiler.heat",
+        tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.heat",
                         String.format("%.1f", heatLevel))
-                .withStyle(ChatFormatting.RED));
+                .withStyle(ChatFormatting.RED)));
 
         return true;
     }
 
-    private String formatSeconds(int ticks) {
-        return String.format("%.1fs", ticks / 20.0f);
+    private String formatTime(int ticks) {
+        int seconds = ticks / 20;
+        String s = "";
+        int min = seconds / 60;
+        final int hour = min / 60;
+        seconds = Math.floorMod(seconds, 60);
+        min = Math.floorMod(min, 60);
+        if (hour > 0) {
+            s += hour + "h ";
+        }
+        if (min < 10 && hour > 0) {
+            s += 0;
+        }
+        if (min > 0 || hour > 0) {
+            s += min + "m ";
+        }
+        if (seconds < 10 && min > 0) {
+            s += 0;
+        }
+        s += seconds + "s";
+        return s;
     }
 
     // NBT

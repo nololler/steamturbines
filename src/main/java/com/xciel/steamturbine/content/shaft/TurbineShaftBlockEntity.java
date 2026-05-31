@@ -19,6 +19,7 @@ import java.util.List;
 
 public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation, ISteamEndpoint {
     private static final float BASE_STRESS_CAPACITY = 390.0f; // SU per RPM
+    private static final float KINETIC_STRESS_CAPACITY = 256.0f;
 
     private float aggregatedSpeed = 0f;
     private float aggregatedThroughput = 0f;
@@ -110,14 +111,10 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("   Turbine Shaft   ").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("  Connected Turbines: ").withStyle(ChatFormatting.GRAY)
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        tooltip.add(Component.literal("    Turbine Shaft: ").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    Connected Turbines: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("  Output Speed: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", getGeneratedSpeed()) + " RPM").withStyle(ChatFormatting.WHITE)));
-        float suCapacity = Math.abs(getGeneratedSpeed() * calculateAddedStressCapacity());
-        tooltip.add(Component.literal("  SU Capacity: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", suCapacity) + " SU").withStyle(ChatFormatting.AQUA)));
         return true;
     }
 

@@ -19,5 +19,6 @@
   "steamturbine.goggles.pipe.throughput": "  Throughput: %s/t (max %.2f)  ",
   "steamturbine.goggles.pipe.pressure": "  Pressure: %s (max %.1f)  ",
   "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
-  "steamturbine.goggles.pipe.idle": "  Idle  "
+  "steamturbine.goggles.pipe.idle": "  Idle  ",
+  "steamturbine.goggles.boiler.burn_time_infinite": "Infinite"
 }

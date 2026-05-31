@@ -33,6 +33,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamType> visualSteamType = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualQuality = new EnumMap<>(Direction.class);
+    private final EnumMap<Direction, SteamData> runtimeBuffer = new EnumMap<>(Direction.class);
 
     private int lazyTickCounter = 10;
 
@@ -43,6 +44,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             visualPressure.put(dir, 0f);
             visualSteamType.put(dir, SteamType.REGULAR);
             visualQuality.put(dir, 1f);
+            runtimeBuffer.put(dir, SteamData.empty());
         }
     }
 
@@ -57,6 +59,12 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             receivedSteam.put(from, existing.withThroughput(existing.getThroughput() + steam.getThroughput()));
         } else {
             receivedSteam.put(from, steam);
+        }
+        SteamData buffered = runtimeBuffer.get(from);
+        if (buffered != null && !buffered.isEmpty()) {
+            runtimeBuffer.put(from, buffered.withThroughput(buffered.getThroughput() + steam.getThroughput()));
+        } else {
+            runtimeBuffer.put(from, steam);
         }
         setChanged();
     }
@@ -132,14 +140,24 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             SteamData steam = receivedSteam.get(inDir);
             if (steam == null || !steam.shouldPropagate()) {
                 receivedSteam.put(inDir, SteamData.empty());
-                continue;
+            } else {
+                for (Direction outDir : Direction.values()) {
+                    if (outDir == inDir) continue;
+                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                    propagateToNeighbor(outDir, steam);
+                }
+                receivedSteam.put(inDir, SteamData.empty());
             }
-            for (Direction outDir : Direction.values()) {
-                if (outDir == inDir) continue;
-                if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
-                propagateToNeighbor(outDir, steam);
+
+            SteamData buffered = runtimeBuffer.get(inDir);
+            if (buffered != null && buffered.shouldPropagate()) {
+                for (Direction outDir : Direction.values()) {
+                    if (outDir == inDir) continue;
+                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+                    propagateToNeighbor(outDir, buffered);
+                }
             }
-            receivedSteam.put(inDir, SteamData.empty());
+            runtimeBuffer.put(inDir, SteamData.empty());
         }
     }
 
@@ -243,17 +261,22 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     @Override
     public SteamData pullSteam(Direction direction, float amount) {
-        SteamData steam = receivedSteam.get(direction);
+        SteamData steam = runtimeBuffer.get(direction);
         if (steam == null || steam.isEmpty()) {
-            return SteamData.empty();
+            steam = receivedSteam.get(direction);
+            if (steam == null || steam.isEmpty()) {
+                return SteamData.empty();
+            }
         }
         float extracted = Math.min(steam.getPressure(), amount);
         float remaining = steam.getPressure() - extracted;
         float extractedThroughput = Math.min(steam.getThroughput(), amount);
         float remainingThroughput = steam.getThroughput() - extractedThroughput;
         if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
+            runtimeBuffer.put(direction, SteamData.empty());
             receivedSteam.put(direction, SteamData.empty());
         } else {
+            runtimeBuffer.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
             receivedSteam.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
         }
         return SteamData.of(extracted, steam.getSteamType(), steam.getQuality(), 1f, extractedThroughput);
