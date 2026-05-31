@@ -64,10 +64,13 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         while (level.isLoaded(current)) {
             var be = level.getBlockEntity(current);
             if (be instanceof SteamTurbineBlockEntity turbine) {
+                float exhaustThroughput = turbine.getExhaustThroughput();
+                if (exhaustThroughput <= 0) break;  // Stop at first turbine with no output
+
                 float turbineSpeed = Math.abs(turbine.getTurbineSpeed());
                 totalSpeed += turbineSpeed;
                 if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
-                totalThroughput += turbine.getExhaustThroughput();
+                totalThroughput += exhaustThroughput;
                 count++;
                 current = current.relative(walkDir);
             } else {
