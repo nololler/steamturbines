@@ -87,7 +87,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         outputSteam = SteamData.of(amplified, SteamType.PRESSURIZED, 1f, 1f, amplifiedThroughput);
         lastProducedSteam = outputSteam;
 
-        float remainingThroughput = inputThroughput - amplifiedThroughput;
+        float remainingThroughput = Math.max(0, inputThroughput - amplifiedThroughput);
         if (remainingThroughput > 0) {
             inputSteam = inputSteam.withThroughput(remainingThroughput);
         } else {
