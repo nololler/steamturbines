@@ -83,22 +83,21 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
         stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
 
-        inputPressure = maxPressure;
-        inputThroughput = Math.min(totalThroughput, MAX_THROUGHPUT);
-
-        lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
-
-        if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
-            float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
-            turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
-            exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
-            exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
-        } else {
-            turbineSpeed = 0f;
-            exhaustPressure = 0f;
-            exhaustThroughput = 0f;
+        if (inputThroughput > 0) {
+            lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
+            if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
+                float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
+                turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
+                exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
+                exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
+            } else {
+                turbineSpeed = 0f;
+                exhaustPressure = 0f;
+                exhaustThroughput = 0f;
+            }
+            lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
         }
-        lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
+        // If inputThroughput is 0, keep displaying last values (don't update lastInputSteam/lastExhaustSteam)
 
         receivedPressure = 0f;
 
