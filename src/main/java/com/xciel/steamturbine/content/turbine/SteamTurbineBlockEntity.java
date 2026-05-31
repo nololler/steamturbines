@@ -127,9 +127,10 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     public void receiveSteam(Direction direction, SteamData steam) {
         if (steam == null || steam.isEmpty()) return;
         receivedPressure = Math.max(receivedPressure, steam.getPressure());
-        lastInputSteam = SteamData.of(Math.max(receivedPressure, steam.getPressure()), steam.getSteamType(), steam.getQuality(), 1f, steam.getThroughput());
+        if (steam.getThroughput() > 0 && lastInputSteam.getThroughput() == 0) {
+            lastInputSteam = SteamData.of(Math.max(receivedPressure, steam.getPressure()), steam.getSteamType(), steam.getQuality(), 1f, steam.getThroughput());
+        }
         setChanged();
-        sendData();
     }
 
     @Override
