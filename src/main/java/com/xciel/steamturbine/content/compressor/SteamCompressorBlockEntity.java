@@ -192,6 +192,11 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         return true;
     }
 
+    @Override
+    public Direction getCompressorOutputDirection() {
+        return getTurbineOutputDirection();
+    }
+
     // ISteamTransport
     @Override
     public void pushSteam(Direction direction, SteamData steam) {
