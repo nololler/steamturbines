@@ -43,7 +43,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     public SteamCompressorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        setLazyTickRate(1);
+        setLazyTickRate(10);
         for (Direction dir : Direction.values()) {
             steamConnections.put(dir, false);
             turbineConnections.put(dir, false);
@@ -59,6 +59,12 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         super.tick();
         if (level == null || level.isClientSide) return;
         updateConnectionStates();
+    }
+
+    @Override
+    public void lazyTick() {
+        super.lazyTick();
+        if (level == null || level.isClientSide) return;
         processSteam();
         pushSteam();
     }
@@ -71,6 +77,8 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
             outputSteam = SteamData.empty();
             inputSteam = SteamData.empty();
+            lastReceivedSteam = SteamData.empty();
+            lastProducedSteam = SteamData.empty();
             setChanged();
             sendData();
             return;

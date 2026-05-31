@@ -157,7 +157,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("    Encased Turbine").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    Steam Turbine").withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("    Stage: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(stageNumber + 1)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("    Efficiency: ").withStyle(ChatFormatting.GRAY)

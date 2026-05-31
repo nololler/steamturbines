@@ -133,13 +133,6 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         var neighborBE = level.getBlockEntity(neighborPos);
         Direction opposite = dir.getOpposite();
 
-        // Block compressor-to-compressor: don't connect to compressor's output direction
-        if (neighborBE instanceof ICompressorEndpoint compressor) {
-            if (compressor.getCompressorOutputDirection() == opposite) {
-                return false;  // Don't connect to compressor's output (prevents compressor chain)
-            }
-        }
-
         if (neighborBE instanceof ISteamEndpoint endpoint) {
             if (endpoint.canConnect(opposite)) return true;
         }
