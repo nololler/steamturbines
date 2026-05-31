@@ -270,8 +270,9 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         }
         float extracted = Math.min(steam.getPressure(), amount);
         float remaining = steam.getPressure() - extracted;
-        float extractedThroughput = Math.min(steam.getThroughput(), amount);
-        float remainingThroughput = steam.getThroughput() - extractedThroughput;
+        float extractedRatio = steam.getPressure() > 0 ? extracted / steam.getPressure() : 0f;
+        float extractedThroughput = steam.getThroughput() * extractedRatio;
+        float remainingThroughput = steam.getThroughput() * (remaining / steam.getPressure());
         if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
             runtimeBuffer.put(direction, SteamData.empty());
             receivedSteam.put(direction, SteamData.empty());

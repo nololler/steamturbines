@@ -32,7 +32,9 @@ public final class SteamHelper {
         return SteamData.of(
             lerp(a.getPressure(), b.getPressure(), factor),
             a.getSteamType(),
-            lerp(a.getQuality(), b.getQuality(), factor)
+            lerp(a.getQuality(), b.getQuality(), factor),
+            1f,
+            lerp(a.getThroughput(), b.getThroughput(), factor)
         );
     }
 
@@ -67,7 +69,9 @@ public final class SteamHelper {
             return SteamData.empty();
         }
         float extracted = Math.min(source.getPressure(), amount);
-        return SteamData.of(extracted, source.getSteamType(), source.getQuality());
+        float extractedRatio = source.getPressure() > 0 ? extracted / source.getPressure() : 0f;
+        float extractedThroughput = source.getThroughput() * extractedRatio;
+        return SteamData.of(extracted, source.getSteamType(), source.getQuality(), 1f, extractedThroughput);
     }
 
     public static SteamData receiveSteam(SteamData target, SteamData incoming) {
@@ -76,6 +80,7 @@ public final class SteamHelper {
         float avgQuality = (target.getQuality() + incoming.getQuality()) * 0.5f;
         SteamType type = target.getSteamType().isBetterThan(incoming.getSteamType())
             ? target.getSteamType() : incoming.getSteamType();
-        return SteamData.of(combinedPressure, type, avgQuality);
+        float combinedThroughput = target.getThroughput() + incoming.getThroughput();
+        return SteamData.of(combinedPressure, type, avgQuality, 1f, combinedThroughput);
     }
 }
