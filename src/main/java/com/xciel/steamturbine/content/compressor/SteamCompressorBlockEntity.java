@@ -10,6 +10,7 @@ import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
@@ -29,7 +30,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class SteamCompressorBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamProducer, ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
+public class SteamCompressorBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamProducer, ISteamTransport, ITurbineEndpoint, ICompressorEndpoint, IHaveGoggleInformation {
     private static final float AMPLIFICATION_FACTOR = 1.0f;
 
     private final EnumMap<Direction, Boolean> steamConnections = new EnumMap<>(Direction.class);
@@ -183,6 +184,12 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     public SteamData produceTurbineSteam(Direction from) {
         return SteamData.empty();
+    }
+
+    // ICompressorEndpoint
+    @Override
+    public boolean isCompressor() {
+        return true;
     }
 
     // ISteamTransport

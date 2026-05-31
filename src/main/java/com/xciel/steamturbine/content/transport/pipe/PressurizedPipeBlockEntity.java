@@ -6,6 +6,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
@@ -122,6 +123,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
         var neighborBE = level.getBlockEntity(neighborPos);
         Direction opposite = dir.getOpposite();
+
+        if (neighborBE instanceof ICompressorEndpoint) return false;  // Don't connect compressor to compressor
 
         if (neighborBE instanceof ISteamEndpoint endpoint) {
             if (endpoint.canConnect(opposite)) return true;
