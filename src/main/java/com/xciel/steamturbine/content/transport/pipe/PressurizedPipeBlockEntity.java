@@ -28,7 +28,7 @@ import java.util.List;
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 512.0f;
+    private static final float MAX_THROUGHPUT = 1024.0f;
 
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);

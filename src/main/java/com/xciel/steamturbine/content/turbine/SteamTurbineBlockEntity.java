@@ -86,7 +86,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         inputPressure = maxPressure;
         inputThroughput = Math.min(totalThroughput, MAX_THROUGHPUT);
 
-        if (inputThroughput > 0) {
+        if (inputThroughput > 0 || receivedPressure > 0) {
             lastInputSteam = SteamData.of(inputPressure, SteamType.REGULAR, 1f, 1f, inputThroughput);
         }
 
@@ -95,12 +95,12 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
             exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
             exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
-            lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
         } else {
             turbineSpeed = 0f;
             exhaustPressure = 0f;
             exhaustThroughput = 0f;
         }
+        lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
         receivedPressure = 0f;
 
@@ -127,10 +127,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     public void receiveSteam(Direction direction, SteamData steam) {
         if (steam == null || steam.isEmpty()) return;
         receivedPressure = Math.max(receivedPressure, steam.getPressure());
-        if (steam.getThroughput() > 0) {
-            lastInputSteam = SteamData.of(Math.max(receivedPressure, steam.getPressure()), SteamType.REGULAR, 1f, 1f, steam.getThroughput());
-        }
+        lastInputSteam = SteamData.of(Math.max(receivedPressure, steam.getPressure()), steam.getSteamType(), steam.getQuality(), 1f, steam.getThroughput());
         setChanged();
+        sendData();
     }
 
     @Override

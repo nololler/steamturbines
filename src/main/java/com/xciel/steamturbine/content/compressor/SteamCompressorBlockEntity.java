@@ -62,7 +62,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         pushSteam();
     }
 
-    private static final float MAX_THROUGHPUT = 512.0f;
+    private static final float MAX_THROUGHPUT = 1024.0f;
 
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
