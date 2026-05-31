@@ -102,7 +102,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     public float calculateAddedStressCapacity() {
         if (aggregatedSpeed <= 0f) return 0f;
-        return Math.max(aggregatedSpeed * BASE_STRESS_CAPACITY / 256f, BASE_STRESS_CAPACITY / 256f);
+        return aggregatedSpeed * aggregatedThroughput * 5.42f;
     }
 
     public void onNeighborChanged() {
