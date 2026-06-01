@@ -7,6 +7,8 @@ import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
+import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
+import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
@@ -27,7 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumMap;
 import java.util.List;
 
-public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, IHaveGoggleInformation {
+public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
     private static final float MAX_THROUGHPUT = 1.0f;  // Pipes act as bottlenecks - low throughput limit
@@ -155,6 +157,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                     if (outDir == inDir) continue;
                     if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
                     if (wouldCreateCompressorLoop(inDir, outDir, steam)) continue;
+                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
                     propagateToNeighbor(outDir, steam);
                 }
                 receivedSteam.put(inDir, SteamData.empty());
@@ -166,6 +169,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                     if (outDir == inDir) continue;
                     if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
                     if (wouldCreateCompressorLoop(inDir, outDir, buffered)) continue;
+                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
                     propagateToNeighbor(outDir, buffered);
                 }
             }
@@ -194,6 +198,41 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         }
 
         return false;
+    }
+
+    private boolean wouldRouteTurbineToCompressor(Direction inDir, Direction outDir) {
+        Direction oppositeOut = outDir.getOpposite();
+
+        // The neighbor that sent us steam is at inDir (not oppositeIn)
+        BlockPos inNeighborPos = worldPosition.relative(inDir);
+        BlockPos outNeighborPos = worldPosition.relative(outDir);
+        if (!level.isLoaded(inNeighborPos) || !level.isLoaded(outNeighborPos)) return false;
+
+        var inNeighborBlock = level.getBlockState(inNeighborPos).getBlock();
+
+        // Check if steam is coming FROM a turbine's output
+        // A turbine outputs in its FACING direction
+        // If we're receiving steam from inDir, the turbine is at inDir
+        // The turbine's FACING must equal inDir (it pushes toward us)
+        boolean inFromTurbineOutput = false;
+        if (inNeighborBlock instanceof SteamTurbineBlock) {
+            var inNeighborBE = level.getBlockEntity(inNeighborPos);
+            if (inNeighborBE instanceof SteamTurbineBlockEntity turbine) {
+                Direction turbineFacing = turbine.getBlockState().getValue(SteamTurbineBlock.FACING);
+                inFromTurbineOutput = (turbineFacing == inDir);
+            }
+        }
+
+        // Check if it's going TO a compressor's input
+        // The compressor is at outDir
+        // The compressor's INPUT direction is oppositeOut (so it receives from oppositeOut direction = from us at outDir)
+        boolean outToCompressorInput = false;
+        var outNeighborBE = level.getBlockEntity(outNeighborPos);
+        if (outNeighborBE instanceof SteamCompressorBlockEntity outComp) {
+            outToCompressorInput = (outComp.getSteamInputDirection() == oppositeOut);
+        }
+
+        return inFromTurbineOutput && outToCompressorInput;
     }
 
     private void propagateToNeighbor(Direction dir, SteamData steam) {
@@ -386,6 +425,22 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     // IHaveGoggleInformation
     // empty lmao, maybe implemented in the future
+
+    // ITurbineEndpoint
+    @Override
+    public boolean canTurbineConnect(Direction direction) {
+        // Pipes can accept turbine exhaust from any direction they have a connection
+        BlockState state = getBlockState();
+        if (state.getBlock() instanceof PressurizedPipeBlock) {
+            return PressurizedPipeBlock.getConnection(state, direction);
+        }
+        return false;
+    }
+
+    @Override
+    public SteamData produceTurbineSteam(Direction from) {
+        return SteamData.empty();
+    }
 
     public void clearState() {
         for (Direction dir : Direction.values()) {

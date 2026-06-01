@@ -76,7 +76,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
             lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
-            // Push to next turbine in chain (the one in front of us)
+            // Push to next in chain (turbine OR pipe that connects to next turbine)
             if (!lastExhaustSteam.isEmpty()) {
                 BlockPos frontPos = worldPosition.relative(facing);
                 if (level.isLoaded(frontPos)) {
