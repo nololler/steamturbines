@@ -109,8 +109,20 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     private void pushSteam() {
         if (!outputSteam.shouldPropagate()) return;
+
         Direction outputDir = getTurbineOutputDirection();
-        com.xciel.steamturbine.network.PipeNetworkManager.pushSteam(level, worldPosition, outputDir, outputSteam);
+        BlockPos neighborPos = worldPosition.relative(outputDir);
+        if (!level.isLoaded(neighborPos)) return;
+
+        var neighbor = level.getBlockEntity(neighborPos);
+        if (neighbor instanceof ICompressorEndpoint) return;  // Don't chain compressors
+        if (neighbor instanceof ISteamTransport transport) {
+            if (transport.canConnect(outputDir.getOpposite())) {
+                transport.pushSteam(outputDir.getOpposite(), outputSteam);
+            }
+        } else if (neighbor instanceof SteamTurbineBlockEntity) {
+            ((ISteamConsumer) neighbor).receiveSteam(outputDir.getOpposite(), outputSteam);
+        }
     }
 
     public void updateConnectionStates() {

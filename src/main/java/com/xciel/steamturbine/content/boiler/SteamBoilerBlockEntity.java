@@ -288,9 +288,21 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private void pushSteamOutput() {
         Direction outputDir = getOutputDirection();
         if (outputDir == null || !outputSteam.shouldPropagate()) return;
+
+        BlockPos neighborPos = worldPosition.relative(outputDir);
+        if (!level.isLoaded(neighborPos)) return;
+
+        var neighbor = level.getBlockEntity(neighborPos);
         SteamData toSend = outputSteam.withPropagationLoss();
         if (!toSend.shouldPropagate()) return;
-        com.xciel.steamturbine.network.PipeNetworkManager.pushSteam(level, worldPosition, outputDir, toSend);
+
+        if (neighbor instanceof ISteamTransport transport) {
+            transport.pushSteam(outputDir.getOpposite(), toSend);
+        } else if (neighbor instanceof ISteamConsumer consumer) {
+            if (consumer.canReceive(outputDir.getOpposite())) {
+                consumer.receiveSteam(outputDir.getOpposite(), toSend);
+            }
+        }
     }
 
     private void clientVisualUpdate() {
