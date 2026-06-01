@@ -77,19 +77,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
             // Push to next in chain (turbine OR pipe that connects to next turbine)
-            if (!lastExhaustSteam.isEmpty()) {
-                BlockPos frontPos = worldPosition.relative(facing);
-                if (level.isLoaded(frontPos)) {
-                    var frontBE = level.getBlockEntity(frontPos);
-                    if (frontBE instanceof ITurbineEndpoint nextTurbine && nextTurbine.canTurbineConnect(facing.getOpposite())) {
-                        if (nextTurbine instanceof ISteamConsumer consumer) {
-                            consumer.receiveSteam(facing.getOpposite(), lastExhaustSteam);
-                        } else if (nextTurbine instanceof ISteamTransport transport) {
-                            transport.pushSteam(facing.getOpposite(), lastExhaustSteam);
-                        }
-                    }
-                }
-            }
+            if (!lastExhaustSteam.isEmpty()) com.xciel.steamturbine.network.PipeNetworkManager.pushSteam(level, worldPosition, facing, lastExhaustSteam);
         } else {
             turbineSpeed = 0f;
             lastExhaustSteam = SteamData.of(0, SteamType.REGULAR, 1f, 1f, 0);

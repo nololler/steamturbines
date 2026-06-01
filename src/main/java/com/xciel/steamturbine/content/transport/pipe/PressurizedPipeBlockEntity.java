@@ -3,25 +3,15 @@ package com.xciel.steamturbine.content.transport.pipe;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.xciel.steamturbine.steam.SteamConstants;
+import com.xciel.steamturbine.network.PipeNetworkManager;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
-import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
-import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
-import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
-import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
-import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
-import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.util.RandomSource;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,424 +20,111 @@ import java.util.EnumMap;
 import java.util.List;
 
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
-    private static final float LERP_FACTOR = 0.2f;
-    private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 1.0f;  // Pipes act as bottlenecks - low throughput limit
 
-    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
+    private static final float DECAY_FACTOR = 0.98f;
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamType> visualSteamType = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualQuality = new EnumMap<>(Direction.class);
-    private final EnumMap<Direction, SteamData> runtimeBuffer = new EnumMap<>(Direction.class);
 
     public PressurizedPipeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        for (Direction dir : Direction.values()) {
-            receivedSteam.put(dir, SteamData.empty());
-            visualPressure.put(dir, 0f);
-            visualSteamType.put(dir, SteamType.REGULAR);
-            visualQuality.put(dir, 1f);
-            runtimeBuffer.put(dir, SteamData.empty());
+        for (Direction d : Direction.values()) {
+            visualPressure.put(d, 0f);
+            visualSteamType.put(d, SteamType.REGULAR);
+            visualQuality.put(d, 1f);
         }
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour> b) {}
+
+    @Override
+    public void pushSteam(Direction d, SteamData s) {
+        if (!s.isEmpty() && level != null && !level.isClientSide) {
+            PipeNetworkManager.pushSteam(level, worldPosition, d, s);
+        }
     }
 
-    public void receiveSteam(Direction from, SteamData steam) {
-        if (steam.isEmpty()) return;
-        SteamData existing = receivedSteam.get(from);
-        float newThroughput = Math.min(steam.getThroughput(), MAX_THROUGHPUT);
-        if (existing != null && !existing.isEmpty()) {
-            float combinedThroughput = existing.getThroughput() + newThroughput;
-            combinedThroughput = Math.min(combinedThroughput, MAX_THROUGHPUT);
-            receivedSteam.put(from, existing.withThroughput(combinedThroughput));
-        } else {
-            receivedSteam.put(from, steam.withThroughput(newThroughput));
-        }
-        SteamData buffered = runtimeBuffer.get(from);
-        if (buffered != null && !buffered.isEmpty()) {
-            float bufferedThroughput = buffered.getThroughput() + newThroughput;
-            bufferedThroughput = Math.min(bufferedThroughput, MAX_THROUGHPUT);
-            runtimeBuffer.put(from, buffered.withThroughput(bufferedThroughput));
-        } else {
-            runtimeBuffer.put(from, steam.withThroughput(newThroughput));
-        }
-        setChanged();
-    }
+    @Override
+    public boolean canConnect(Direction d) { return true; }
+
+    @Override
+    public SteamData pullSteam(Direction d, float a) { return SteamData.empty(); }
+
+    @Override
+    public float getFlowRate(Direction d) { return 0f; }
 
     @Override
     public void lazyTick() {
         super.lazyTick();
         if (level.isClientSide) {
-            clientVisualUpdate();
+            clientTick();
         } else {
             updateConnectionStates();
-            serverPropagation();
+            PipeNetworkManager.tickAll(level);
         }
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (!level.isClientSide) {
-            updateConnectionStates();
-        }
+        if (level != null && !level.isClientSide) updateConnectionStates();
     }
 
     void updateConnectionStates() {
-        if (level == null) return;
-
-        BlockState state = getBlockState();
-        boolean changed = false;
-
-        for (Direction dir : Direction.values()) {
-            boolean wasConnected = PressurizedPipeBlock.getConnection(state, dir);
-            boolean isConnected = hasNeighborPipe(dir);
-
-            if (isConnected != wasConnected) {
-                state = PressurizedPipeBlock.setConnection(state, dir, isConnected);
-                changed = true;
-            }
-
-            // Clear steam when source connection is lost
-            if (wasConnected && !isConnected) {
-                receivedSteam.put(dir, SteamData.empty());
-                runtimeBuffer.put(dir, SteamData.empty());
+        BlockState s = getBlockState();
+        boolean c = false;
+        for (Direction d : Direction.values()) {
+            boolean was = PressurizedPipeBlock.getConnection(s, d);
+            boolean now = hasNeighbor(d);
+            if (now != was) {
+                s = PressurizedPipeBlock.setConnection(s, d, now);
+                c = true;
             }
         }
-
-        if (changed) {
-            level.setBlock(getBlockPos(), state, Block.UPDATE_ALL);
-        }
+        if (c) level.setBlock(getBlockPos(), s, Block.UPDATE_ALL);
     }
 
-    private boolean hasNeighborPipe(Direction dir) {
-        BlockPos neighborPos = getBlockPos().relative(dir);
-        if (!level.isLoaded(neighborPos)) return false;
-
-        BlockState neighborState = level.getBlockState(neighborPos);
-        Block neighborBlock = neighborState.getBlock();
-
-        if (neighborBlock instanceof PressurizedPipeBlock) return true;
-
-        var neighborBE = level.getBlockEntity(neighborPos);
-        Direction opposite = dir.getOpposite();
-
-        if (neighborBE instanceof ISteamEndpoint endpoint) {
-            if (endpoint.canConnect(opposite)) return true;
-        }
-
-        if (neighborBE instanceof ITurbineEndpoint turbineEndpoint) {
-            if (turbineEndpoint.canTurbineConnect(opposite)) return true;
-        }
-
+    private boolean hasNeighbor(Direction d) {
+        BlockPos n = getBlockPos().relative(d);
+        if (!level.isLoaded(n)) return false;
+        if (level.getBlockState(n).getBlock() instanceof PressurizedPipeBlock) return true;
+        var be = level.getBlockEntity(n);
+        Direction op = d.getOpposite();
+        if (be instanceof com.xciel.steamturbine.steam.transfer.ISteamEndpoint e && e.canConnect(op)) return true;
+        if (be instanceof ITurbineEndpoint e && e.canTurbineConnect(op)) return true;
         return false;
     }
 
-    private void serverPropagation() {
-        BlockState state = getBlockState();
-        for (Direction inDir : Direction.values()) {
-            SteamData steam = receivedSteam.get(inDir);
-            if (steam == null || !steam.shouldPropagate()) {
-                receivedSteam.put(inDir, SteamData.empty());
-            } else {
-                for (Direction outDir : Direction.values()) {
-                    if (outDir == inDir) continue;
-                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
-                    if (wouldCreateCompressorLoop(inDir, outDir, steam)) continue;
-                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
-                    propagateToNeighbor(outDir, steam);
-                }
-                receivedSteam.put(inDir, SteamData.empty());
-            }
-
-            SteamData buffered = runtimeBuffer.get(inDir);
-            if (buffered != null && buffered.shouldPropagate()) {
-                for (Direction outDir : Direction.values()) {
-                    if (outDir == inDir) continue;
-                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
-                    if (wouldCreateCompressorLoop(inDir, outDir, buffered)) continue;
-                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
-                    propagateToNeighbor(outDir, buffered);
-                }
-            }
-            runtimeBuffer.put(inDir, SteamData.empty());
-        }
-    }
-
-    private boolean wouldCreateCompressorLoop(Direction inDir, Direction outDir, SteamData steam) {
-        Direction oppositeIn = inDir.getOpposite();
-        Direction oppositeOut = outDir.getOpposite();
-
-        BlockPos inNeighborPos = worldPosition.relative(oppositeIn);
-        BlockPos outNeighborPos = worldPosition.relative(oppositeOut);
-        if (!level.isLoaded(inNeighborPos) || !level.isLoaded(outNeighborPos)) return false;
-
-        var inNeighbor = level.getBlockEntity(inNeighborPos);
-        var outNeighbor = level.getBlockEntity(outNeighborPos);
-
-        boolean inFromCompressorOutput = inNeighbor instanceof ICompressorEndpoint inComp
-            && inComp.getCompressorOutputDirection() == oppositeIn;
-        boolean outToCompressorInput = outNeighbor instanceof SteamCompressorBlockEntity outComp
-            && outComp.getSteamInputDirection() == oppositeOut;
-
-        if (inFromCompressorOutput && outToCompressorInput) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private boolean wouldRouteTurbineToCompressor(Direction inDir, Direction outDir) {
-        Direction oppositeOut = outDir.getOpposite();
-
-        // The neighbor that sent us steam is at inDir (not oppositeIn)
-        BlockPos inNeighborPos = worldPosition.relative(inDir);
-        BlockPos outNeighborPos = worldPosition.relative(outDir);
-        if (!level.isLoaded(inNeighborPos) || !level.isLoaded(outNeighborPos)) return false;
-
-        var inNeighborBlock = level.getBlockState(inNeighborPos).getBlock();
-
-        // Check if steam is coming FROM a turbine's output
-        // A turbine outputs in its FACING direction
-        // If we're receiving steam from inDir, the turbine is at inDir
-        // The turbine's FACING must equal inDir (it pushes toward us)
-        boolean inFromTurbineOutput = false;
-        if (inNeighborBlock instanceof SteamTurbineBlock) {
-            var inNeighborBE = level.getBlockEntity(inNeighborPos);
-            if (inNeighborBE instanceof SteamTurbineBlockEntity turbine) {
-                Direction turbineFacing = turbine.getBlockState().getValue(SteamTurbineBlock.FACING);
-                inFromTurbineOutput = (turbineFacing == inDir);
-            }
-        }
-
-        // Check if it's going TO a compressor's input
-        // The compressor is at outDir
-        // The compressor's INPUT direction is oppositeOut (so it receives from oppositeOut direction = from us at outDir)
-        boolean outToCompressorInput = false;
-        var outNeighborBE = level.getBlockEntity(outNeighborPos);
-        if (outNeighborBE instanceof SteamCompressorBlockEntity outComp) {
-            outToCompressorInput = (outComp.getSteamInputDirection() == oppositeOut);
-        }
-
-        return inFromTurbineOutput && outToCompressorInput;
-    }
-
-    private void propagateToNeighbor(Direction dir, SteamData steam) {
-        BlockPos neighborPos = worldPosition.relative(dir);
-        if (!level.isLoaded(neighborPos)) return;
-
-        if (!steam.shouldPropagate()) return;
-
-        var neighbor = level.getBlockEntity(neighborPos);
-        if (neighbor instanceof PressurizedPipeBlockEntity pipe) {
-            pipe.receiveSteam(dir.getOpposite(), steam);
-        } else if (neighbor instanceof ISteamTransport transport) {
-            transport.pushSteam(dir.getOpposite(), steam);
-        } else if (neighbor instanceof ISteamConsumer consumer) {
-            consumer.receiveSteam(dir.getOpposite(), steam);
-        }
-    }
-
-    private void clientVisualUpdate() {
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            float targetPressure = steam.getPressure();
-            SteamType targetType = steam.getSteamType();
-            float targetQuality = steam.getQuality();
-
-            float currentPressure = visualPressure.get(dir);
-
-            float newPressure = currentPressure + (targetPressure - currentPressure) * LERP_FACTOR;
-            newPressure *= DECAY_FACTOR;
-            if (newPressure < 0.01f) newPressure = 0f;
-
-            float currentQuality = visualQuality.get(dir);
-            float newQuality = currentQuality + (targetQuality - currentQuality) * LERP_FACTOR;
-            newQuality *= 0.998f;
-            if (newQuality < 0.01f) newQuality = 0f;
-
-            visualPressure.put(dir, newPressure);
-            visualSteamType.put(dir, targetType);
-            visualQuality.put(dir, newQuality);
-        }
-    }
-
-    @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        for (Direction dir : Direction.values()) {
-            String prefix = "S_" + dir.getName() + "_";
-            if (tag.contains(prefix + "P")) {
-                float p = tag.getFloat(prefix + "P");
-                String typeStr = tag.contains(prefix + "T") ? tag.getString(prefix + "T") : "REGULAR";
-                float q = tag.contains(prefix + "Q") ? tag.getFloat(prefix + "Q") : 1f;
-                float tp = tag.contains(prefix + "TP") ? tag.getFloat(prefix + "TP") : 0f;
-                SteamType type = SteamType.REGULAR;
-                try { type = SteamType.valueOf(typeStr); } catch (Exception ignored) {}
-                SteamData steam = SteamData.of(p, type, q, 1f, tp);
-                visualPressure.put(dir, p);
-                visualSteamType.put(dir, type);
-                visualQuality.put(dir, q);
-                receivedSteam.put(dir, steam);
+    private void clientTick() {
+        for (Direction d : Direction.values()) {
+            float p = visualPressure.get(d) * DECAY_FACTOR;
+            visualPressure.put(d, p);
+            visualQuality.put(d, visualQuality.get(d) * DECAY_FACTOR);
+            if (p < 0.05f) {
+                visualPressure.put(d, 0f);
+                visualQuality.put(d, 1f);
             }
         }
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        for (Direction dir : Direction.values()) {
-            String prefix = "S_" + dir.getName() + "_";
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null) {
-                tag.putFloat(prefix + "P", steam.getPressure());
-                tag.putString(prefix + "T", steam.getSteamType().name());
-                tag.putFloat(prefix + "Q", steam.getQuality());
-                tag.putFloat(prefix + "TP", Math.min(steam.getThroughput(), MAX_THROUGHPUT));
-            }
-        }
-    }
-
-    public float getVisualPressure(Direction dir) {
-        return visualPressure.getOrDefault(dir, 0f);
-    }
-
-    public SteamType getVisualSteamType(Direction dir) {
-        return visualSteamType.getOrDefault(dir, SteamType.REGULAR);
-    }
-
-    public float getVisualQuality(Direction dir) {
-        return visualQuality.getOrDefault(dir, 1f);
+    public boolean canTurbineConnect(Direction d) {
+        return PressurizedPipeBlock.getConnection(getBlockState(), d);
     }
 
     @Override
-    public boolean canConnect(Direction direction) {
-        return true;
-    }
+    public SteamData produceTurbineSteam(Direction f) { return SteamData.empty(); }
+
+    public float getVisualPressure(Direction d) { return visualPressure.getOrDefault(d, 0f); }
+
+    public SteamType getVisualSteamType(Direction d) { return visualSteamType.getOrDefault(d, SteamType.REGULAR); }
+
+    public float getVisualQuality(Direction d) { return visualQuality.getOrDefault(d, 1f); }
 
     @Override
-    public void pushSteam(Direction direction, SteamData steam) {
-        receiveSteam(direction, steam);
-    }
+    protected void read(CompoundTag t, HolderLookup.Provider r, boolean p) { super.read(t, r, p); }
 
     @Override
-    public SteamData pullSteam(Direction direction, float amount) {
-        SteamData steam = runtimeBuffer.get(direction);
-        if (steam == null || steam.isEmpty()) {
-            steam = receivedSteam.get(direction);
-            if (steam == null || steam.isEmpty()) {
-                return SteamData.empty();
-            }
-        }
-        float extracted = Math.min(steam.getPressure(), amount);
-        float remaining = steam.getPressure() - extracted;
-        float extractedRatio = steam.getPressure() > 0 ? extracted / steam.getPressure() : 0f;
-        float extractedThroughput = steam.getThroughput() * extractedRatio;
-        float remainingThroughput = steam.getThroughput() * (remaining / steam.getPressure());
-        if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
-            runtimeBuffer.put(direction, SteamData.empty());
-            receivedSteam.put(direction, SteamData.empty());
-        } else {
-            runtimeBuffer.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
-            receivedSteam.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
-        }
-        return SteamData.of(extracted, steam.getSteamType(), steam.getQuality(), 1f, extractedThroughput);
-    }
-
-    @Override
-    public float getFlowRate(Direction direction) {
-        SteamData steam = receivedSteam.get(direction);
-        if (steam == null) return 0f;
-        return steam.getThroughput();
-    }
-
-    public float getOutboundPressure(Direction direction) {
-        return visualPressure.getOrDefault(direction, 0f);
-    }
-
-    public float getActualThroughput() {
-        float total = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null) {
-                total += steam.getThroughput();
-            }
-        }
-        return total;
-    }
-
-    public float getTotalPressure() {
-        float total = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null) {
-                total += steam.getPressure();
-            }
-        }
-        return total;
-    }
-
-    public float getMaxThroughput() {
-        float max = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getThroughput() > max) {
-                max = steam.getThroughput();
-            }
-        }
-        return max;
-    }
-
-    public float getMaxPressure() {
-        float max = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getPressure() > max) {
-                max = steam.getPressure();
-            }
-        }
-        return max;
-    }
-
-    public int getActiveDirectionCount() {
-        int count = 0;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getPressure() > 0.001f) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    // IHaveGoggleInformation
-    // empty lmao, maybe implemented in the future
-
-    // ITurbineEndpoint
-    @Override
-    public boolean canTurbineConnect(Direction direction) {
-        // Pipes can accept turbine exhaust from any direction they have a connection
-        BlockState state = getBlockState();
-        if (state.getBlock() instanceof PressurizedPipeBlock) {
-            return PressurizedPipeBlock.getConnection(state, direction);
-        }
-        return false;
-    }
-
-    @Override
-    public SteamData produceTurbineSteam(Direction from) {
-        return SteamData.empty();
-    }
-
-    public void clearState() {
-        for (Direction dir : Direction.values()) {
-            receivedSteam.put(dir, SteamData.empty());
-            visualPressure.put(dir, 0f);
-            visualSteamType.put(dir, SteamType.REGULAR);
-            visualQuality.put(dir, 1f);
-        }
-    }
+    protected void write(CompoundTag t, HolderLookup.Provider r, boolean p) { super.write(t, r, p); }
 }
