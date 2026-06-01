@@ -1,10 +1,11 @@
 package com.xciel.steamturbine.content.shaft;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
-import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -24,6 +25,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     private float aggregatedSpeed = 0f;
     private float aggregatedThroughput = 0f;
     private int connectedTurbineCount = 0;
+    private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     public TurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -31,6 +33,13 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        movementDirection = new ScrollOptionBehaviour<>(
+            WindmillBearingBlockEntity.RotationDirection.class,
+            Component.translatable("create.contraptions.windmill.rotation_direction"),
+            this,
+            new TurbineShaftDirectionOption());
+        movementDirection.withCallback(v -> updateGeneratedRotation());
+        behaviours.add(movementDirection);
     }
 
     @Override
@@ -88,7 +97,12 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float getGeneratedSpeed() {
-        return Math.min(aggregatedSpeed, 256f);
+        float speed = Math.min(aggregatedSpeed, 256f);
+        // Apply direction: 0 = CLOCKWISE (positive), 1 = COUNTERCLOCKWISE (negative)
+        if (movementDirection != null && movementDirection.getValue() == 1) {
+            speed = -speed;
+        }
+        return speed;
     }
 
     public float getCappedSpeed() {
@@ -106,18 +120,12 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     public float calculateAddedStressCapacity() {
         if (aggregatedSpeed <= 0f) return 0f;
 
-        float maxStressCapacity = 900000f;
-        float stageMultiplier = 0.52f + (connectedTurbineCount * 0.00545f);
+        float maxStressCapacity = 500000f;
+        float stageMultiplier = 0.23f + (connectedTurbineCount * 0.00505f);
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
 
-        if (calculatedStressCapacity > maxStressCapacity) {
-            float excessRatio = Math.max(0f, calculatedStressCapacity - maxStressCapacity) / maxStressCapacity;
-            float reductionFactor = 1.0f / (1.0f + excessRatio);
-            calculatedStressCapacity = calculatedStressCapacity * reductionFactor;
-        }
-
         return Math.round(calculatedStressCapacity);
-    }
+        }
 
     public void onNeighborChanged() {
         updateFromConnectedTurbines();

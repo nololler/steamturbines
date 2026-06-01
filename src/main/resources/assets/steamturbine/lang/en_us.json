@@ -4,7 +4,18 @@
   "block.steamturbine.steam_boiler": "Steam Boiler",
   "block.steamturbine.steam_compressor": "Steam Compressor",
   "block.steamturbine.steam_turbine": "Steam Turbine",
-  "block.steamturbine.turbine_shaft": "Turbine Shaft",
+  "block.steamturbine.turbine_shaft": "Steam Turbine Shaft",
+
+  "block.steamturbine.steam_boiler.tooltip.summary": "Produces Steam which can be fed to Steam Turbines, Steam Compressors, and Pressurized Steam Pipes. Make sure to feed it fuel and water!",
+
+  "block.steamturbine.pressure_pipe.tooltip.summary": "Moves Steam to where you need it to go. Use it to connect machines together.",
+
+  "block.steamturbine.steam_compressor.tooltip.summary": "Uses rotational force to compress Steam to have higher pressure and throughput. Place it between Steam Boilers and Steam Turbines.",
+
+  "block.steamturbine.steam_turbine.tooltip.summary": "Consumes Steam to generate power which is sent to the Steam Turbine Shaft. You can chain 10 of these together for higher SU.",
+
+  "block.steamturbine.turbine_shaft.tooltip.summary": "Generates SU from chained Steam Turbines.",
+
   "steamturbine.goggles.boiler.header": " Steam Boiler  ",
   "steamturbine.goggles.boiler.status.active": "  Status: Active  ",
   "steamturbine.goggles.boiler.status.heating": " Status: Heating  ",
