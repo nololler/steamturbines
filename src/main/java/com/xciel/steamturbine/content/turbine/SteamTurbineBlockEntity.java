@@ -33,6 +33,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     private float stageEfficiency = 1.0f;
     private SteamData lastInputSteam = SteamData.empty();
     private SteamData lastExhaustSteam = SteamData.empty();
+    private Direction inputSource = null;  // Track where steam came from for exhaust output
 
     public SteamTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -76,17 +77,15 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
             lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
-            // Push to next in chain (turbine OR pipe that connects to next turbine)
-            if (!lastExhaustSteam.isEmpty()) {
-                BlockPos frontPos = worldPosition.relative(facing);
-                if (level.isLoaded(frontPos)) {
-                    var frontBE = level.getBlockEntity(frontPos);
-                    if (frontBE instanceof ITurbineEndpoint nextTurbine && nextTurbine.canTurbineConnect(facing.getOpposite())) {
-                        if (nextTurbine instanceof ISteamConsumer consumer) {
-                            consumer.receiveSteam(facing.getOpposite(), lastExhaustSteam);
-                        } else if (nextTurbine instanceof ISteamTransport transport) {
-                            transport.pushSteam(facing.getOpposite(), lastExhaustSteam);
-                        }
+            // Output exhaust to the pipe we received from (input source)
+            if (inputSource != null && !lastExhaustSteam.isEmpty()) {
+                BlockPos sourcePos = worldPosition.relative(inputSource);
+                if (level.isLoaded(sourcePos)) {
+                    var sourceBE = level.getBlockEntity(sourcePos);
+                    if (sourceBE instanceof com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity pipe) {
+                        pipe.receiveSteam(inputSource.getOpposite(), lastExhaustSteam);
+                    } else if (sourceBE instanceof ISteamTransport transport) {
+                        transport.pushSteam(inputSource.getOpposite(), lastExhaustSteam);
                     }
                 }
             }
@@ -119,6 +118,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     @Override
     public void receiveSteam(Direction direction, SteamData steam) {
         if (steam == null || steam.isEmpty()) return;
+        inputSource = direction;  // Track where steam came from
         if (inputSteam.isEmpty()) {
             inputSteam = steam;
         } else {
@@ -134,25 +134,22 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
 
     @Override
     public boolean canReceive(Direction direction) {
-        Direction facing = getBlockState().getValue(SteamTurbineBlock.FACING);
-        return direction == facing.getOpposite(); // only SOUTH face = input
+        return true;  // Accept from any direction in tank model
     }
 
     @Override
     public float getMaxReceiveRate(Direction direction) {
-        return direction == getBlockState().getValue(SteamTurbineBlock.FACING).getOpposite() ? 100f : 0f;
+        return 100f;  // Accept any amount from any direction
     }
 
     @Override
     public boolean canConnect(Direction direction) {
-        Direction facing = getBlockState().getValue(SteamTurbineBlock.FACING);
-        return direction == facing.getOpposite(); // only SOUTH face accepts pipe connections
+        return true;  // Accept pipe connections from any direction
     }
 
     @Override
     public boolean canTurbineConnect(Direction direction) {
-        Direction facing = getBlockState().getValue(SteamTurbineBlock.FACING);
-        return direction == facing.getOpposite() || direction == facing; // accepts from behind and front
+        return true;  // Can connect turbines from any direction
     }
 
     @Override

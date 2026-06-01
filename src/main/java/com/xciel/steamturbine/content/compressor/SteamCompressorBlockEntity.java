@@ -184,7 +184,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     // ISteamEndpoint
     @Override
     public boolean canConnect(Direction direction) {
-        return direction == getSteamInputDirection();
+        return true;  // Accept connections from any direction in tank model
     }
 
     // ISteamProducer
@@ -195,18 +195,18 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
 
     @Override
     public float getMaxProduceRate(Direction from) {
-        return from == getTurbineOutputDirection() ? 100f : 0f;
+        return 100f;  // Allow production to any direction
     }
 
     @Override
     public boolean canProduce(Direction direction) {
-        return direction == getTurbineOutputDirection();
+        return true;  // Can produce to any direction in tank model
     }
 
     // ITurbineEndpoint
     @Override
     public boolean canTurbineConnect(Direction direction) {
-        return direction == getTurbineOutputDirection();
+        return true;  // Can connect to any direction
     }
 
     @Override

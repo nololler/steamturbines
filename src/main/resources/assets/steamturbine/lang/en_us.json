@@ -5,6 +5,7 @@
   "block.steamturbine.steam_compressor": "Steam Compressor",
   "block.steamturbine.steam_turbine": "Steam Turbine",
   "block.steamturbine.turbine_shaft": "Steam Turbine Shaft",
+  "block.steamturbine.steam_pump": "Pressurized Steam Pump",
 
   "block.steamturbine.steam_boiler.tooltip.summary": "Produces Steam which can be fed to Steam Turbines, Steam Compressors, and Pressurized Steam Pipes. Make sure to feed it fuel and water!",
 

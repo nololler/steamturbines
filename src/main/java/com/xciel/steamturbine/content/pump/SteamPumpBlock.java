@@ -1,0 +1,111 @@
+package com.xciel.steamturbine.content.pump;
+
+import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
+import com.simibubi.create.content.kinetics.base.IRotate;
+import com.simibubi.create.foundation.block.IBE;
+import com.xciel.steamturbine.AllBlockEntityTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+
+public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<SteamPumpBlockEntity>, IRotate {
+
+    private static final VoxelShape SHAPE_NORTH = Shapes.or(
+        Block.box(3.0, 3.0, 4.0, 13.0, 13.0, 12.0),
+        Block.box(3.0, 3.0, 0.0, 13.0, 13.0, 2.0),
+        Block.box(2.0, 2.0, 14.0, 14.0, 14.0, 16.0),
+        Block.box(4.0, 4.0, 2.0, 12.0, 12.0, 4.0),
+        Block.box(4.0, 4.0, 12.0, 12.0, 12.0, 14.0),
+        Block.box(13.0, 5.0, 5.0, 15.0, 11.0, 11.0),
+        Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0)
+    );
+
+    private static final VoxelShape SHAPE_EAST = Shapes.or(
+        Block.box(4.0, 3.0, 3.0, 12.0, 13.0, 13.0),
+        Block.box(14.0, 3.0, 3.0, 16.0, 13.0, 13.0),
+        Block.box(0.0, 2.0, 2.0, 2.0, 14.0, 14.0),
+        Block.box(12.0, 4.0, 4.0, 14.0, 12.0, 12.0),
+        Block.box(2.0, 4.0, 4.0, 4.0, 12.0, 12.0),
+        Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0),
+        Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0)
+    );
+
+    private static final VoxelShape SHAPE_SOUTH = Shapes.or(
+        Block.box(3.0, 3.0, 4.0, 13.0, 13.0, 12.0),
+        Block.box(3.0, 3.0, 14.0, 13.0, 13.0, 16.0),
+        Block.box(2.0, 2.0, 0.0, 14.0, 14.0, 2.0),
+        Block.box(4.0, 4.0, 12.0, 12.0, 12.0, 14.0),
+        Block.box(4.0, 4.0, 2.0, 12.0, 12.0, 4.0),
+        Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0),
+        Block.box(13.0, 5.0, 5.0, 15.0, 11.0, 11.0)
+    );
+
+    private static final VoxelShape SHAPE_WEST = Shapes.or(
+        Block.box(4.0, 3.0, 3.0, 12.0, 13.0, 13.0),
+        Block.box(0.0, 3.0, 3.0, 2.0, 13.0, 13.0),
+        Block.box(14.0, 2.0, 2.0, 16.0, 14.0, 14.0),
+        Block.box(2.0, 4.0, 4.0, 4.0, 12.0, 12.0),
+        Block.box(12.0, 4.0, 4.0, 14.0, 12.0, 12.0),
+        Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0),
+        Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0)
+    );
+
+    private static final VoxelShape SHAPE_UP = Shapes.or(
+        Block.box(3.0, 4.0, 3.0, 13.0, 12.0, 13.0),
+        Block.box(3.0, 14.0, 3.0, 13.0, 16.0, 13.0),
+        Block.box(2.0, 0.0, 2.0, 14.0, 2.0, 14.0),
+        Block.box(4.0, 12.0, 4.0, 12.0, 14.0, 12.0),
+        Block.box(4.0, 2.0, 4.0, 12.0, 4.0, 12.0),
+        Block.box(13.0, 5.0, 5.0, 15.0, 11.0, 11.0),
+        Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0)
+    );
+
+    private static final VoxelShape SHAPE_DOWN = Shapes.or(
+        Block.box(3.0, 4.0, 3.0, 13.0, 12.0, 13.0),
+        Block.box(3.0, 0.0, 3.0, 13.0, 2.0, 13.0),
+        Block.box(2.0, 14.0, 2.0, 14.0, 16.0, 14.0),
+        Block.box(4.0, 2.0, 4.0, 12.0, 4.0, 12.0),
+        Block.box(4.0, 12.0, 4.0, 12.0, 14.0, 12.0),
+        Block.box(13.0, 5.0, 5.0, 15.0, 11.0, 11.0),
+        Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0)
+    );
+
+    public SteamPumpBlock(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
+        return switch (state.getValue(FACING)) {
+            case SOUTH -> SHAPE_SOUTH;
+            case EAST -> SHAPE_EAST;
+            case WEST -> SHAPE_WEST;
+            case UP -> SHAPE_UP;
+            case DOWN -> SHAPE_DOWN;
+            default -> SHAPE_NORTH;
+        };
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getShape(state, level, pos, context);
+    }
+
+    @Override
+    public Class<SteamPumpBlockEntity> getBlockEntityClass() {
+        return SteamPumpBlockEntity.class;
+    }
+
+    @Override
+    public BlockEntityType<? extends SteamPumpBlockEntity> getBlockEntityType() {
+        return AllBlockEntityTypes.STEAM_PUMP.get();
+    }
+}

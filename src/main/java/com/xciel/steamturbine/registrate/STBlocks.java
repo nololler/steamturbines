@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
+import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
@@ -54,6 +55,13 @@ public class STBlocks {
             .initialProperties(SharedProperties::stone)
             .transform(pickaxeOnly())
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 256.0))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<SteamPumpBlock> STEAM_PUMP = REGISTRATE.block("steam_pump", SteamPumpBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .transform(pickaxeOnly())
             .item()
             .build()
             .register();
