@@ -63,31 +63,27 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         Direction facing = state.getValue(TurbineShaftBlock.FACING);
 
         Direction walkDir = facing.getOpposite();
-        BlockPos current = worldPosition.relative(walkDir);
+
+        // Use the network walker to find all turbines through pipes
+        TurbineNetworkWalker walker = new TurbineNetworkWalker(level);
+        List<TurbineNetworkWalker.TurbineInfo> turbines = walker.findTurbines(worldPosition, walkDir);
 
         float totalSpeed = 0f;
         float maxSpeed = 0f;
         float totalThroughput = 0f;
         int count = 0;
 
-        while (level.isLoaded(current)) {
-            var be = level.getBlockEntity(current);
-            if (be instanceof SteamTurbineBlockEntity turbine) {
-                float exhaustThroughput = turbine.getExhaustThroughput();
-                if (exhaustThroughput <= 0) break;  // Stop at first turbine with no output
+        for (TurbineNetworkWalker.TurbineInfo info : turbines) {
+            float exhaustThroughput = info.turbine.getExhaustThroughput();
+            if (exhaustThroughput <= 0) continue;
 
-                float turbineSpeed = Math.abs(turbine.getTurbineSpeed());
-                totalSpeed += turbineSpeed;
-                if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
-                totalThroughput += exhaustThroughput;
-                count++;
-                current = current.relative(walkDir);
-            } else {
-                break;
-            }
+            float turbineSpeed = Math.abs(info.turbine.getTurbineSpeed());
+            totalSpeed += turbineSpeed;
+            if (turbineSpeed > maxSpeed) maxSpeed = turbineSpeed;
+            totalThroughput += exhaustThroughput;
+            count++;
         }
 
-        float prevSpeed = aggregatedSpeed;
         aggregatedSpeed = totalSpeed;
         aggregatedThroughput = totalThroughput;
         connectedTurbineCount = count;
@@ -98,7 +94,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     public float getGeneratedSpeed() {
         float speed = Math.min(aggregatedSpeed, 256f);
-        // Apply direction: 0 = CLOCKWISE (positive), 1 = COUNTERCLOCKWISE (negative)
         if (movementDirection != null && movementDirection.getValue() == 1) {
             speed = -speed;
         }
@@ -125,7 +120,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
 
         return Math.round(calculatedStressCapacity);
-        }
+    }
 
     public void onNeighborChanged() {
         updateFromConnectedTurbines();
