@@ -24,7 +24,7 @@ import java.util.List;
 public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamConsumer, ISteamEndpoint, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float MAX_RPM = 256f;
     private static final float MIN_PRESSURE_FOR_OPERATION = 0.5f;
-    private static final float MAX_THROUGHPUT = 2048.0f;
+    private static final float MAX_THROUGHPUT = 50.0f;
     private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
 
     private SteamData inputSteam = SteamData.empty();

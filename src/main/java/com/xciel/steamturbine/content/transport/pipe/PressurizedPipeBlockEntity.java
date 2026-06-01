@@ -33,21 +33,22 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
     private static final float MAX_THROUGHPUT = 1.0f;  // Pipes act as bottlenecks - low throughput limit
+    private static final float MAX_STORAGE = 100f;     // Each pipe has its own storage of steam
 
-    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
+    private float storage = 0f;  // Pipe's internal steam reserve
+    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);  // For visual only
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamType> visualSteamType = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualQuality = new EnumMap<>(Direction.class);
-    private final EnumMap<Direction, SteamData> runtimeBuffer = new EnumMap<>(Direction.class);
 
     public PressurizedPipeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        storage = 0f;
         for (Direction dir : Direction.values()) {
             receivedSteam.put(dir, SteamData.empty());
             visualPressure.put(dir, 0f);
             visualSteamType.put(dir, SteamType.REGULAR);
             visualQuality.put(dir, 1f);
-            runtimeBuffer.put(dir, SteamData.empty());
         }
     }
 
@@ -57,23 +58,10 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     public void receiveSteam(Direction from, SteamData steam) {
         if (steam.isEmpty()) return;
-        SteamData existing = receivedSteam.get(from);
-        float newThroughput = Math.min(steam.getThroughput(), MAX_THROUGHPUT);
-        if (existing != null && !existing.isEmpty()) {
-            float combinedThroughput = existing.getThroughput() + newThroughput;
-            combinedThroughput = Math.min(combinedThroughput, MAX_THROUGHPUT);
-            receivedSteam.put(from, existing.withThroughput(combinedThroughput));
-        } else {
-            receivedSteam.put(from, steam.withThroughput(newThroughput));
-        }
-        SteamData buffered = runtimeBuffer.get(from);
-        if (buffered != null && !buffered.isEmpty()) {
-            float bufferedThroughput = buffered.getThroughput() + newThroughput;
-            bufferedThroughput = Math.min(bufferedThroughput, MAX_THROUGHPUT);
-            runtimeBuffer.put(from, buffered.withThroughput(bufferedThroughput));
-        } else {
-            runtimeBuffer.put(from, steam.withThroughput(newThroughput));
-        }
+        // Add to pipe's storage, capped at MAX_STORAGE
+        storage = Math.min(storage + steam.getPressure(), MAX_STORAGE);
+        // Store for visual feedback
+        receivedSteam.put(from, steam);
         setChanged();
     }
 
@@ -114,7 +102,6 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             // Clear steam when source connection is lost
             if (wasConnected && !isConnected) {
                 receivedSteam.put(dir, SteamData.empty());
-                runtimeBuffer.put(dir, SteamData.empty());
             }
         }
 
@@ -147,33 +134,30 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     private void serverPropagation() {
-        BlockState state = getBlockState();
-        for (Direction inDir : Direction.values()) {
-            SteamData steam = receivedSteam.get(inDir);
-            if (steam == null || !steam.shouldPropagate()) {
-                receivedSteam.put(inDir, SteamData.empty());
-            } else {
-                for (Direction outDir : Direction.values()) {
-                    if (outDir == inDir) continue;
-                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
-                    if (wouldCreateCompressorLoop(inDir, outDir, steam)) continue;
-                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
-                    propagateToNeighbor(outDir, steam);
-                }
-                receivedSteam.put(inDir, SteamData.empty());
-            }
+        if (storage <= 0) return;
 
-            SteamData buffered = runtimeBuffer.get(inDir);
-            if (buffered != null && buffered.shouldPropagate()) {
-                for (Direction outDir : Direction.values()) {
-                    if (outDir == inDir) continue;
-                    if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
-                    if (wouldCreateCompressorLoop(inDir, outDir, buffered)) continue;
-                    if (wouldRouteTurbineToCompressor(inDir, outDir)) continue;
-                    propagateToNeighbor(outDir, buffered);
-                }
+        BlockState state = getBlockState();
+        for (Direction outDir : Direction.values()) {
+            if (!PressurizedPipeBlock.getConnection(state, outDir)) continue;
+
+            Direction oppositeOut = outDir.getOpposite();
+            BlockPos outNeighborPos = worldPosition.relative(oppositeOut);
+            if (!level.isLoaded(outNeighborPos)) continue;
+
+            var outNeighbor = level.getBlockEntity(outNeighborPos);
+            if (!(outNeighbor instanceof SteamCompressorBlockEntity)) continue;
+
+            // Destination is a compressor - check if source is turbine or compressor
+            // Walk back from the pipe in oppositeOut direction to find sources
+            if (walkBackFromTurbineSource(oppositeOut, 99)) continue;
+            if (walkBackFromCompressorSource(oppositeOut, 99)) continue;
+
+            // Propagate from storage to compressor
+            float amount = Math.min(storage, MAX_THROUGHPUT);
+            if (amount > 0.01f) {
+                propagateToNeighbor(outDir, SteamData.of(amount, SteamType.REGULAR, 1f, 1f, MAX_THROUGHPUT));
+                storage -= amount;
             }
-            runtimeBuffer.put(inDir, SteamData.empty());
         }
     }
 
@@ -192,7 +176,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         if (!outToCompressorInput) return false;
 
         // Walk back through pipes to find if source is a compressor
-        return walkBackFromCompressorSource(inDir, 50);
+        return walkBackFromCompressorSource(inDir, 99);
     }
 
     private boolean walkBackFromCompressorSource(Direction fromDir, int depth) {
@@ -230,7 +214,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         if (!outToCompressorInput) return false;
 
         // Walk back through pipes to find if source is a turbine
-        return walkBackFromTurbineSource(inDir, 50);
+        return walkBackFromTurbineSource(inDir, 99);
     }
 
     private boolean walkBackFromTurbineSource(Direction fromDir, int depth) {
@@ -276,25 +260,20 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     private void clientVisualUpdate() {
+        // Visual shows storage level (pressure)
         for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            float targetPressure = steam.getPressure();
-            SteamType targetType = steam.getSteamType();
-            float targetQuality = steam.getQuality();
-
             float currentPressure = visualPressure.get(dir);
+            float targetPressure = storage;  // Use storage as pressure indicator
 
             float newPressure = currentPressure + (targetPressure - currentPressure) * LERP_FACTOR;
             newPressure *= DECAY_FACTOR;
             if (newPressure < 0.01f) newPressure = 0f;
 
             float currentQuality = visualQuality.get(dir);
-            float newQuality = currentQuality + (targetQuality - currentQuality) * LERP_FACTOR;
-            newQuality *= 0.998f;
+            float newQuality = currentQuality * 0.998f;
             if (newQuality < 0.01f) newQuality = 0f;
 
             visualPressure.put(dir, newPressure);
-            visualSteamType.put(dir, targetType);
             visualQuality.put(dir, newQuality);
         }
     }
@@ -359,33 +338,19 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     @Override
     public SteamData pullSteam(Direction direction, float amount) {
-        SteamData steam = runtimeBuffer.get(direction);
-        if (steam == null || steam.isEmpty()) {
-            steam = receivedSteam.get(direction);
-            if (steam == null || steam.isEmpty()) {
-                return SteamData.empty();
-            }
-        }
-        float extracted = Math.min(steam.getPressure(), amount);
-        float remaining = steam.getPressure() - extracted;
-        float extractedRatio = steam.getPressure() > 0 ? extracted / steam.getPressure() : 0f;
-        float extractedThroughput = steam.getThroughput() * extractedRatio;
-        float remainingThroughput = steam.getThroughput() * (remaining / steam.getPressure());
-        if (remaining <= SteamConstants.PROPAGATION_THRESHOLD) {
-            runtimeBuffer.put(direction, SteamData.empty());
-            receivedSteam.put(direction, SteamData.empty());
-        } else {
-            runtimeBuffer.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
-            receivedSteam.put(direction, steam.withPressure(remaining).withThroughput(remainingThroughput));
-        }
-        return SteamData.of(extracted, steam.getSteamType(), steam.getQuality(), 1f, extractedThroughput);
+        if (storage <= 0) return SteamData.empty();
+        float extracted = Math.min(storage, amount);
+        storage -= extracted;
+        return SteamData.of(extracted, SteamType.REGULAR, 1f, 1f, extracted);
     }
 
     @Override
     public float getFlowRate(Direction direction) {
-        SteamData steam = receivedSteam.get(direction);
-        if (steam == null) return 0f;
-        return steam.getThroughput();
+        return storage;
+    }
+
+    public float getStorage() {
+        return storage;
     }
 
     public float getOutboundPressure(Direction direction) {
@@ -393,14 +358,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     public float getActualThroughput() {
-        float total = 0f;
-        for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null) {
-                total += steam.getThroughput();
-            }
-        }
-        return total;
+        return storage;
     }
 
     public float getTotalPressure() {
