@@ -32,7 +32,7 @@ import java.util.List;
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 1.0f;  // Pipes act as bottlenecks - low throughput limit
+    private static final float MAX_THROUGHPUT = 2.0f;  // Pipes act as bottlenecks - low throughput limit
     private static final float MAX_STORAGE = 100f;     // Each pipe has its own storage of steam
 
     private float storage = 0f;  // Pipe's internal steam reserve
@@ -63,6 +63,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         // Store for visual feedback
         receivedSteam.put(from, steam);
         setChanged();
+        sendData();
     }
 
     @Override
@@ -156,6 +157,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 storage -= amount;
             }
         }
+        setChanged();
+        sendData();
     }
 
     private boolean wouldCreateCompressorLoop(Direction inDir, Direction outDir, SteamData steam) {
@@ -278,9 +281,18 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         }
     }
 
+    // IHaveGoggleInformation
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        tooltip.add(Component.literal("    Steam Reserves: ").withStyle(ChatFormatting.GOLD)
+            .append(Component.literal(String.format("%.0f / %.0f", storage, MAX_STORAGE)).withStyle(ChatFormatting.WHITE)));
+        return true;
+    }
+
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
+        storage = tag.getFloat("Storage");
         for (Direction dir : Direction.values()) {
             String prefix = "S_" + dir.getName() + "_";
             if (tag.contains(prefix + "P")) {
@@ -302,6 +314,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
+        tag.putFloat("Storage", storage);
         for (Direction dir : Direction.values()) {
             String prefix = "S_" + dir.getName() + "_";
             SteamData steam = receivedSteam.get(dir);
