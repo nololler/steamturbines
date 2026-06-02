@@ -31,7 +31,7 @@ public class STBlocks {
             .initialProperties(SharedProperties::softMetal)
             .properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
             .transform(pickaxeOnly())
-            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 8.0))
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 16.0))
             .item()
             .build()
             .register();
@@ -62,6 +62,7 @@ public class STBlocks {
     public static final BlockEntry<SteamPumpBlock> STEAM_PUMP = REGISTRATE.block("steam_pump", SteamPumpBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 16.0))
             .item()
             .build()
             .register();
