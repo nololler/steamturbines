@@ -28,7 +28,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint {
+public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamConsumer {
     private static final float MAX_TARGET_RATE = 100f;
     private static final int SCROLL_MIN = 0;
     private static final int SCROLL_MAX = 100;
@@ -410,5 +410,25 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
     @Override
     public boolean canConnect(Direction direction) {
         return direction == pullDirection || direction == pushDirection;
+    }
+
+    @Override
+    public void receiveSteam(Direction direction, SteamData steam) {
+        if (steam == null || steam.isEmpty()) return;
+        lastPulledSteam += steam.getThroughput();
+        storedSteamType = steam.getSteamType();
+        totalPulledSteam += steam.getThroughput();
+        setChanged();
+        sendData();
+    }
+
+    @Override
+    public boolean canReceive(Direction direction) {
+        return direction == pullDirection || direction == pushDirection;
+    }
+
+    @Override
+    public float getMaxReceiveRate(Direction direction) {
+        return 100f;
     }
 }

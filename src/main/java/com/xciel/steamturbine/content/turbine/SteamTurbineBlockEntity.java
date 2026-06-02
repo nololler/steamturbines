@@ -3,6 +3,7 @@ package com.xciel.steamturbine.content.turbine;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
@@ -77,15 +78,20 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
             lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
-            // Output exhaust to the pipe we received from (input source)
-            if (inputSource != null && !lastExhaustSteam.isEmpty()) {
-                BlockPos sourcePos = worldPosition.relative(inputSource);
-                if (level.isLoaded(sourcePos)) {
-                    var sourceBE = level.getBlockEntity(sourcePos);
-                    if (sourceBE instanceof com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity pipe) {
-                        pipe.receiveSteam(inputSource.getOpposite(), lastExhaustSteam);
-                    } else if (sourceBE instanceof ISteamTransport transport) {
-                        transport.pushSteam(inputSource.getOpposite(), lastExhaustSteam);
+            // Output exhaust in the FACING direction (forward to next turbine or pipe)
+            Direction outputDir = facing;
+            BlockPos outputPos = worldPosition.relative(outputDir);
+            if (level.isLoaded(outputPos)) {
+                var outputBE = level.getBlockEntity(outputPos);
+                if (outputBE instanceof PressurizedPipeBlockEntity pipe) {
+                    pipe.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
+                } else if (outputBE instanceof ISteamTransport transport) {
+                    if (transport.canConnect(outputDir.getOpposite())) {
+                        transport.pushSteam(outputDir.getOpposite(), lastExhaustSteam);
+                    }
+                } else if (outputBE instanceof ISteamConsumer consumer) {
+                    if (consumer.canReceive(outputDir.getOpposite())) {
+                        consumer.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
                     }
                 }
             }

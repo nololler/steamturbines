@@ -1,5 +1,6 @@
 package com.xciel.steamturbine.content.shaft;
 
+import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
@@ -58,14 +59,11 @@ public class TurbineNetworkWalker {
         BlockState state = level.getBlockState(current);
         Block block = state.getBlock();
 
-        // If it's a turbine, record it and continue walking through
-        if (block instanceof SteamTurbineBlock) {
-            var be = level.getBlockEntity(current);
-            if (be instanceof SteamTurbineBlockEntity turbine) {
-                foundTurbines.add(new TurbineInfo(current, turbine, path.size() - 1, new ArrayList<>(path)));
-
-                // Continue walking past the turbine in the same direction we came from
-                BlockPos next = current.relative(cameFrom.getOpposite());
+        // If it's a pipe, pass through (don't record, just continue walking)
+        if (block instanceof PressurizedPipeBlock) {
+            // Walk in the direction we came from (pass through pipes)
+            BlockPos next = current.relative(cameFrom.getOpposite());
+            if (!visited.contains(next)) {
                 List<BlockPos> newPath = new ArrayList<>(path);
                 newPath.add(next);
                 walk(newPath, next, cameFrom);
@@ -73,40 +71,36 @@ public class TurbineNetworkWalker {
             return;
         }
 
-        // If it's a pipe, explore all connected directions
-        if (block instanceof PressurizedPipeBlock) {
-            // Check all 6 directions for valid connections
-            for (Direction dir : Direction.values()) {
-                if (dir == cameFrom) continue;
+        // If it's a pump, pass through (don't record, just continue walking)
+        if (block instanceof SteamPumpBlock) {
+            // Walk in the direction we came from (pass through pumps)
+            BlockPos next = current.relative(cameFrom.getOpposite());
+            if (!visited.contains(next)) {
+                List<BlockPos> newPath = new ArrayList<>(path);
+                newPath.add(next);
+                walk(newPath, next, cameFrom);
+            }
+            return;
+        }
 
-                BlockPos next = current.relative(dir);
-                BlockState nextState = level.getBlockState(next);
-                Block nextBlock = nextState.getBlock();
+        // If it's a turbine, record it and continue walking
+        if (block instanceof SteamTurbineBlock) {
+            var be = level.getBlockEntity(current);
+            if (be instanceof SteamTurbineBlockEntity turbine) {
+                foundTurbines.add(new TurbineInfo(current, turbine, path.size() - 1, new ArrayList<>(path)));
 
-                // Skip if same pipe already visited
-                if (nextBlock instanceof PressurizedPipeBlock) {
-                    if (!visited.contains(next)) {
-                        List<BlockPos> newPath = new ArrayList<>(path);
-                        newPath.add(next);
-                        walk(newPath, next, dir.getOpposite());
-                    }
-                    continue;
-                }
-
-                // If it's a turbine, check if it can connect from this direction
-                if (nextBlock instanceof SteamTurbineBlock) {
-                    var nextBE = level.getBlockEntity(next);
-                    if (nextBE instanceof ITurbineEndpoint endpoint) {
-                        // Check if turbine accepts connection from this direction
-                        if (endpoint.canTurbineConnect(dir.getOpposite())) {
-                            List<BlockPos> newPath = new ArrayList<>(path);
-                            newPath.add(next);
-                            walk(newPath, next, dir.getOpposite());
-                        }
-                    }
+                // Continue walking past the turbine in the same direction we came from
+                BlockPos next = current.relative(cameFrom.getOpposite());
+                if (!visited.contains(next)) {
+                    List<BlockPos> newPath = new ArrayList<>(path);
+                    newPath.add(next);
+                    walk(newPath, next, cameFrom);
                 }
             }
+            return;
         }
+
+        // For any other block, stop walking
     }
 
     public static TurbineInfo findLastTurbine(List<TurbineInfo> turbines) {
