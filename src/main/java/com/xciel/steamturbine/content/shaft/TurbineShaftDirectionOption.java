@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 public class TurbineShaftDirectionOption extends ValueBoxTransform.Sided {
 
     private static final float POSITION_X = 8;
-    private static final float POSITION_Y = 13;
+    private static final float POSITION_Y = 14.0f;
     private static final float POSITION_Z = 8;
 
     @Override

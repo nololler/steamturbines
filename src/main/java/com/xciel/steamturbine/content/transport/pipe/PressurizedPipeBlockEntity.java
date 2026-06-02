@@ -25,7 +25,7 @@ import java.util.List;
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 2.0f;
+    private static final float MAX_THROUGHPUT = 10.0f;
     private static final float MAX_STORAGE = 100f;
 
     private float storage = 0f;
@@ -236,130 +236,16 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     @Override
     public SteamData pullSteam(Direction direction, float amount) {
-        return pullSteamInternal(direction, amount, null);
-    }
-
-    public SteamData pullSteamInternal(Direction fromDirection, float amount, BlockPos origin) {
-        if (storage <= 0 && amount > 0) {
-            return pullFromNeighbors(fromDirection, amount, origin);
-        }
-
+        if (storage <= 0) return SteamData.empty();
         float maxExtract = Math.min(amount, MAX_THROUGHPUT);
         float extracted = Math.min(storage, maxExtract);
         storage -= extracted;
-        float remaining = amount - extracted;
-
-        if (remaining > 0.01f) {
-            SteamData fromNeighbors = pullFromNeighbors(fromDirection, remaining, origin);
-            float totalExtracted = extracted + fromNeighbors.getThroughput();
-            return SteamData.of(totalExtracted, storedSteamType, 1f, 1f, totalExtracted);
-        }
-
         return SteamData.of(extracted, storedSteamType, 1f, 1f, extracted);
-    }
-
-    private SteamData pullFromNeighbors(Direction excludeDir, float amount, BlockPos origin) {
-        if (level == null) return SteamData.empty();
-
-        float totalPulled = 0f;
-        SteamType pulledType = storedSteamType;
-        float remaining = amount;
-
-        for (Direction dir : Direction.values()) {
-            if (dir == excludeDir) continue;
-            if (remaining <= 0.01f) break;
-
-            BlockPos neighborPos = getBlockPos().relative(dir);
-            if (origin != null && neighborPos.equals(origin)) continue;
-
-            if (!level.isLoaded(neighborPos)) continue;
-
-            BlockState neighborState = level.getBlockState(neighborPos);
-            Block neighborBlock = neighborState.getBlock();
-
-            if (!(neighborBlock instanceof PressurizedPipeBlock)) continue;
-
-            var neighborBE = level.getBlockEntity(neighborPos);
-            if (!(neighborBE instanceof PressurizedPipeBlockEntity neighborPipe)) continue;
-
-            float available = neighborPipe.getStorage();
-            if (available <= 0) continue;
-
-            float toPull = Math.min(remaining, Math.min(available, MAX_THROUGHPUT));
-            if (toPull > 0.01f) {
-                SteamData pulled = neighborPipe.pullSteamInternal(dir.getOpposite(), toPull, getBlockPos());
-                if (!pulled.isEmpty()) {
-                    totalPulled += pulled.getThroughput();
-                    remaining -= pulled.getThroughput();
-                    if (pulled.getSteamType() != SteamType.REGULAR) {
-                        pulledType = pulled.getSteamType();
-                    }
-                }
-            }
-        }
-
-        if (totalPulled > 0) {
-            storage -= totalPulled;
-            if (storage < 0) storage = 0;
-            return SteamData.of(totalPulled, pulledType, 1f, 1f, totalPulled);
-        }
-
-        return SteamData.empty();
     }
 
     @Override
     public float getFlowRate(Direction direction) {
-        if (storage > 0) {
-            return Math.min(storage, MAX_THROUGHPUT);
-        }
-        return getFlowRateFromNeighbors(direction);
-    }
-
-    private float getFlowRateFromNeighbors(Direction excludeDir) {
-        if (level == null) return 0f;
-
-        float totalAvailable = 0f;
-
-        for (Direction dir : Direction.values()) {
-            if (dir == excludeDir) continue;
-
-            BlockPos neighborPos = getBlockPos().relative(dir);
-            if (!level.isLoaded(neighborPos)) continue;
-
-            BlockState neighborState = level.getBlockState(neighborPos);
-            Block neighborBlock = neighborState.getBlock();
-
-            if (!(neighborBlock instanceof PressurizedPipeBlock)) continue;
-
-            var neighborBE = level.getBlockEntity(neighborPos);
-            if (!(neighborBE instanceof PressurizedPipeBlockEntity neighborPipe)) continue;
-
-            totalAvailable += neighborPipe.getAvailableFlow(dir.getOpposite(), getBlockPos());
-        }
-
-        return Math.min(totalAvailable, MAX_THROUGHPUT);
-    }
-
-    public float getAvailableFlow(Direction fromDirection, BlockPos origin) {
-        if (storage > 0) {
-            return Math.min(storage, MAX_THROUGHPUT);
-        }
-
-        float fromNeighbors = 0f;
-        for (Direction dir : Direction.values()) {
-            if (dir == fromDirection) continue;
-            if (origin != null && getBlockPos().relative(dir).equals(origin)) continue;
-
-            BlockPos neighborPos = getBlockPos().relative(dir);
-            if (!level.isLoaded(neighborPos)) continue;
-
-            var neighborBE = level.getBlockEntity(neighborPos);
-            if (!(neighborBE instanceof PressurizedPipeBlockEntity neighborPipe)) continue;
-
-            fromNeighbors += neighborPipe.getAvailableFlow(dir.getOpposite(), getBlockPos());
-        }
-
-        return Math.min(fromNeighbors, MAX_THROUGHPUT);
+        return Math.min(storage, MAX_THROUGHPUT);
     }
 
     public float getStorage() {

@@ -221,10 +221,10 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
 
     private float getEffectivePullRate() {
         if (targetPullRate <= 0) return 0f;
-        if (!hasSource()) return 0f;
         float speed = getSpeed();
-        if (speed <= 0) return 0f;
-        float speedMultiplier = speed / SPEED_REFERENCE_RPM;
+        float absSpeed = Math.abs(speed);
+        if (absSpeed < 1f) return 0f;
+        float speedMultiplier = absSpeed / SPEED_REFERENCE_RPM;
         float effectiveRate = BASE_PULL_RATE * (targetPullRate / 100f) * speedMultiplier;
         return Math.max(0f, effectiveRate);
     }
@@ -235,20 +235,14 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
         if (level == null || level.isClientSide) return;
         updateConnectionStates();
         updatePullPushDirections();
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (level == null || level.isClientSide) return;
         pullFromPipes();
         pushToOutput();
     }
 
     private void updatePullPushDirections() {
         Direction facing = getBlockState().getValue(SteamPumpBlock.FACING);
-        pushDirection = facing.getOpposite();
-        pullDirection = facing;
+        pushDirection = facing;
+        pullDirection = facing.getOpposite();
     }
 
     private void updateConnectionStates() {
@@ -280,6 +274,10 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
             return transport.canConnect(dir.getOpposite());
         }
 
+        if (neighborBE instanceof ISteamEndpoint endpoint) {
+            return endpoint.canConnect(dir.getOpposite());
+        }
+
         return false;
     }
 
@@ -297,6 +295,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
 
         for (Direction dir : Direction.values()) {
             if (dir == pushDirection) continue;
+            if (remainingToPull <= 0.01f) break;
 
             BlockPos neighborPos = worldPosition.relative(dir);
             if (!level.isLoaded(neighborPos)) continue;
@@ -314,17 +313,12 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
                 if (!pulled.isEmpty()) {
                     actualPull += pulled.getThroughput();
                     remainingToPull -= pulled.getThroughput();
-                    if (!typeInitialized && pulled.getSteamType() != SteamType.REGULAR) {
-                        pulledType = pulled.getSteamType();
-                        typeInitialized = true;
-                    } else if (!typeInitialized) {
+                    if (!typeInitialized) {
                         pulledType = pulled.getSteamType();
                         typeInitialized = true;
                     }
                 }
             }
-
-            if (remainingToPull <= 0.01f) break;
         }
 
         if (actualPull > 0) {
