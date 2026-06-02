@@ -117,7 +117,7 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
             return alongFirst ? Direction.Axis.Z : Direction.Axis.X;
         }
 
-        return super.getRotationAxis(state);
+        return facing.getClockWise().getAxis();
     }
 
     @Override
@@ -130,6 +130,7 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
             return face.getAxis() == blockAxis;
         }
 
-        return face.getAxis() == getRotationAxis(state);
+        Direction.Axis blockAxis = facing.getClockWise().getAxis();
+        return face.getAxis() == blockAxis;
     }
 }
