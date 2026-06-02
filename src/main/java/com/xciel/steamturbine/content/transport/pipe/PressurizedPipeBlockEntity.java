@@ -163,8 +163,30 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     // IHaveGoggleInformation
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("    Steam Reserves: ").withStyle(ChatFormatting.GOLD)
-            .append(Component.literal(String.format("%.0f / %.0f", storage, MAX_STORAGE)).withStyle(ChatFormatting.WHITE)));
+        tooltip.add(Component.literal("    Pressurized Pipe").withStyle(ChatFormatting.GOLD));
+
+        tooltip.add(Component.literal("    Steam: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.0f / %.0f", storage, MAX_STORAGE)).withStyle(ChatFormatting.WHITE))
+            .append(Component.literal(" [").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(storedSteamType.name()).withStyle(
+                storedSteamType == SteamType.REGULAR ? ChatFormatting.AQUA : ChatFormatting.LIGHT_PURPLE))
+            .append(Component.literal("]").withStyle(ChatFormatting.GRAY)));
+
+        float maxPressure = getMaxPressure();
+        float maxThroughput = getMaxThroughput();
+        if (maxPressure > 0.001f || maxThroughput > 0.001f) {
+            tooltip.add(Component.literal("    Pressure: ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.format("%.1f", maxPressure)).withStyle(ChatFormatting.WHITE)));
+            tooltip.add(Component.literal("    Throughput: ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.format("%.2f/t", maxThroughput)).withStyle(ChatFormatting.WHITE)));
+        }
+
+        int activeDirs = getActiveDirectionCount();
+        if (activeDirs > 0) {
+            tooltip.add(Component.literal("    Active Connections: ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.valueOf(activeDirs)).withStyle(ChatFormatting.WHITE)));
+        }
+
         return true;
     }
 
