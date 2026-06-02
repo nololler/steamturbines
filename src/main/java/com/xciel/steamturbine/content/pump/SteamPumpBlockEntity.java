@@ -11,6 +11,7 @@ import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
+import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
@@ -27,7 +28,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class SteamPumpBlockEntity extends KineticBlockEntity {
+public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint {
     private static final float MAX_TARGET_RATE = 100f;
     private static final int SCROLL_MIN = 0;
     private static final int SCROLL_MAX = 100;
@@ -246,8 +247,8 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
 
     private void updatePullPushDirections() {
         Direction facing = getBlockState().getValue(SteamPumpBlock.FACING);
-        pushDirection = facing;
-        pullDirection = facing.getOpposite();
+        pushDirection = facing.getOpposite();
+        pullDirection = facing;
     }
 
     private void updateConnectionStates() {
@@ -417,5 +418,10 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         for (Direction dir : Direction.values()) {
             tag.putBoolean("conn_" + dir.getName(), connections.getOrDefault(dir, false));
         }
+    }
+
+    @Override
+    public boolean canConnect(Direction direction) {
+        return direction == pullDirection || direction == pushDirection;
     }
 }
