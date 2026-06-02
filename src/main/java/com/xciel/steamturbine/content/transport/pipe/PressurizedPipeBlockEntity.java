@@ -174,18 +174,14 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
         float maxPressure = getMaxPressure();
         float maxThroughput = getMaxThroughput();
-        if (maxPressure > 0.001f || maxThroughput > 0.001f) {
-            tooltip.add(Component.literal("    Pressure: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(String.format("%.1f", maxPressure)).withStyle(ChatFormatting.WHITE)));
-            tooltip.add(Component.literal("    Throughput: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(String.format("%.2f/t", maxThroughput)).withStyle(ChatFormatting.WHITE)));
-        }
+        tooltip.add(Component.literal("    Pressure: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.1f", maxPressure)).withStyle(maxPressure > 0.001f ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
+        tooltip.add(Component.literal("    Throughput: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.format("%.2f/t", maxThroughput)).withStyle(maxThroughput > 0.001f ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
 
         int activeDirs = getActiveDirectionCount();
-        if (activeDirs > 0) {
-            tooltip.add(Component.literal("    Active Connections: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(String.valueOf(activeDirs)).withStyle(ChatFormatting.WHITE)));
-        }
+        tooltip.add(Component.literal("    Active Connections: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.valueOf(activeDirs)).withStyle(activeDirs > 0 ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
 
         return true;
     }
