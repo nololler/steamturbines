@@ -17,6 +17,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<SteamPumpBlockEntity>, IRotate {
 
+    // Toggle for rendering approach:
+    // "override" - Use custom IRotate methods (original approach)
+    // "parent" - Use DirectionalAxisKineticBlock's built-in IRotate methods
+    private static final String RENDER_MODE = "override";
+
     private static final VoxelShape SHAPE_NORTH = Shapes.or(
         Block.box(3.0, 3.0, 4.0, 13.0, 13.0, 12.0),
         Block.box(3.0, 3.0, 0.0, 13.0, 13.0, 2.0),
@@ -110,6 +115,10 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
 
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
+        if ("parent".equals(RENDER_MODE)) {
+            return super.getRotationAxis(state);
+        }
+        // "override" mode or default
         Direction facing = state.getValue(FACING);
         boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
 
@@ -117,11 +126,15 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
             return alongFirst ? Direction.Axis.Z : Direction.Axis.X;
         }
 
-        return super.getRotationAxis(state);
+        return facing.getClockWise().getAxis();
     }
 
     @Override
     public boolean hasShaftTowards(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state, Direction face) {
+        if ("parent".equals(RENDER_MODE)) {
+            return super.hasShaftTowards(level, pos, state, face);
+        }
+        // "override" mode or default
         Direction facing = state.getValue(FACING);
         boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
 
@@ -130,6 +143,7 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
             return face.getAxis() == blockAxis;
         }
 
-        return face.getAxis() == getRotationAxis(state);
+        Direction.Axis blockAxis = facing.getClockWise().getAxis();
+        return face.getAxis() == blockAxis;
     }
 }
