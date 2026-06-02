@@ -37,6 +37,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     private float storage = 0f;
     private SteamType storedSteamType = SteamType.REGULAR;
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
+    private final EnumMap<Direction, SteamData> outgoingSteam = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamType> visualSteamType = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualQuality = new EnumMap<>(Direction.class);
@@ -46,6 +47,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         storage = 0f;
         for (Direction dir : Direction.values()) {
             receivedSteam.put(dir, SteamData.empty());
+            outgoingSteam.put(dir, SteamData.empty());
             visualPressure.put(dir, 0f);
             visualSteamType.put(dir, SteamType.REGULAR);
             visualQuality.put(dir, 1f);
@@ -101,6 +103,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             // Clear steam when source connection is lost
             if (wasConnected && !isConnected) {
                 receivedSteam.put(dir, SteamData.empty());
+                outgoingSteam.put(dir, SteamData.empty());
             }
         }
 
@@ -136,12 +139,25 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         for (Direction dir : Direction.values()) {
             float currentPressure = visualPressure.get(dir);
             SteamData received = receivedSteam.get(dir);
+            SteamData outgoing = outgoingSteam.get(dir);
             float targetPressure = 0f;
             float targetQuality = visualQuality.get(dir);
+            SteamType targetType = SteamType.REGULAR;
 
             if (received != null && !received.isEmpty()) {
-                targetPressure = received.getThroughput();
+                targetPressure = Math.max(targetPressure, received.getThroughput());
                 targetQuality = received.getQuality();
+                targetType = received.getSteamType();
+            }
+
+            if (outgoing != null && !outgoing.isEmpty()) {
+                targetPressure = Math.max(targetPressure, outgoing.getThroughput());
+                if (outgoing.getQuality() < targetQuality) {
+                    targetQuality = outgoing.getQuality();
+                }
+                if (outgoing.getSteamType() != SteamType.REGULAR) {
+                    targetType = outgoing.getSteamType();
+                }
             }
 
             float newPressure = currentPressure + (targetPressure - currentPressure) * LERP_FACTOR;
@@ -153,10 +169,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
             visualPressure.put(dir, newPressure);
             visualQuality.put(dir, newQuality);
-
-            if (received != null && !received.isEmpty()) {
-                visualSteamType.put(dir, received.getSteamType());
-            }
+            visualSteamType.put(dir, targetType);
         }
     }
 
@@ -213,6 +226,13 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 receivedSteam.put(dir, steam);
             }
         }
+    }
+
+    public void recordOutgoingSteam(Direction dir, float amount) {
+        if (amount <= 0) return;
+        SteamData current = outgoingSteam.get(dir);
+        float newPressure = Math.min(current.getPressure() + amount, MAX_THROUGHPUT);
+        outgoingSteam.put(dir, SteamData.of(newPressure, storedSteamType, 1f, 1f, amount));
     }
 
     @Override
@@ -287,6 +307,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         while (!queue.isEmpty() && remaining > 0.01f && nodesVisited < MAX_BFS_NODES) {
             BlockPos current = queue.pollFirst();
             nodesVisited++;
+            boolean isOrigin = current.equals(worldPosition);
 
             var be = level.getBlockEntity(current);
             if (!(be instanceof PressurizedPipeBlockEntity pipe)) continue;
@@ -296,6 +317,9 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
                 float toExtract = Math.min(remaining, Math.min(available, MAX_BFS_AMOUNT_PER_NODE));
                 if (toExtract > 0.01f) {
                     pipe.storage -= toExtract;
+                    if (isOrigin) {
+                        pipe.recordOutgoingSteam(requestedFrom, toExtract);
+                    }
                     totalExtracted += toExtract;
                     remaining -= toExtract;
                     extractedType = pipe.storedSteamType;
@@ -359,9 +383,13 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     public float getMaxThroughput() {
         float max = 0f;
         for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getThroughput() > max) {
-                max = steam.getThroughput();
+            SteamData received = receivedSteam.get(dir);
+            SteamData outgoing = outgoingSteam.get(dir);
+            if (received != null && received.getThroughput() > max) {
+                max = received.getThroughput();
+            }
+            if (outgoing != null && outgoing.getThroughput() > max) {
+                max = outgoing.getThroughput();
             }
         }
         return max;
@@ -370,9 +398,13 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     public float getMaxPressure() {
         float max = 0f;
         for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getPressure() > max) {
-                max = steam.getPressure();
+            SteamData received = receivedSteam.get(dir);
+            SteamData outgoing = outgoingSteam.get(dir);
+            if (received != null && received.getPressure() > max) {
+                max = received.getPressure();
+            }
+            if (outgoing != null && outgoing.getPressure() > max) {
+                max = outgoing.getPressure();
             }
         }
         return max;
@@ -381,8 +413,11 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     public int getActiveDirectionCount() {
         int count = 0;
         for (Direction dir : Direction.values()) {
-            SteamData steam = receivedSteam.get(dir);
-            if (steam != null && steam.getPressure() > 0.001f) {
+            SteamData received = receivedSteam.get(dir);
+            SteamData outgoing = outgoingSteam.get(dir);
+            boolean hasReceived = received != null && received.getPressure() > 0.001f;
+            boolean hasOutgoing = outgoing != null && outgoing.getPressure() > 0.001f;
+            if (hasReceived || hasOutgoing) {
                 count++;
             }
         }
