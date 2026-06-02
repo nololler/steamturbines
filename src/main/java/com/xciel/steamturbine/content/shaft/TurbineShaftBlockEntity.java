@@ -45,18 +45,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
             new TurbineShaftDirectionOption());
         movementDirection.withCallback(v -> updateGeneratedRotation());
         behaviours.add(movementDirection);
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (level == null) return;
-        if (level.isClientSide) {
-            spawnSteamParticles();
-            return;
-        }
-        updateFromConnectedTurbines();
-    }
+}
 
     private void spawnSteamParticles() {
         if (level == null) return;
@@ -172,16 +161,23 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        aggregatedSpeed = tag.getFloat("AggregatedSpeed");
-        aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
+        if (clientPacket) {
+            aggregatedSpeed = tag.getFloat("AggregatedSpeed");
+            aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
+        } else {
+            aggregatedSpeed = 0f;
+            aggregatedThroughput = 0f;
+        }
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        tag.putFloat("AggregatedSpeed", aggregatedSpeed);
-        tag.putFloat("AggregatedThroughput", aggregatedThroughput);
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
+        if (clientPacket) {
+            tag.putFloat("AggregatedSpeed", aggregatedSpeed);
+            tag.putFloat("AggregatedThroughput", aggregatedThroughput);
+        }
     }
 }

@@ -111,12 +111,18 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     @Override
     public void tick() {
         super.tick();
-        if (!level.isClientSide) {
+        if (level.isClientSide) {
+            spawnOutputParticles();
+            clientVisualUpdate();
+        } else {
             updateFuel();
             updateHeat();
             generateSteam();
-        } else {
-            spawnOutputParticles();
+            pushSteamOutput();
+            updateConnectionStates();
+            for (Direction dir : Direction.values()) {
+                receivedSteam.put(dir, SteamData.empty());
+            }
         }
     }
 
@@ -138,20 +144,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             worldPosition.getY() + offset.y + (level.random.nextDouble() - 0.5) * 0.1,
             worldPosition.getZ() + offset.z + (level.random.nextDouble() - 0.5) * 0.1,
             normal.x * speed, normal.y * speed * 0.3, normal.z * speed);
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (level.isClientSide) {
-            clientVisualUpdate();
-        } else {
-            pushSteamOutput();
-            updateConnectionStates();
-            for (Direction dir : Direction.values()) {
-                receivedSteam.put(dir, SteamData.empty());
-            }
-        }
     }
 
     private void updateFuel() {

@@ -65,15 +65,9 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         if (level == null) return;
         if (!level.isClientSide) {
             updateConnectionStates();
+            processSteam();
+            pushSteam();
         }
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (level == null || level.isClientSide) return;
-        processSteam();
-        pushSteam();
     }
 
     private static final float MAX_THROUGHPUT = 30.0f;

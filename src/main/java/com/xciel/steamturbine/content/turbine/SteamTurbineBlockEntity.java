@@ -53,11 +53,6 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     @Override
     public void tick() {
         super.tick();
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
         if (level == null || level.isClientSide) return;
 
         BlockState state = getBlockState();
@@ -89,7 +84,6 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
             lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
 
-            // Output exhaust in the FACING direction (forward to next turbine or pipe)
             Direction outputDir = facing;
             BlockPos outputPos = worldPosition.relative(outputDir);
             if (level.isLoaded(outputPos)) {
@@ -228,9 +222,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         if (tag.contains("InputSteam")) {
-            inputSteam = SteamData.loadFromNBT(tag.getCompound("InputSteam"), registries);
+            inputSteam = SteamData.empty();
         }
-        turbineSpeed = tag.getFloat("TurbineSpeed");
+        turbineSpeed = 0f;
         stageNumber = tag.getInt("StageNumber");
         stageEfficiency = tag.getFloat("StageEfficiency");
         if (clientPacket) {
@@ -240,6 +234,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             if (tag.contains("LastExhaustSteam")) {
                 lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
             }
+        } else {
+            lastInputSteam = SteamData.empty();
+            lastExhaustSteam = SteamData.empty();
         }
     }
 

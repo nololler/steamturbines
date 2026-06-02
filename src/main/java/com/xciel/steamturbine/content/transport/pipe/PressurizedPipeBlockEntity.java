@@ -64,8 +64,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     @Override
-    public void lazyTick() {
-        super.lazyTick();
+    public void tick() {
+        super.tick();
         if (level.isClientSide) {
             clientVisualUpdate();
         } else {
