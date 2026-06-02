@@ -47,6 +47,17 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         behaviours.add(movementDirection);
 }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (level == null) return;
+        if (level.isClientSide) {
+            spawnSteamParticles();
+            return;
+        }
+        updateFromConnectedTurbines();
+    }
+
     private void spawnSteamParticles() {
         if (level == null) return;
         float su = calculateAddedStressCapacity();
@@ -139,7 +150,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         if (aggregatedSpeed <= 0f) return 0f;
 
         float maxStressCapacity = 500000f;
-        float stageMultiplier = 0.190f + (connectedTurbineCount * 0.00505f);
+        float stageMultiplier = 0.107f + (connectedTurbineCount * 0.00505f);
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
 
         return Math.round(calculatedStressCapacity);

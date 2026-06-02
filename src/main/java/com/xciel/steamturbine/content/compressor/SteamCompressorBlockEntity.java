@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SteamCompressorBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamProducer, ISteamTransport, ITurbineEndpoint, ICompressorEndpoint, IHaveGoggleInformation {
-    private static final float AMPLIFICATION_FACTOR = 1.0f;
+    private static final float AMPLIFICATION_FACTOR = 2.0f;
 
     private final EnumMap<Direction, Boolean> steamConnections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Boolean> turbineConnections = new EnumMap<>(Direction.class);
