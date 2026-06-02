@@ -16,6 +16,9 @@ import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -23,15 +26,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamConsumer {
-    private static final float MAX_TARGET_RATE = 100f;
+    private static final float MAX_TARGET_RATE = 50f;
     private static final int SCROLL_MIN = 0;
-    private static final int SCROLL_MAX = 100;
+    private static final int SCROLL_MAX = 50;
     private static final float BASE_PULL_RATE = 2.0f;
     private static final float SPEED_REFERENCE_RPM = 256f;
 
@@ -232,7 +236,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) return;
+        if (level == null) return;
         updateConnectionStates();
         updatePullPushDirections();
         pullFromPipes();

@@ -11,10 +11,15 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -45,9 +50,38 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) return;
-
+        if (level == null) return;
+        if (level.isClientSide) {
+            spawnSteamParticles();
+            return;
+        }
         updateFromConnectedTurbines();
+    }
+
+    private void spawnSteamParticles() {
+        if (level == null) return;
+        float su = calculateAddedStressCapacity();
+        if (su < 100) return;
+        Direction facing = getBlockState().getValue(TurbineShaftBlock.FACING);
+        Direction eastFace = facing.getClockWise();
+        BlockPos eastPos = worldPosition.relative(eastFace);
+        if (!level.isLoaded(eastPos)) return;
+        if (!level.isEmptyBlock(eastPos)) return;
+        float distance;
+        if (su < 500) distance = 1.0f;
+        else if (su < 1000) distance = 2.0f;
+        else if (su < 10000) distance = 3.0f;
+        else if (su < 100000) distance = 5.0f;
+        else distance = 8.0f;
+        if (level.random.nextInt(3) != 0) return;
+        Vec3 normal = Vec3.atLowerCornerOf(eastFace.getNormal());
+        Vec3 offset = normal.scale(0.5).add(0.5, 0.5, 0.5);
+        double speed = distance * 0.05;
+        level.addParticle(ParticleTypes.CLOUD,
+            worldPosition.getX() + offset.x + (level.random.nextDouble() - 0.5) * 0.1,
+            worldPosition.getY() + offset.y + (level.random.nextDouble() - 0.5) * 0.1,
+            worldPosition.getZ() + offset.z + (level.random.nextDouble() - 0.5) * 0.1,
+            normal.x * speed, normal.y * speed * 0.3, normal.z * speed);
     }
 
     @Override

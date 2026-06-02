@@ -31,6 +31,11 @@ import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -110,7 +115,29 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             updateFuel();
             updateHeat();
             generateSteam();
+        } else {
+            spawnOutputParticles();
         }
+    }
+
+    private void spawnOutputParticles() {
+        if (level == null || !outputSteam.shouldPropagate()) return;
+        Direction outputDir = getOutputDirection();
+        BlockPos outputPos = worldPosition.relative(outputDir);
+        if (!level.isLoaded(outputPos)) return;
+        var block = level.getBlockState(outputPos).getBlock();
+        if (block instanceof PressurizedPipeBlock || block instanceof SteamBoilerBlock) return;
+        float distance = Math.min(outputSteam.getPressure() * outputSteam.getThroughput() * 0.05f, 1.5f);
+        if (distance < 0.05f) return;
+        if (level.random.nextInt(3) != 0) return;
+        Vec3 normal = Vec3.atLowerCornerOf(outputDir.getNormal());
+        Vec3 offset = normal.scale(0.5).add(0.5, 0.5, 0.5);
+        double speed = distance * 0.05;
+        level.addParticle(ParticleTypes.LARGE_SMOKE,
+            worldPosition.getX() + offset.x + (level.random.nextDouble() - 0.5) * 0.1,
+            worldPosition.getY() + offset.y + (level.random.nextDouble() - 0.5) * 0.1,
+            worldPosition.getZ() + offset.z + (level.random.nextDouble() - 0.5) * 0.1,
+            normal.x * speed, normal.y * speed * 0.3, normal.z * speed);
     }
 
     @Override
