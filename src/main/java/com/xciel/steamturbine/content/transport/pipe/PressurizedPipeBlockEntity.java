@@ -25,11 +25,12 @@ import java.util.List;
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
-    private static final float MAX_THROUGHPUT = 2.0f;  // Pipes act as bottlenecks - low throughput limit
-    private static final float MAX_STORAGE = 100f;     // Each pipe has its own storage of steam
+    private static final float MAX_THROUGHPUT = 2.0f;
+    private static final float MAX_STORAGE = 100f;
 
-    private float storage = 0f;  // Pipe's internal steam reserve
-    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);  // For visual only
+    private float storage = 0f;
+    private SteamType storedSteamType = SteamType.REGULAR;
+    private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualPressure = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamType> visualSteamType = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Float> visualQuality = new EnumMap<>(Direction.class);
@@ -51,9 +52,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
 
     public void receiveSteam(Direction from, SteamData steam) {
         if (steam.isEmpty()) return;
-        // Add to pipe's storage, capped at MAX_STORAGE
         storage = Math.min(storage + steam.getThroughput(), MAX_STORAGE);
-        // Store for visual feedback
+        storedSteamType = steam.getSteamType();
         receivedSteam.put(from, steam);
         setChanged();
         sendData();
@@ -127,21 +127,30 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     }
 
     private void clientVisualUpdate() {
-        // Visual shows storage level (pressure)
         for (Direction dir : Direction.values()) {
             float currentPressure = visualPressure.get(dir);
-            float targetPressure = storage;  // Use storage as pressure indicator
+            SteamData received = receivedSteam.get(dir);
+            float targetPressure = 0f;
+            float targetQuality = visualQuality.get(dir);
+
+            if (received != null && !received.isEmpty()) {
+                targetPressure = received.getThroughput();
+                targetQuality = received.getQuality();
+            }
 
             float newPressure = currentPressure + (targetPressure - currentPressure) * LERP_FACTOR;
             newPressure *= DECAY_FACTOR;
             if (newPressure < 0.01f) newPressure = 0f;
 
-            float currentQuality = visualQuality.get(dir);
-            float newQuality = currentQuality * 0.998f;
+            float newQuality = targetQuality * 0.998f;
             if (newQuality < 0.01f) newQuality = 0f;
 
             visualPressure.put(dir, newPressure);
             visualQuality.put(dir, newQuality);
+
+            if (received != null && !received.isEmpty()) {
+                visualSteamType.put(dir, received.getSteamType());
+            }
         }
     }
 
@@ -157,6 +166,13 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         storage = tag.getFloat("Storage");
+        if (tag.contains("StoredSteamType")) {
+            try {
+                storedSteamType = SteamType.valueOf(tag.getString("StoredSteamType"));
+            } catch (IllegalArgumentException ignored) {
+                storedSteamType = SteamType.REGULAR;
+            }
+        }
         for (Direction dir : Direction.values()) {
             String prefix = "S_" + dir.getName() + "_";
             if (tag.contains(prefix + "P")) {
@@ -179,6 +195,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putFloat("Storage", storage);
+        tag.putString("StoredSteamType", storedSteamType.name());
         for (Direction dir : Direction.values()) {
             String prefix = "S_" + dir.getName() + "_";
             SteamData steam = receivedSteam.get(dir);
@@ -203,6 +220,10 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         return visualQuality.getOrDefault(dir, 1f);
     }
 
+    public SteamType getStoredSteamType() {
+        return storedSteamType;
+    }
+
     @Override
     public boolean canConnect(Direction direction) {
         return true;
@@ -216,14 +237,15 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     @Override
     public SteamData pullSteam(Direction direction, float amount) {
         if (storage <= 0) return SteamData.empty();
-        float extracted = Math.min(storage, amount);
+        float maxExtract = Math.min(amount, MAX_THROUGHPUT);
+        float extracted = Math.min(storage, maxExtract);
         storage -= extracted;
-        return SteamData.of(extracted, SteamType.REGULAR, 1f, 1f, extracted);
+        return SteamData.of(extracted, storedSteamType, 1f, 1f, extracted);
     }
 
     @Override
     public float getFlowRate(Direction direction) {
-        return storage;
+        return Math.min(storage, MAX_THROUGHPUT);
     }
 
     public float getStorage() {

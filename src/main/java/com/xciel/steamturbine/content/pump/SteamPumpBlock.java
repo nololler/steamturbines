@@ -7,7 +7,6 @@ import com.xciel.steamturbine.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -107,5 +106,30 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
     @Override
     public BlockEntityType<? extends SteamPumpBlockEntity> getBlockEntityType() {
         return AllBlockEntityTypes.STEAM_PUMP.get();
+    }
+
+    @Override
+    public Direction.Axis getRotationAxis(BlockState state) {
+        Direction facing = state.getValue(FACING);
+        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
+
+        if (facing == Direction.UP || facing == Direction.DOWN) {
+            return alongFirst ? Direction.Axis.Z : Direction.Axis.X;
+        }
+
+        return super.getRotationAxis(state);
+    }
+
+    @Override
+    public boolean hasShaftTowards(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state, Direction face) {
+        Direction facing = state.getValue(FACING);
+        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
+
+        if (facing == Direction.UP || facing == Direction.DOWN) {
+            Direction.Axis blockAxis = alongFirst ? Direction.Axis.Z : Direction.Axis.X;
+            return face.getAxis() == blockAxis;
+        }
+
+        return face.getAxis() == getRotationAxis(state);
     }
 }

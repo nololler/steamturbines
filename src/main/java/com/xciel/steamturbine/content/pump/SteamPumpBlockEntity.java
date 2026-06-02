@@ -31,6 +31,8 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
     private static final float MAX_TARGET_RATE = 100f;
     private static final int SCROLL_MIN = 0;
     private static final int SCROLL_MAX = 100;
+    private static final float BASE_PULL_RATE = 2.0f;
+    private static final float SPEED_REFERENCE_RPM = 256f;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
     private float targetPullRate = 10f;
@@ -38,6 +40,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
     private float lastPulledSteam = 0f;
     private Direction pullDirection;
     private Direction pushDirection;
+    private SteamType storedSteamType = SteamType.REGULAR;
 
     public SteamPumpBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -49,24 +52,96 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         pushDirection = Direction.UP;
     }
 
-    @Override
+@Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        Direction facing = getBlockState().getValue(SteamPumpBlock.FACING);
+
+        boolean isVertical = facing == Direction.UP || facing == Direction.DOWN;
+        ValueBoxTransform slot = isVertical ? new PumpScrollSlotVerticalPrimary() : new PumpScrollSlotHorizontal();
+
         ScrollValueBehaviour scrollBehaviour = new ScrollValueBehaviour(
             net.minecraft.network.chat.Component.literal("Pump Rate"),
             this,
-            new PumpScrollSlot()
+            slot
         );
         scrollBehaviour.between(SCROLL_MIN, SCROLL_MAX);
         scrollBehaviour.withCallback(this::onScrollValueChanged);
         scrollBehaviour.withFormatter(v -> v + "%");
         scrollBehaviour.value = (int) targetPullRate;
         behaviours.add(scrollBehaviour);
+
+        if (isVertical) {
+            ScrollValueBehaviour scrollBehaviour2 = new ScrollValueBehaviour(
+                net.minecraft.network.chat.Component.literal("Pump Rate 2"),
+                this,
+                new PumpScrollSlotVerticalSecondary()
+            );
+            scrollBehaviour2.between(SCROLL_MIN, SCROLL_MAX);
+            scrollBehaviour2.withCallback(this::onScrollValueChanged);
+            scrollBehaviour2.withFormatter(v -> v + "%");
+            scrollBehaviour2.value = (int) targetPullRate;
+            behaviours.add(scrollBehaviour2);
+        }
     }
 
-    private static class PumpScrollSlot extends ValueBoxTransform.Sided {
+    // Horizontal facing (N/S/E/W) - button on UP/DOWN faces
+    private static class PumpScrollSlotHorizontal extends ValueBoxTransform.Sided {
         @Override
         protected Vec3 getSouthLocation() {
-            return VecHelper.voxelSpace(8, 8, 15.5);
+            return VecHelper.voxelSpace(8, 8, 12.5);
+        }
+
+        @Override
+        protected boolean isSideActive(net.minecraft.world.level.block.state.BlockState state, Direction direction) {
+            Direction facing = state.getValue(SteamPumpBlock.FACING);
+
+            if (facing == Direction.NORTH) {
+                return direction == Direction.UP || direction == Direction.DOWN;
+            }
+            if (facing == Direction.SOUTH) {
+                return direction == Direction.UP || direction == Direction.DOWN;
+            }
+            if (facing == Direction.EAST) {
+                return direction == Direction.UP || direction == Direction.DOWN;
+            }
+            if (facing == Direction.WEST) {
+                return direction == Direction.UP || direction == Direction.DOWN;
+            }
+            return false;
+        }
+
+        @Override
+        public void rotate(net.minecraft.world.level.LevelAccessor level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state, PoseStack ms) {
+            Direction facing = state.getValue(SteamPumpBlock.FACING);
+
+            if (facing == Direction.NORTH) {
+                super.rotate(level, pos, state, ms);
+                return;
+            }
+            if (facing == Direction.SOUTH) {
+                TransformStack.of(ms).rotateYDegrees(180);
+                super.rotate(level, pos, state, ms);
+                return;
+            }
+            if (facing == Direction.EAST) {
+                TransformStack.of(ms).rotateYDegrees(90);
+                super.rotate(level, pos, state, ms);
+                return;
+            }
+            if (facing == Direction.WEST) {
+                TransformStack.of(ms).rotateYDegrees(-90);
+                super.rotate(level, pos, state, ms);
+                return;
+            }
+            super.rotate(level, pos, state, ms);
+        }
+    }
+
+// Vertical facing (UP/DOWN) - primary button on N/S or E/W depending on rotation
+    private static class PumpScrollSlotVerticalPrimary extends ValueBoxTransform.Sided {
+        @Override
+        protected Vec3 getSouthLocation() {
+            return VecHelper.voxelSpace(8, 8, 12.5);
         }
 
         @Override
@@ -74,34 +149,65 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
             Direction facing = state.getValue(SteamPumpBlock.FACING);
             boolean alongFirst = state.getValue(DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE);
 
-            if (facing == Direction.UP || facing == Direction.DOWN) {
-                return alongFirst
-                    ? direction == Direction.NORTH || direction == Direction.SOUTH
-                    : direction == Direction.EAST || direction == Direction.WEST;
+            if (facing == Direction.UP && !alongFirst) {
+                return direction == Direction.NORTH || direction == Direction.SOUTH;
             }
-
-            return direction == Direction.UP || direction == Direction.DOWN;
+            if (facing == Direction.UP && alongFirst) {
+                return direction == Direction.EAST || direction == Direction.WEST;
+            }
+            if (facing == Direction.DOWN && !alongFirst) {
+                return direction == Direction.NORTH || direction == Direction.SOUTH;
+            }
+            if (facing == Direction.DOWN && alongFirst) {
+                return direction == Direction.EAST || direction == Direction.WEST;
+            }
+            return false;
         }
 
         @Override
         public void rotate(net.minecraft.world.level.LevelAccessor level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state, PoseStack ms) {
+            Direction side = getSide();
+            if (side == Direction.UP || side == Direction.DOWN) {
+                return;
+            }
+            super.rotate(level, pos, state, ms);
+        }
+    }
+
+    // Vertical facing (UP/DOWN) - secondary button on opposite faces
+    private static class PumpScrollSlotVerticalSecondary extends ValueBoxTransform.Sided {
+        @Override
+        protected Vec3 getSouthLocation() {
+            return VecHelper.voxelSpace(8, 8, 12.5);
+        }
+
+        @Override
+        protected boolean isSideActive(net.minecraft.world.level.block.state.BlockState state, Direction direction) {
             Direction facing = state.getValue(SteamPumpBlock.FACING);
             boolean alongFirst = state.getValue(DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE);
 
-            if (facing.getAxis().isVertical()) {
-                float yRot = AngleHelper.horizontalAngle(facing) + 180;
-                float xRot = facing == Direction.UP ? 90 : 270;
+            // Opposite of Primary
+            if (facing == Direction.UP && !alongFirst) {
+                return direction == Direction.NORTH || direction == Direction.SOUTH;
+            }
+            if (facing == Direction.UP && alongFirst) {
+                return direction == Direction.EAST || direction == Direction.WEST;
+            }
+            if (facing == Direction.DOWN && !alongFirst) {
+                return direction == Direction.NORTH || direction == Direction.SOUTH;
+            }
+            if (facing == Direction.DOWN && alongFirst) {
+                return direction == Direction.EAST || direction == Direction.WEST;
+            }
+            return false;
+        }
 
-                if (alongFirst) {
-                    yRot += 90;
-                }
-
-                TransformStack.of(ms)
-                    .rotateYDegrees(yRot)
-                    .rotateXDegrees(xRot);
+        @Override
+        public void rotate(net.minecraft.world.level.LevelAccessor level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state, PoseStack ms) {
+            Direction side = getSide();
+            if (side == Direction.UP || side == Direction.DOWN) {
                 return;
             }
-
             super.rotate(level, pos, state, ms);
         }
     }
@@ -110,6 +216,16 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         targetPullRate = value;
         setChanged();
         sendData();
+    }
+
+    private float getEffectivePullRate() {
+        if (targetPullRate <= 0) return 0f;
+        if (!hasSource()) return 0f;
+        float speed = getSpeed();
+        if (speed <= 0) return 0f;
+        float speedMultiplier = speed / SPEED_REFERENCE_RPM;
+        float effectiveRate = BASE_PULL_RATE * (targetPullRate / 100f) * speedMultiplier;
+        return Math.max(0f, effectiveRate);
     }
 
     @Override
@@ -167,14 +283,16 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
     }
 
     private void pullFromPipes() {
-        if (targetPullRate <= 0) {
+        float effectiveRate = getEffectivePullRate();
+        if (effectiveRate <= 0) {
             lastPulledSteam = 0f;
-            totalPulledSteam = 0f;
             return;
         }
 
         float actualPull = 0f;
-        float remainingToPull = targetPullRate;
+        float remainingToPull = effectiveRate;
+        SteamType pulledType = SteamType.REGULAR;
+        boolean typeInitialized = false;
 
         for (Direction dir : Direction.values()) {
             if (dir == pushDirection) continue;
@@ -191,18 +309,32 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
 
             float toPull = Math.min(remainingToPull, available);
             if (toPull > 0.01f) {
-                transport.pullSteam(dir.getOpposite(), toPull);
-                actualPull += toPull;
-                remainingToPull -= toPull;
+                SteamData pulled = transport.pullSteam(dir.getOpposite(), toPull);
+                if (!pulled.isEmpty()) {
+                    actualPull += pulled.getThroughput();
+                    remainingToPull -= pulled.getThroughput();
+                    if (!typeInitialized && pulled.getSteamType() != SteamType.REGULAR) {
+                        pulledType = pulled.getSteamType();
+                        typeInitialized = true;
+                    } else if (!typeInitialized) {
+                        pulledType = pulled.getSteamType();
+                        typeInitialized = true;
+                    }
+                }
             }
 
             if (remainingToPull <= 0.01f) break;
         }
 
-        totalPulledSteam += actualPull;
-        lastPulledSteam = actualPull;
-        setChanged();
-        sendData();
+        if (actualPull > 0) {
+            lastPulledSteam = actualPull;
+            storedSteamType = pulledType;
+            totalPulledSteam += actualPull;
+            setChanged();
+            sendData();
+        } else {
+            lastPulledSteam = 0f;
+        }
     }
 
     private void pushToOutput() {
@@ -212,7 +344,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         if (!level.isLoaded(outputPos)) return;
 
         var neighborBE = level.getBlockEntity(outputPos);
-        SteamData toPush = SteamData.of(lastPulledSteam, SteamType.REGULAR, 1f, 1f, lastPulledSteam);
+        SteamData toPush = SteamData.of(lastPulledSteam, storedSteamType, 1f, 1f, lastPulledSteam);
 
         if (neighborBE instanceof PressurizedPipeBlockEntity pipe) {
             pipe.receiveSteam(pushDirection.getOpposite(), toPush);
@@ -251,6 +383,10 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         return connections;
     }
 
+    public SteamType getStoredSteamType() {
+        return storedSteamType;
+    }
+
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
@@ -258,6 +394,13 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         totalPulledSteam = tag.getFloat("TotalPulledSteam");
         if (clientPacket) {
             lastPulledSteam = tag.getFloat("LastPulledSteam");
+        }
+        if (tag.contains("StoredSteamType")) {
+            try {
+                storedSteamType = SteamType.valueOf(tag.getString("StoredSteamType"));
+            } catch (IllegalArgumentException ignored) {
+                storedSteamType = SteamType.REGULAR;
+            }
         }
         for (Direction dir : Direction.values()) {
             connections.put(dir, tag.getBoolean("conn_" + dir.getName()));
@@ -270,6 +413,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity {
         tag.putFloat("TargetPullRate", targetPullRate);
         tag.putFloat("TotalPulledSteam", totalPulledSteam);
         tag.putFloat("LastPulledSteam", lastPulledSteam);
+        tag.putString("StoredSteamType", storedSteamType.name());
         for (Direction dir : Direction.values()) {
             tag.putBoolean("conn_" + dir.getName(), connections.getOrDefault(dir, false));
         }
