@@ -2,7 +2,6 @@ package com.xciel.steamturbine.content.transport.pipe;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
@@ -10,25 +9,22 @@ import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Deque;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
+public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
     private static final float MAX_THROUGHPUT = 10.0f;
@@ -171,32 +167,6 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
             visualQuality.put(dir, newQuality);
             visualSteamType.put(dir, targetType);
         }
-    }
-
-    // IHaveGoggleInformation
-    @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("    Pressurized Pipe").withStyle(ChatFormatting.GOLD));
-
-        tooltip.add(Component.literal("    Steam: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f / %.0f", storage, MAX_STORAGE)).withStyle(ChatFormatting.WHITE))
-            .append(Component.literal(" [").withStyle(ChatFormatting.GRAY))
-            .append(Component.literal(storedSteamType.name()).withStyle(
-                storedSteamType == SteamType.REGULAR ? ChatFormatting.AQUA : ChatFormatting.LIGHT_PURPLE))
-            .append(Component.literal("]").withStyle(ChatFormatting.GRAY)));
-
-        float maxPressure = getMaxPressure();
-        float maxThroughput = getMaxThroughput();
-        tooltip.add(Component.literal("    Pressure: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f", maxPressure)).withStyle(maxPressure > 0.001f ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
-        tooltip.add(Component.literal("    Throughput: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.2f/t", maxThroughput)).withStyle(maxThroughput > 0.001f ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
-
-        int activeDirs = getActiveDirectionCount();
-        tooltip.add(Component.literal("    Active Connections: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.valueOf(activeDirs)).withStyle(activeDirs > 0 ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY)));
-
-        return true;
     }
 
     @Override
