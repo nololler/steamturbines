@@ -7,6 +7,7 @@ import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
+import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
 import net.minecraft.ChatFormatting;
@@ -19,8 +20,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.Deque;
 import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float LERP_FACTOR = 0.2f;
@@ -241,6 +247,67 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         float extracted = Math.min(storage, maxExtract);
         storage -= extracted;
         return SteamData.of(extracted, storedSteamType, 1f, 1f, extracted);
+    }
+
+    private static final int MAX_BFS_NODES = 32;
+    private static final float MAX_BFS_AMOUNT_PER_NODE = 2.0f;
+
+    public SteamData pullSteamFromNetwork(Direction requestedFrom, float amount) {
+        if (level == null || level.isClientSide) return SteamData.empty();
+        if (storage <= 0 && amount <= 0) return SteamData.empty();
+
+        Set<BlockPos> visited = new HashSet<>();
+        Deque<BlockPos> queue = new LinkedList<>();
+        queue.add(worldPosition);
+        visited.add(worldPosition);
+
+        float totalExtracted = 0f;
+        float remaining = amount;
+        SteamType extractedType = storedSteamType;
+        int nodesVisited = 0;
+
+        while (!queue.isEmpty() && remaining > 0.01f && nodesVisited < MAX_BFS_NODES) {
+            BlockPos current = queue.pollFirst();
+            nodesVisited++;
+
+            var be = level.getBlockEntity(current);
+            if (!(be instanceof PressurizedPipeBlockEntity pipe)) continue;
+
+            float available = pipe.storage;
+            if (available > 0) {
+                float toExtract = Math.min(remaining, Math.min(available, MAX_BFS_AMOUNT_PER_NODE));
+                if (toExtract > 0.01f) {
+                    pipe.storage -= toExtract;
+                    totalExtracted += toExtract;
+                    remaining -= toExtract;
+                    extractedType = pipe.storedSteamType;
+                }
+            }
+
+            if (remaining <= 0.01f) break;
+
+            if (level != null) {
+                for (Direction dir : Direction.values()) {
+                    if (dir == requestedFrom && current.equals(worldPosition)) continue;
+
+                    BlockPos neighborPos = current.relative(dir);
+                    if (visited.contains(neighborPos)) continue;
+                    if (!level.isLoaded(neighborPos)) continue;
+
+                    visited.add(neighborPos);
+                    var neighbor = level.getBlockEntity(neighborPos);
+
+                    if (neighbor instanceof PressurizedPipeBlockEntity) {
+                        queue.add(neighborPos);
+                    }
+                }
+            }
+        }
+
+        if (totalExtracted > 0) {
+            return SteamData.of(totalExtracted, extractedType, 1f, 1f, totalExtracted);
+        }
+        return SteamData.empty();
     }
 
     @Override

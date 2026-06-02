@@ -301,22 +301,15 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
             if (!level.isLoaded(neighborPos)) continue;
 
             var neighborBE = level.getBlockEntity(neighborPos);
-            if (!(neighborBE instanceof ISteamTransport transport)) continue;
-            if (!transport.canConnect(dir.getOpposite())) continue;
+            if (!(neighborBE instanceof PressurizedPipeBlockEntity pipe)) continue;
 
-            float available = transport.getFlowRate(dir.getOpposite());
-            if (available <= 0) continue;
-
-            float toPull = Math.min(remainingToPull, available);
-            if (toPull > 0.01f) {
-                SteamData pulled = transport.pullSteam(dir.getOpposite(), toPull);
-                if (!pulled.isEmpty()) {
-                    actualPull += pulled.getThroughput();
-                    remainingToPull -= pulled.getThroughput();
-                    if (!typeInitialized) {
-                        pulledType = pulled.getSteamType();
-                        typeInitialized = true;
-                    }
+            SteamData pulled = pipe.pullSteamFromNetwork(dir.getOpposite(), remainingToPull);
+            if (!pulled.isEmpty()) {
+                actualPull += pulled.getThroughput();
+                remainingToPull -= pulled.getThroughput();
+                if (!typeInitialized) {
+                    pulledType = pulled.getSteamType();
+                    typeInitialized = true;
                 }
             }
         }
