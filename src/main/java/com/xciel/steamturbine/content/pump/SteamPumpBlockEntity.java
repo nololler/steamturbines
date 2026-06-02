@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamConsumer {
-    private static final float MAX_TARGET_RATE = 50f;
+    private static final float MAX_TARGET_RATE = 75f;
     private static final int SCROLL_MIN = 0;
-    private static final int SCROLL_MAX = 50;
+    private static final int SCROLL_MAX = 75;
     private static final float BASE_PULL_RATE = 2.0f;
     private static final float SPEED_REFERENCE_RPM = 256f;
 
