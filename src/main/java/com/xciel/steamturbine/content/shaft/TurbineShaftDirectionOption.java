@@ -10,6 +10,10 @@ import net.minecraft.world.phys.Vec3;
 
 public class TurbineShaftDirectionOption extends ValueBoxTransform.Sided {
 
+    private static final float POSITION_X = 8;
+    private static final float POSITION_Y = 13;
+    private static final float POSITION_Z = 8;
+
     @Override
     protected boolean isSideActive(BlockState state, Direction side) {
         return side == Direction.UP;
@@ -17,11 +21,11 @@ public class TurbineShaftDirectionOption extends ValueBoxTransform.Sided {
 
     @Override
     public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
-        return VecHelper.voxelSpace(8, 13, 8);
+        return VecHelper.voxelSpace(POSITION_X, POSITION_Y, POSITION_Z);
     }
 
     @Override
     protected Vec3 getSouthLocation() {
-        return Vec3.ZERO;
+        return VecHelper.voxelSpace(POSITION_X, POSITION_Y, POSITION_Z);
     }
 }
