@@ -2,10 +2,8 @@ package com.xciel.steamturbine;
 
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
-import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
-import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;

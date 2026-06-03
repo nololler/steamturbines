@@ -32,6 +32,8 @@ public class TurbineNetworkWalker {
         }
     }
 
+    private static final int MAX_DEPTH = 64;
+
     public TurbineNetworkWalker(Level level) {
         this.level = level;
     }
@@ -45,13 +47,13 @@ public class TurbineNetworkWalker {
         initialPath.add(start);
         initialPath.add(firstStep);
 
-        walk(initialPath, firstStep, initialDirection.getOpposite());
+        walk(initialPath, firstStep, initialDirection.getOpposite(), 1);
 
         return foundTurbines;
     }
 
-    private void walk(List<BlockPos> path, BlockPos current, Direction cameFrom) {
-        if (!level.isLoaded(current) || visited.contains(current)) {
+    private void walk(List<BlockPos> path, BlockPos current, Direction cameFrom, int depth) {
+        if (depth > MAX_DEPTH || !level.isLoaded(current) || visited.contains(current)) {
             return;
         }
         visited.add(current);
@@ -66,7 +68,7 @@ public class TurbineNetworkWalker {
             if (!visited.contains(next)) {
                 List<BlockPos> newPath = new ArrayList<>(path);
                 newPath.add(next);
-                walk(newPath, next, cameFrom);
+                walk(newPath, next, cameFrom, depth + 1);
             }
             return;
         }
@@ -78,7 +80,18 @@ public class TurbineNetworkWalker {
             if (!visited.contains(next)) {
                 List<BlockPos> newPath = new ArrayList<>(path);
                 newPath.add(next);
-                walk(newPath, next, cameFrom);
+                walk(newPath, next, cameFrom, depth + 1);
+            }
+            return;
+        }
+
+        // If it's a boiler, pass through (don't record, just continue walking)
+        if (block instanceof com.xciel.steamturbine.content.boiler.SteamBoilerBlock) {
+            BlockPos next = current.relative(cameFrom.getOpposite());
+            if (!visited.contains(next)) {
+                List<BlockPos> newPath = new ArrayList<>(path);
+                newPath.add(next);
+                walk(newPath, next, cameFrom, depth + 1);
             }
             return;
         }
@@ -94,7 +107,7 @@ public class TurbineNetworkWalker {
                 if (!visited.contains(next)) {
                     List<BlockPos> newPath = new ArrayList<>(path);
                     newPath.add(next);
-                    walk(newPath, next, cameFrom);
+                    walk(newPath, next, cameFrom, depth + 1);
                 }
             }
             return;

@@ -11,15 +11,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -150,7 +147,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         if (aggregatedSpeed <= 0f) return 0f;
 
         float maxStressCapacity = 500000f;
-        float stageMultiplier = 0.107f + (connectedTurbineCount * 0.00505f);
+        float stageMultiplier = 0.105f + (connectedTurbineCount * 0.0037f);
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * stageMultiplier;
 
         return Math.round(calculatedStressCapacity);

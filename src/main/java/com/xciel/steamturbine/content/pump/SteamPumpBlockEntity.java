@@ -16,9 +16,6 @@ import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -26,7 +23,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -36,7 +32,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
     private static final float MAX_TARGET_RATE = 75f;
     private static final int SCROLL_MIN = 0;
     private static final int SCROLL_MAX = 75;
-    private static final float BASE_PULL_RATE = 2.0f;
+    private static final float BASE_PULL_RATE = 20.0f;
     private static final float SPEED_REFERENCE_RPM = 256f;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
@@ -237,6 +233,7 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
     public void tick() {
         super.tick();
         if (level == null) return;
+        if (level.isClientSide) return;
         updateConnectionStates();
         updatePullPushDirections();
         pullFromPipes();

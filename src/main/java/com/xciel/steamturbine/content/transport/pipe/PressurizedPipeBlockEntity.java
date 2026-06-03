@@ -257,8 +257,8 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
         return SteamData.of(extracted, storedSteamType, 1f, 1f, extracted);
     }
 
-    private static final int MAX_BFS_NODES = 32;
-    private static final float MAX_BFS_AMOUNT_PER_NODE = 2.0f;
+    private static final int MAX_BFS_NODES = 64;
+    private static final float MAX_BFS_AMOUNT_PER_NODE = 10.0f;
 
     public SteamData pullSteamFromNetwork(Direction requestedFrom, float amount) {
         if (level == null || level.isClientSide) return SteamData.empty();

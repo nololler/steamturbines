@@ -67,6 +67,16 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
         Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0)
     );
 
+    private static final VoxelShape SHAPE_UP_EAST = Shapes.or(
+        Block.box(3.0, 4.0, 3.0, 13.0, 12.0, 13.0),
+        Block.box(3.0, 14.0, 3.0, 13.0, 16.0, 13.0),
+        Block.box(2.0, 0.0, 2.0, 14.0, 2.0, 14.0),
+        Block.box(4.0, 12.0, 4.0, 12.0, 14.0, 12.0),
+        Block.box(4.0, 2.0, 4.0, 12.0, 4.0, 12.0),
+        Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0),
+        Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0)
+    );
+
     private static final VoxelShape SHAPE_DOWN = Shapes.or(
         Block.box(3.0, 4.0, 3.0, 13.0, 12.0, 13.0),
         Block.box(3.0, 0.0, 3.0, 13.0, 2.0, 13.0),
@@ -77,18 +87,30 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
         Block.box(1.0, 5.0, 5.0, 3.0, 11.0, 11.0)
     );
 
+    private static final VoxelShape SHAPE_DOWN_EAST = Shapes.or(
+        Block.box(3.0, 4.0, 3.0, 13.0, 12.0, 13.0),
+        Block.box(3.0, 0.0, 3.0, 13.0, 2.0, 13.0),
+        Block.box(2.0, 14.0, 2.0, 14.0, 16.0, 14.0),
+        Block.box(4.0, 2.0, 4.0, 12.0, 4.0, 12.0),
+        Block.box(4.0, 12.0, 4.0, 12.0, 14.0, 12.0),
+        Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0),
+        Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0)
+    );
+
     public SteamPumpBlock(Properties properties) {
         super(properties);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
-        return switch (state.getValue(FACING)) {
+        Direction facing = state.getValue(FACING);
+        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
+        return switch (facing) {
             case SOUTH -> SHAPE_SOUTH;
             case EAST -> SHAPE_EAST;
             case WEST -> SHAPE_WEST;
-            case UP -> SHAPE_UP;
-            case DOWN -> SHAPE_DOWN;
+            case UP -> alongFirst ? SHAPE_UP_EAST : SHAPE_UP;
+            case DOWN -> alongFirst ? SHAPE_DOWN_EAST : SHAPE_DOWN;
             default -> SHAPE_NORTH;
         };
     }
