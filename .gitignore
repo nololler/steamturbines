@@ -16,6 +16,8 @@ out/
 .classpath
 .project
 .settings/
+.vscode/
+eclipse/
 
 # OS
 .DS_Store
@@ -24,9 +26,18 @@ Thumbs.db
 # Temporary
 *.log
 *.tmp
+*.orig
 
 # Generated resources (keep src/main/resources)
 src/generated/
 
 # NeoForge specific
 cache/
+
+# Agent/OpenCode files
+.code-graph/
+.memory/
+.smallcode/
+
+# Project
+chatgpt.md
