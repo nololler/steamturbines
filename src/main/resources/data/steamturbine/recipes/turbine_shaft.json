@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "create:shaft" },
+    "Z": { "item": "create:zinc_block" },
+    "I": { "tag": "c:ingots/iron" }
+  },
+  "pattern": [
+    "III",
+    "SII",
+    "ZZZ"
+  ],
+  "result": { "count": 1, "id": "steamturbine:turbine_shaft" }
+}

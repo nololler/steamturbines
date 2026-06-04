@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "create:shaft" },
+    "P": { "item": "steamturbine:steam_pump" },
+    "Z": { "item": "create:zinc_block" }
+  },
+  "pattern": [
+    "ZZZ",
+    "SPS",
+    "ZZZ"
+  ],
+  "result": { "count": 1, "id": "steamturbine:steam_compressor" }
+}

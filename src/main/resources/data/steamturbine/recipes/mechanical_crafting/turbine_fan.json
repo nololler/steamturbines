@@ -1,0 +1,19 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "B": { "item": "steamturbine:turbine_blade" },
+    "S": { "item": "create:shaft" },
+    "C": { "item": "create:andesite_casing" }
+  },
+  "pattern": [
+    "  B  ",
+    " BS B ",
+    "BSCB S",
+    " BS B ",
+    "  B  "
+  ],
+  "result": { "count": 1, "id": "steamturbine:turbine_fan" },
+  "show_notification": false
+}

@@ -1,0 +1,19 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "C": { "item": "create:andesite_casing" },
+    "A": { "item": "create:andesite_alloy" },
+    "Z": { "item": "create:zinc_ingot" }
+  },
+  "pattern": [
+    "  A  ",
+    " A Z ",
+    "AZCZ A",
+    " A Z ",
+    "  A  "
+  ],
+  "result": { "count": 1, "id": "steamturbine:turbine_blade" },
+  "show_notification": false
+}

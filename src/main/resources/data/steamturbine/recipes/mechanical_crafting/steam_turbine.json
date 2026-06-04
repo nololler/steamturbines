@@ -1,0 +1,20 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "Z": { "item": "create:zinc_block" },
+    "T": { "item": "steamturbine:turbine_fan" },
+    "P": { "item": "steamturbine:steam_pump" },
+    "PP": { "item": "steamturbine:pressure_pipe" }
+  },
+  "pattern": [
+    "ZZZZZ",
+    "ZTTTZ",
+    "PPPPP",
+    "ZTTTZ",
+    "ZZZZZ"
+  ],
+  "result": { "count": 1, "id": "steamturbine:steam_turbine" },
+  "show_notification": false
+}

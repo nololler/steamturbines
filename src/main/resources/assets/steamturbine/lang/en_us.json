@@ -1,5 +1,8 @@
 {
   "itemGroup.steamturbine.main": "Steam Turbine",
+  "item.steamturbine.core_of_the_hearth": "Core of the Hearth",
+  "item.steamturbine.turbine_fan": "Turbine Fan",
+  "item.steamturbine.turbine_blade": "Turbine Blade",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
   "block.steamturbine.steam_compressor": "Steam Compressor",
