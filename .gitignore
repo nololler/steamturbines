@@ -1,6 +1,7 @@
 # Gradle
 build/
 ./gradle
+.gradle
 run/
 out/
 *.class
