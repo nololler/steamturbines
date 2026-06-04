@@ -5,13 +5,13 @@
   "key": {
     "B": { "item": "steamturbine:turbine_blade" },
     "S": { "item": "create:shaft" },
-    "C": { "item": "create:andesite_casing" }
+    "A": { "item": "minecraft:netherite_scrap" }
   },
   "pattern": [
     "  B  ",
-    " BS B ",
-    "BSCB S",
-    " BS B ",
+    " BSB ",
+    "BSASB",
+    " BSB ",
     "  B  "
   ],
   "result": { "count": 1, "id": "steamturbine:turbine_fan" },

@@ -1,7 +1,7 @@
 {
   "textures": {
-    "0": "steamturbine:item/hearth-core",
-    "particle": "steamturbine:item/hearth-core"
+    "0": "steamturbine:item/hearth_core",
+    "particle": "steamturbine:item/hearth_core"
   },
   "elements": [
     {

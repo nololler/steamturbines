@@ -45,6 +45,7 @@ public class SteamTurbine {
 
         STBlocks.register();
         STBlockEntityTypes.register();
+        STItems.register();
         STCreativeTabs.register(eventBus);
 
         LOGGER.info("Steam Turbine Initialized!");

@@ -3,12 +3,13 @@
   "category": "misc",
   "key": {
     "S": { "item": "create:shaft" },
-    "Z": { "item": "create:zinc_block" },
-    "I": { "tag": "c:ingots/iron" }
+    "Z": { "item": "minecraft:iron_block" },
+    "I": { "item": "create:zinc_ingot" },
+    "P": { "item": "steamturbine:pressure_pipe" }
   },
   "pattern": [
     "III",
-    "SII",
+    "SIP",
     "ZZZ"
   ],
   "result": { "count": 1, "id": "steamturbine:turbine_shaft" }

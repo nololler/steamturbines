@@ -6,7 +6,7 @@
     "T": { "item": "create:fluid_tank" },
     "H": { "item": "steamturbine:core_of_the_hearth" },
     "P": { "item": "steamturbine:steam_pump" },
-    "B": { "item": "create:blaze_burner" }
+    "B": { "item": "create:empty_blaze_burner" }
   },
   "pattern": [
     "III",

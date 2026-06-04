@@ -3,15 +3,15 @@
   "accept_mirrored": false,
   "category": "misc",
   "key": {
-    "C": { "item": "create:andesite_casing" },
+    "S": { "item": "minecraft:netherite_scrap" },
     "A": { "item": "create:andesite_alloy" },
     "Z": { "item": "create:zinc_ingot" }
   },
   "pattern": [
     "  A  ",
-    " A Z ",
-    "AZCZ A",
-    " A Z ",
+    " AZA ",
+    "AZSZA",
+    " AZA ",
     "  A  "
   ],
   "result": { "count": 1, "id": "steamturbine:turbine_blade" },

@@ -4,7 +4,7 @@
   "key": {
     "S": { "item": "create:shaft" },
     "P": { "item": "steamturbine:steam_pump" },
-    "Z": { "item": "create:zinc_block" }
+    "Z": { "item": "minecraft:iron_block" }
   },
   "pattern": [
     "ZZZ",

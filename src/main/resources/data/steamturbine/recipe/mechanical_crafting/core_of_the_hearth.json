@@ -5,13 +5,14 @@
   "key": {
     "I": { "item": "minecraft:iron_block" },
     "N": { "item": "minecraft:netherrack" },
-    "H": { "item": "minecraft:heavy_core" }
+    "H": { "item": "minecraft:heavy_core" },
+    "S": { "item": "minecraft:netherite_scrap" }
   },
   "pattern": [
     "IIIII",
-    "INNNI",
-    "INNHI",
-    "INNNI",
+    "INSNI",
+    "INHNI",
+    "INSNI",
     "IIIII"
   ],
   "result": { "count": 1, "id": "steamturbine:core_of_the_hearth" },

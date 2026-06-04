@@ -3,15 +3,15 @@
   "accept_mirrored": false,
   "category": "misc",
   "key": {
-    "Z": { "item": "create:zinc_block" },
+    "Z": { "item": "minecraft:iron_block" },
     "T": { "item": "steamturbine:turbine_fan" },
-    "P": { "item": "steamturbine:steam_pump" },
-    "PP": { "item": "steamturbine:pressure_pipe" }
+    "U": { "item": "steamturbine:steam_pump" },
+    "P": { "item": "steamturbine:pressure_pipe" }
   },
   "pattern": [
     "ZZZZZ",
     "ZTTTZ",
-    "PPPPP",
+    "UPPPU",
     "ZTTTZ",
     "ZZZZZ"
   ],
