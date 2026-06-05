@@ -9,11 +9,22 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
+def gitCommitCount = { ->
+    try {
+        def process = ['git', 'rev-list', '--count', 'HEAD'].execute()
+        process.waitFor()
+        return process.text.trim().toInteger()
+    } catch (Exception e) {
+        return 0
+    }
+}
+
+def buildNum = gitCommitCount()
+version = "1.0.${String.format('%03d', buildNum)}"
 group = mod_group_id
 
 base {
-    archivesName = mod_id
+    archivesName = "${mod_id}-mc${minecraft_version}"
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
