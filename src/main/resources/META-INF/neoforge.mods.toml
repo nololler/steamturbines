@@ -9,6 +9,7 @@ version="1.0.0"
 displayName="Steam Turbine"
 authors="Xciel"
 description='''Steam pressure and turbine system for Create'''
+logoFile = "icon.png"
 
 [[dependencies.steamturbine]]
 modId="neoforge"
