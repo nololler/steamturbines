@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.89'
+    id 'net.neoforged.moddev' version '2.0.97'
     id 'idea'
 }
 
@@ -73,12 +73,21 @@ repositories {
     maven { url = "https://mvn.devos.one/snapshots" }
     maven { url = "https://maven.blamejared.com" }
     maven { url = "https://maven.shedaniel.me" }
+    maven { url = "https://maven.neoforged.net/releases/" }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 dependencies {
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
     implementation("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}") { transitive = false }
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
+    compileOnly("maven.modrinth:emi:1.1.24+1.21.1+neoforge") { transitive = false }
     implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
