@@ -72,6 +72,14 @@ neoForge {
     }
 }
 
+sourceSets {
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
+
 configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
