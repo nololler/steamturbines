@@ -8,7 +8,7 @@ modId="steamturbine"
 version="1.0.0"
 displayName="Steam Turbine"
 authors="Xciel"
-description='''Steam pressure and turbine system for Create'''
+description='''Power of Steam to turn Turbines for Create'''
 logoFile = "icon.png"
 
 [[dependencies.steamturbine]]
