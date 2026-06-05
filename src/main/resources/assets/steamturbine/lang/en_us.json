@@ -37,5 +37,6 @@
   "steamturbine.goggles.pipe.pressure": "  Pressure: %s (max %.1f)  ",
   "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
   "steamturbine.goggles.pipe.idle": "  Idle  ",
-  "steamturbine.goggles.boiler.burn_time_infinite": "Infinite"
+  "steamturbine.goggles.boiler.burn_time_infinite": "Infinite",
+  "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting"
 }
