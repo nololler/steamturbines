@@ -62,7 +62,7 @@ public class STBlocks {
     public static final BlockEntry<SteamPumpBlock> STEAM_PUMP = REGISTRATE.block("steam_pump", SteamPumpBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
-            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 64.0))
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 32.0))
             .item()
             .build()
             .register();
