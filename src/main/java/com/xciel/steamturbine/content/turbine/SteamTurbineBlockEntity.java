@@ -28,14 +28,18 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     private static final float MIN_PRESSURE_FOR_OPERATION = 0.5f;
     private static final float MAX_THROUGHPUT = 50.0f;
     private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
+    private static final float MAX_STEAM_BUFFER = 500f;
+    private static final float BUFFER_DRAIN_RATE = 0.2f;
 
     private SteamData inputSteam = SteamData.empty();
+    private float steamBuffer = 0f;
+    private SteamType bufferedSteamType = SteamType.REGULAR;
     private float turbineSpeed = 0f;
     private int stageNumber = 0;
     private float stageEfficiency = 1.0f;
     private SteamData lastInputSteam = SteamData.empty();
     private SteamData lastExhaustSteam = SteamData.empty();
-    private Direction inputSource = null;  // Track where steam came from for exhaust output
+    private Direction inputSource = null;
 
     public SteamTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -57,11 +61,24 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
         int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
         stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
 
+        boolean usedBuffer = false;
+        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+            if (steamBuffer > 0 && bufferedSteamType != null) {
+                float bufferPressure = steamBuffer / MAX_STEAM_BUFFER * 3f;
+                inputSteam = SteamData.of(bufferPressure, bufferedSteamType, 1f, 1f, steamBuffer * BUFFER_DRAIN_RATE);
+                usedBuffer = true;
+            }
+        }
+
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
             inputSteam = SteamData.empty();
             lastInputSteam = SteamData.empty();
-            lastExhaustSteam = SteamData.empty();
             turbineSpeed = 0f;
+            lastExhaustSteam = SteamData.empty();
+            if (usedBuffer) {
+                steamBuffer *= (1f - BUFFER_DRAIN_RATE);
+                if (steamBuffer < 1f) steamBuffer = 0f;
+            }
             setChanged();
             sendData();
             return;
@@ -100,6 +117,11 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
             lastExhaustSteam = SteamData.of(0, SteamType.REGULAR, 1f, 1f, 0);
         }
 
+        if (usedBuffer) {
+            steamBuffer *= (1f - BUFFER_DRAIN_RATE);
+            if (steamBuffer < 1f) steamBuffer = 0f;
+        }
+
         inputSteam = SteamData.empty();
 
         setChanged();
@@ -124,7 +146,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     @Override
     public void receiveSteam(Direction direction, SteamData steam) {
         if (steam == null || steam.isEmpty()) return;
-        inputSource = direction;  // Track where steam came from
+        inputSource = direction;
         if (inputSteam.isEmpty()) {
             inputSteam = steam;
         } else {
@@ -216,10 +238,18 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        if (tag.contains("InputSteam")) {
-            inputSteam = SteamData.empty();
+        steamBuffer = tag.getFloat("SteamBuffer");
+        if (tag.contains("BufferedSteamType")) {
+            try {
+                bufferedSteamType = SteamType.valueOf(tag.getString("BufferedSteamType"));
+            } catch (IllegalArgumentException ignored) {
+                bufferedSteamType = SteamType.REGULAR;
+            }
         }
-        turbineSpeed = 0f;
+        if (tag.contains("InputSteam")) {
+            inputSteam = SteamData.loadFromNBT(tag.getCompound("InputSteam"), registries);
+        }
+        turbineSpeed = tag.getFloat("TurbineSpeed");
         stageNumber = tag.getInt("StageNumber");
         stageEfficiency = tag.getFloat("StageEfficiency");
         if (clientPacket) {
@@ -230,14 +260,20 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamC
                 lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
             }
         } else {
-            lastInputSteam = SteamData.empty();
-            lastExhaustSteam = SteamData.empty();
+            if (tag.contains("LastInputSteam")) {
+                lastInputSteam = SteamData.loadFromNBT(tag.getCompound("LastInputSteam"), registries);
+            }
+            if (tag.contains("LastExhaustSteam")) {
+                lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
+            }
         }
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
+        tag.putFloat("SteamBuffer", steamBuffer);
+        tag.putString("BufferedSteamType", bufferedSteamType.name());
         CompoundTag inputTag = new CompoundTag();
         inputSteam.saveToNBT(inputTag, registries);
         tag.put("InputSteam", inputTag);

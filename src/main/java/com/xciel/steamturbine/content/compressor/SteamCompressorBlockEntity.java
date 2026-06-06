@@ -33,11 +33,15 @@ import java.util.Map;
 
 public class SteamCompressorBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamProducer, ISteamTransport, ITurbineEndpoint, ICompressorEndpoint, IHaveGoggleInformation {
     private static final float AMPLIFICATION_FACTOR = 2.0f;
+    private static final float MAX_THROUGHPUT = 30.0f;
+    private static final float MAX_STEAM_BUFFER = 250f;
 
     private final EnumMap<Direction, Boolean> steamConnections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, Boolean> turbineConnections = new EnumMap<>(Direction.class);
     private SteamData inputSteam = SteamData.empty();
     private SteamData outputSteam = SteamData.empty();
+    private float steamBuffer = 0f;
+    private SteamType bufferedSteamType = SteamType.REGULAR;
     private float currentRPM = 0f;
     private SteamData lastReceivedSteam = SteamData.empty();
     private SteamData lastProducedSteam = SteamData.empty();
@@ -66,16 +70,26 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
         }
     }
 
-    private static final float MAX_THROUGHPUT = 30.0f;
-
     private void processSteam() {
         currentRPM = Math.abs(getSpeed());
 
+        boolean usedBuffer = false;
         if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
-            outputSteam = SteamData.empty();
+            if (steamBuffer > 0 && bufferedSteamType != null && currentRPM > 0) {
+                float bufferPressure = steamBuffer / MAX_STEAM_BUFFER * 2f;
+                inputSteam = SteamData.of(bufferPressure, bufferedSteamType, 1f, 1f, steamBuffer);
+                usedBuffer = true;
+            }
+        }
+
+        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
             inputSteam = SteamData.empty();
             lastReceivedSteam = SteamData.empty();
             lastProducedSteam = SteamData.empty();
+            outputSteam = SteamData.empty();
+            if (usedBuffer) {
+                steamBuffer = 0f;
+            }
             setChanged();
             sendData();
             return;
@@ -98,6 +112,10 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             inputSteam = inputSteam.withThroughput(remainingThroughput);
         } else {
             inputSteam = SteamData.empty();
+        }
+
+        if (usedBuffer) {
+            steamBuffer = 0f;
         }
 
         setChanged();
@@ -278,6 +296,14 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
+        steamBuffer = tag.getFloat("SteamBuffer");
+        if (tag.contains("BufferedSteamType")) {
+            try {
+                bufferedSteamType = SteamType.valueOf(tag.getString("BufferedSteamType"));
+            } catch (IllegalArgumentException ignored) {
+                bufferedSteamType = SteamType.REGULAR;
+            }
+        }
         if (tag.contains("OutputSteam")) {
             outputSteam = SteamData.loadFromNBT(tag.getCompound("OutputSteam"), registries);
         }
@@ -299,6 +325,8 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
+        tag.putFloat("SteamBuffer", steamBuffer);
+        tag.putString("BufferedSteamType", bufferedSteamType.name());
         CompoundTag outputTag = new CompoundTag();
         outputSteam.saveToNBT(outputTag, registries);
         tag.put("OutputSteam", outputTag);

@@ -21,12 +21,16 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation, ISteamEndpoint {
-    private static final float BASE_STRESS_CAPACITY = 390.0f; // SU per RPM
+    private static final float BASE_STRESS_CAPACITY = 390.0f;
     private static final float KINETIC_STRESS_CAPACITY = 256.0f;
+    private static final float KICKSTART_CAPACITY = 10000000f;
+    private static final int KICKSTART_DURATION = 40;
 
     private float aggregatedSpeed = 0f;
     private float aggregatedThroughput = 0f;
     private int connectedTurbineCount = 0;
+    private int kickstartTicks = 0;
+    private boolean wasRunning = false;
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     public TurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -45,6 +49,16 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level == null || level.isClientSide) return;
+        if (wasRunning) {
+            kickstartTicks = KICKSTART_DURATION;
+        }
+        updateFromConnectedTurbines();
+    }
+
+    @Override
     public void tick() {
         super.tick();
         if (level == null) return;
@@ -52,6 +66,12 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
             spawnSteamParticles();
             return;
         }
+        if (kickstartTicks > 0) {
+            kickstartTicks--;
+        }
+
+        wasRunning = aggregatedSpeed > 0f;
+
         updateFromConnectedTurbines();
     }
 
@@ -124,6 +144,13 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float getGeneratedSpeed() {
+        if (kickstartTicks > 0) {
+            float speed = 256f;
+            if (movementDirection != null && movementDirection.getValue() == 1) {
+                speed = -speed;
+            }
+            return speed;
+        }
         float speed = Math.min(aggregatedSpeed, 256f);
         if (movementDirection != null && movementDirection.getValue() == 1) {
             speed = -speed;
@@ -144,6 +171,9 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
 
     @Override
     public float calculateAddedStressCapacity() {
+        if (kickstartTicks > 0) {
+            return KICKSTART_CAPACITY;
+        }
         if (aggregatedSpeed <= 0f) return 0f;
 
         float maxStressCapacity = 500000f;
@@ -170,12 +200,10 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
+        wasRunning = tag.getBoolean("WasRunning");
         if (clientPacket) {
             aggregatedSpeed = tag.getFloat("AggregatedSpeed");
             aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
-        } else {
-            aggregatedSpeed = 0f;
-            aggregatedThroughput = 0f;
         }
     }
 
@@ -183,6 +211,7 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
+        tag.putBoolean("WasRunning", wasRunning);
         if (clientPacket) {
             tag.putFloat("AggregatedSpeed", aggregatedSpeed);
             tag.putFloat("AggregatedThroughput", aggregatedThroughput);
