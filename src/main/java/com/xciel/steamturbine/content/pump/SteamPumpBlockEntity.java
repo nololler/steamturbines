@@ -12,6 +12,7 @@ import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
+import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
@@ -271,8 +272,14 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
 
         if (neighborState.getBlock() instanceof PressurizedPipeBlock) return true;
 
+        if (neighborBE instanceof PressurizedPipeBlockEntity) return true;
+
         if (neighborBE instanceof ISteamTransport transport) {
             return transport.canConnect(dir.getOpposite());
+        }
+
+        if (neighborBE instanceof ISteamProducer producer) {
+            return producer.canProduce(dir.getOpposite());
         }
 
         if (neighborBE instanceof ISteamEndpoint endpoint) {
@@ -302,15 +309,29 @@ public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEn
             if (!level.isLoaded(neighborPos)) continue;
 
             var neighborBE = level.getBlockEntity(neighborPos);
-            if (!(neighborBE instanceof PressurizedPipeBlockEntity pipe)) continue;
 
-            SteamData pulled = pipe.pullSteamFromNetwork(dir.getOpposite(), remainingToPull);
-            if (!pulled.isEmpty()) {
-                actualPull += pulled.getThroughput();
-                remainingToPull -= pulled.getThroughput();
-                if (!typeInitialized) {
-                    pulledType = pulled.getSteamType();
-                    typeInitialized = true;
+            if (neighborBE instanceof PressurizedPipeBlockEntity pipe) {
+                SteamData pulled = pipe.pullSteamFromNetwork(dir.getOpposite(), remainingToPull);
+                if (!pulled.isEmpty()) {
+                    actualPull += pulled.getThroughput();
+                    remainingToPull -= pulled.getThroughput();
+                    if (!typeInitialized) {
+                        pulledType = pulled.getSteamType();
+                        typeInitialized = true;
+                    }
+                }
+            } else if (neighborBE instanceof ISteamProducer producer) {
+                if (producer.canProduce(dir.getOpposite())) {
+                    SteamData pulled = producer.produceSteam(dir.getOpposite());
+                    if (!pulled.isEmpty() && pulled.getThroughput() > 0) {
+                        float amountToPull = Math.min(pulled.getThroughput(), remainingToPull);
+                        actualPull += amountToPull;
+                        remainingToPull -= amountToPull;
+                        if (!typeInitialized) {
+                            pulledType = pulled.getSteamType();
+                            typeInitialized = true;
+                        }
+                    }
                 }
             }
         }
