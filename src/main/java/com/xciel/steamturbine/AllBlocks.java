@@ -12,6 +12,7 @@ public class AllBlocks {
     public static final BlockEntry<com.xciel.steamturbine.content.shaft.TurbineShaftBlock> TURBINE_SHAFT = STBlocks.TURBINE_SHAFT;
     public static final BlockEntry<com.xciel.steamturbine.content.pump.SteamPumpBlock> STEAM_PUMP = STBlocks.STEAM_PUMP;
     public static final BlockEntry<com.xciel.steamturbine.content.boilerTurbine.BoilerTurbineBlock> BOILER_TURBINE = STBlocks.BOILER_TURBINE;
+    public static final BlockEntry<com.xciel.steamturbine.content.boilerTurbine.ShaftCasingBlock> BOILER_TURBINE_SHAFT_CASING = STBlocks.BOILER_TURBINE_SHAFT_CASING;
 
     private AllBlocks() {}
 }

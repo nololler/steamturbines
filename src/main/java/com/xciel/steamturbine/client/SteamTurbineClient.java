@@ -1,6 +1,7 @@
 package com.xciel.steamturbine.client;
 
 import com.xciel.steamturbine.AllBlockEntityTypes;
+import com.xciel.steamturbine.content.boilerTurbine.ShaftCasingVisual;
 import com.xciel.steamturbine.content.compressor.SteamCompressorRenderer;
 import com.xciel.steamturbine.content.compressor.SteamCompressorVisual;
 import com.xciel.steamturbine.content.pump.SteamPumpVisual;
@@ -25,6 +26,10 @@ public class SteamTurbineClient {
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_PUMP.get())
             .factory(SteamPumpVisual::new)
+            .apply();
+
+        SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.BOILER_TURBINE_SHAFT_CASING.get())
+            .factory(ShaftCasingVisual::new)
             .apply();
     }
 }

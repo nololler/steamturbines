@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "rotation=0": {
+      "model": "steamturbine:block/boiler_turbine/shaft_casing"
+    },
+    "rotation=1": {
+      "model": "steamturbine:block/boiler_turbine/shaft_casing",
+      "y": 90
+    },
+    "rotation=2": {
+      "model": "steamturbine:block/boiler_turbine/shaft_casing",
+      "y": 180
+    },
+    "rotation=3": {
+      "model": "steamturbine:block/boiler_turbine/shaft_casing",
+      "y": 270
+    }
+  }
+}

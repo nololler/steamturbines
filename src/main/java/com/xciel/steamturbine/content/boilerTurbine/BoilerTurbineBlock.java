@@ -32,6 +32,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
@@ -140,9 +141,16 @@ public class BoilerTurbineBlock extends FaceAttachedHorizontalDirectionalBlock
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         IPlacementHelper placementHelper = PlacementHelpers.get(placementHelperId);
-        if (placementHelper.matchesItem(stack))
+        if (placementHelper.matchesItem(stack)) {
+            if (player.isShiftKeyDown()) {
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof BoilerTurbineBlockEntity turbineBE && turbineBE.shouldRespawnCasing()) {
+                    turbineBE.markCasingRespawned();
+                }
+            }
             return placementHelper.getOffset(player, level, state, pos, hitResult)
                 .placeInWorld(level, (BlockItem) stack.getItem(), player, hand, hitResult);
+        }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
@@ -162,6 +170,7 @@ public class BoilerTurbineBlock extends FaceAttachedHorizontalDirectionalBlock
         if (isShaftValid(pState, shaftState)) {
             pLevel.setBlock(shaftPos, getPoweredShaftEquivalent(shaftState), Block.UPDATE_ALL);
         }
+        trySpawnCasing(pLevel, pPos, pState);
     }
 
     @Override
@@ -173,6 +182,69 @@ public class BoilerTurbineBlock extends FaceAttachedHorizontalDirectionalBlock
         BlockState shaftState = pLevel.getBlockState(shaftPos);
         if (isPoweredShaft(shaftState))
             pLevel.scheduleTick(shaftPos, shaftState.getBlock(), 1);
+        removeCasing(pLevel, pPos);
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, neighborPos, isMoving);
+        if (level.isClientSide) return;
+
+        BlockPos shaftPos = getShaftPos(state, pos);
+        BlockPos casingPos = getCasingPos(pos);
+
+        if (neighborPos.equals(shaftPos)) {
+            BlockState shaftState = level.getBlockState(shaftPos);
+            if (isShaftValid(state, shaftState) && !isPoweredShaft(shaftState)) {
+                level.setBlock(shaftPos, getPoweredShaftEquivalent(shaftState), Block.UPDATE_ALL);
+            }
+            BoilerTurbineBlockEntity be = getBlockEntity(level, pos);
+            if (be != null) {
+                if (isShaftValid(state, shaftState)) {
+                    be.onShaftPlaced();
+                    trySpawnCasing(level, pos, state);
+                }
+            }
+        }
+    }
+
+    public static BlockPos getCasingPos(BlockPos pos) {
+        return pos.relative(Direction.UP);
+    }
+
+    private void trySpawnCasing(Level level, BlockPos pos, BlockState state) {
+        BlockPos casingPos = getCasingPos(pos);
+        if (level.hasChunkAt(casingPos)) {
+            BlockState existing = level.getBlockState(casingPos);
+            if (!existing.is(com.xciel.steamturbine.AllBlocks.BOILER_TURBINE_SHAFT_CASING.get())) {
+                level.setBlock(casingPos, com.xciel.steamturbine.AllBlocks.BOILER_TURBINE_SHAFT_CASING.getDefaultState()
+                    .setValue(ShaftCasingBlock.ROTATION, getCasingRotation(state.getValue(FACING))), Block.UPDATE_ALL);
+                BoilerTurbineBlockEntity be = getBlockEntity(level, pos);
+                if (be != null) {
+                    be.onCasingSpawned();
+                }
+            }
+        }
+    }
+
+    private void removeCasing(Level level, BlockPos pos) {
+        BlockPos casingPos = getCasingPos(pos);
+        if (level.hasChunkAt(casingPos)) {
+            BlockState casingState = level.getBlockState(casingPos);
+            if (casingState.is(com.xciel.steamturbine.AllBlocks.BOILER_TURBINE_SHAFT_CASING.get())) {
+                level.removeBlockEntity(casingPos);
+                level.setBlock(casingPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    public static int getCasingRotation(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> 2;
+            case WEST -> 3;
+            case EAST -> 1;
+            default -> 0;
+        };
     }
 
     private void updateBoilerState(BlockState state, Level level, BlockPos pos) {
@@ -217,12 +289,12 @@ public class BoilerTurbineBlock extends FaceAttachedHorizontalDirectionalBlock
     }
 
     public static BlockPos getShaftPos(BlockState sideState, BlockPos pos) {
-        return pos.relative(getConnectedDirection(sideState), 2);
+        return pos.relative(Direction.UP);
     }
 
     public static boolean isShaftValid(BlockState state, BlockState shaft) {
         return (AllBlocks.SHAFT.has(shaft) || isPoweredShaft(shaft))
-            && shaft.getValue(ShaftBlock.AXIS) != getFacing(state).getAxis();
+            && shaft.getValue(ShaftBlock.AXIS) == Direction.Axis.Y;
     }
 
     public static boolean isPoweredShaft(BlockState state) {
@@ -259,22 +331,16 @@ public class BoilerTurbineBlock extends FaceAttachedHorizontalDirectionalBlock
         public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
                                          BlockHitResult ray) {
             BlockPos shaftPos = BoilerTurbineBlock.getShaftPos(state, pos);
-            BlockState shaft = AllBlocks.SHAFT.getDefaultState();
-            for (Direction direction : Direction.orderedByNearest(player)) {
-                shaft = shaft.setValue(ShaftBlock.AXIS, direction.getAxis());
-                if (isShaftValid(state, shaft))
-                    break;
-            }
+            BlockState shaft = AllBlocks.SHAFT.getDefaultState().setValue(ShaftBlock.AXIS, Direction.Axis.Y);
 
             BlockState newState = world.getBlockState(shaftPos);
             if (!newState.canBeReplaced())
                 return PlacementOffset.fail();
 
-            Axis axis = shaft.getValue(ShaftBlock.AXIS);
             return PlacementOffset.success(shaftPos,
                 s -> BlockHelper
                     .copyProperties(s, AllBlocks.POWERED_SHAFT.getDefaultState())
-                    .setValue(PoweredShaftBlock.AXIS, axis));
+                    .setValue(PoweredShaftBlock.AXIS, Direction.Axis.Y));
         }
     }
 

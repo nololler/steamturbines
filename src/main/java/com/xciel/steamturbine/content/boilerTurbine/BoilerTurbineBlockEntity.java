@@ -16,7 +16,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -38,6 +40,9 @@ public class BoilerTurbineBlockEntity extends SmartBlockEntity implements IHaveG
     public WeakReference<SteamBoilerBlockEntity> source;
 
     float prevAngle = 0;
+
+    private boolean hasShaftCasing = false;
+    private boolean shaftCasingRemovedPermanently = false;
 
     public BoilerTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -111,12 +116,34 @@ public class BoilerTurbineBlockEntity extends SmartBlockEntity implements IHaveG
         return boiler.getPressure();
     }
 
+    public float getShaftSpeed() {
+        PoweredShaftBlockEntity shaft = getShaft();
+        if (shaft != null) {
+            return shaft.getSpeed();
+        }
+        return 0f;
+    }
+
     @Override
     public void remove() {
         PoweredShaftBlockEntity shaft = getShaft();
         if (shaft != null)
             shaft.remove(worldPosition);
         super.remove();
+    }
+
+    @Override
+    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(tag, registries, clientPacket);
+        hasShaftCasing = tag.getBoolean("HasShaftCasing");
+        shaftCasingRemovedPermanently = tag.getBoolean("ShaftCasingRemovedPermanently");
+    }
+
+    @Override
+    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(tag, registries, clientPacket);
+        tag.putBoolean("HasShaftCasing", hasShaftCasing);
+        tag.putBoolean("ShaftCasingRemovedPermanently", shaftCasingRemovedPermanently);
     }
 
     @Override
@@ -130,8 +157,8 @@ public class BoilerTurbineBlockEntity extends SmartBlockEntity implements IHaveG
         if (shaft == null || shaft.isRemoved() || !shaft.canBePoweredBy(worldPosition)) {
             if (shaft != null)
                 target = new WeakReference<>(null);
-            Direction facing = BoilerTurbineBlock.getFacing(getBlockState());
-            BlockEntity anyShaftAt = level.getBlockEntity(worldPosition.relative(facing, 2));
+            BlockPos shaftPos = BoilerTurbineBlock.getShaftPos(getBlockState(), worldPosition);
+            BlockEntity anyShaftAt = level.getBlockEntity(shaftPos);
             if (anyShaftAt instanceof PoweredShaftBlockEntity ps && ps.canBePoweredBy(worldPosition))
                 target = new WeakReference<>(shaft = ps);
         }
@@ -161,6 +188,37 @@ public class BoilerTurbineBlockEntity extends SmartBlockEntity implements IHaveG
             return false;
 
         return level.getBlockState(getBlockPos().relative(dir)).is(com.xciel.steamturbine.AllBlocks.STEAM_BOILER.get());
+    }
+
+    public void onShaftPlaced() {
+        if (shaftCasingRemovedPermanently) {
+            return;
+        }
+        if (!hasShaftCasing) {
+            hasShaftCasing = true;
+        }
+    }
+
+    public void onCasingSpawned() {
+        hasShaftCasing = true;
+    }
+
+    public void onShaftRemovedFromCasing() {
+        hasShaftCasing = false;
+        shaftCasingRemovedPermanently = true;
+    }
+
+    public boolean shouldRespawnCasing() {
+        return !hasShaftCasing && shaftCasingRemovedPermanently;
+    }
+
+    public void markCasingRespawned() {
+        hasShaftCasing = true;
+        shaftCasingRemovedPermanently = false;
+    }
+
+    public boolean isShaftCasingRemovedPermanently() {
+        return shaftCasingRemovedPermanently;
     }
 
     @OnlyIn(Dist.CLIENT)

@@ -11,6 +11,7 @@ public class AllBlockEntityTypes {
     public static final BlockEntityEntry<com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity> TURBINE_SHAFT = STBlockEntityTypes.TURBINE_SHAFT;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.pump.SteamPumpBlockEntity> STEAM_PUMP = STBlockEntityTypes.STEAM_PUMP;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.boilerTurbine.BoilerTurbineBlockEntity> BOILER_TURBINE = STBlockEntityTypes.BOILER_TURBINE;
+    public static final BlockEntityEntry<com.xciel.steamturbine.content.boilerTurbine.ShaftCasingBlockEntity> BOILER_TURBINE_SHAFT_CASING = STBlockEntityTypes.BOILER_TURBINE_SHAFT_CASING;
 
     private AllBlockEntityTypes() {}
 }
