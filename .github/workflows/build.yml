@@ -35,7 +35,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon --no-configuration-cache
         env:
           GRADLE_OPTS: "-Xmx4G"
 
