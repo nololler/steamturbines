@@ -5,7 +5,7 @@
   "key": {
     "I": { "item": "minecraft:iron_block" },
     "N": { "item": "minecraft:netherrack" },
-    "H": { "item": "minecraft:heavy_core" },
+    "H": { "item": "create:empty_blaze_burner" },
     "S": { "item": "minecraft:netherite_scrap" }
   },
   "pattern": [
