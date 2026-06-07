@@ -17,6 +17,7 @@ A Create 6.x compatible mod for Minecraft NeoForge 1.21.1, implementing a modula
 | **Steam Boiler** | Burns fuel to generate steam from water |
 | **Steam Pump** | Pulls steam from pipes and pushes to output |
 | **Pressurized Pipe** | Transports steam between machines |
+| **Steam Compressor** | Compresses steam for higher pressure and throughput |
 | **Steam Turbine** | Converts steam pressure into rotational force |
 | **Turbine Shaft** | Aggregates power from multiple turbines |
 
