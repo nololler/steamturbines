@@ -6,10 +6,6 @@ The code in this codebase is written by AI, I vibe-coded the mod.
 - This was made with love and pure effort, a hobby project of mine.
 - Mod is stable, but still needs work, and I am actively planning on more additions to this mod.
 
-# Create: SteamTurbine
-
-A Create 6.x compatible mod for Minecraft NeoForge 1.21.1, implementing a modular steam pressure and turbine system.
-
 ## Core Machines
 
 | Machine | Description |
@@ -18,8 +14,8 @@ A Create 6.x compatible mod for Minecraft NeoForge 1.21.1, implementing a modula
 | **Steam Pump** | Pulls steam from pipes and pushes to output |
 | **Pressurized Pipe** | Transports steam between machines |
 | **Steam Compressor** | Compresses steam for higher pressure and throughput |
-| **Steam Turbine** | Converts steam pressure into rotational force |
-| **Turbine Shaft** | Aggregates power from multiple turbines |
+| **Steam Turbine** | Converts steam pressure into rotational force which is sent to Turbine Shaft |
+| **Turbine Shaft** | Aggregates rotational power from turbines |
 
 ## Dependencies
 
