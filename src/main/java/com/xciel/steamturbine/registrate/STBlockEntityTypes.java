@@ -1,6 +1,7 @@
 package com.xciel.steamturbine.registrate;
 
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
+import com.xciel.steamturbine.content.boilerTurbine.BoilerTurbineBlockEntity;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
 import com.xciel.steamturbine.content.pump.SteamPumpBlockEntity;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity;
@@ -40,6 +41,11 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<SteamPumpBlockEntity> STEAM_PUMP = REGISTRATE
             .blockEntity("steam_pump", SteamPumpBlockEntity::new)
             .validBlocks(STBlocks.STEAM_PUMP)
+            .register();
+
+    public static final BlockEntityEntry<BoilerTurbineBlockEntity> BOILER_TURBINE = REGISTRATE
+            .blockEntity("boiler_turbine", BoilerTurbineBlockEntity::new)
+            .validBlocks(STBlocks.BOILER_TURBINE)
             .register();
 
     public static void register() {}

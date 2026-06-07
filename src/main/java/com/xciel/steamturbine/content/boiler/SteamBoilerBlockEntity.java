@@ -389,6 +389,14 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         return outputSteam;
     }
 
+    public float getPressure() {
+        return heatLevel;
+    }
+
+    public SteamBoilerBlockEntity getControllerBE() {
+        return this;
+    }
+
     public int getNextFuelBurnTime() {
         ItemStack stack = fuelInventory.getStackInSlot(0);
         if (stack.isEmpty()) return 0;

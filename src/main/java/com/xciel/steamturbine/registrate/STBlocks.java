@@ -3,6 +3,7 @@ package com.xciel.steamturbine.registrate;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
+import com.xciel.steamturbine.content.boilerTurbine.BoilerTurbineBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
 import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
@@ -63,6 +64,14 @@ public class STBlocks {
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 32.0))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<BoilerTurbineBlock> BOILER_TURBINE = REGISTRATE.block("boiler_turbine", BoilerTurbineBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 1024.0))
             .item()
             .build()
             .register();
