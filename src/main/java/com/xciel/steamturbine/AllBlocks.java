@@ -11,6 +11,8 @@ public class AllBlocks {
     public static final BlockEntry<com.xciel.steamturbine.content.turbine.SteamTurbineBlock> STEAM_TURBINE = STBlocks.STEAM_TURBINE;
     public static final BlockEntry<com.xciel.steamturbine.content.shaft.TurbineShaftBlock> TURBINE_SHAFT = STBlocks.TURBINE_SHAFT;
     public static final BlockEntry<com.xciel.steamturbine.content.pump.SteamPumpBlock> STEAM_PUMP = STBlocks.STEAM_PUMP;
+    public static final BlockEntry<com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlock> LAVA_DUCT_TURBINE = STBlocks.LAVA_DUCT_TURBINE;
+    public static final BlockEntry<com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock> LAVA_DUCT_SHAFT = STBlocks.LAVA_DUCT_SHAFT;
 
     private AllBlocks() {}
 }

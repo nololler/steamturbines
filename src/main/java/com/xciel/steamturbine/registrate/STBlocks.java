@@ -7,7 +7,9 @@ import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
 import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
+import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
+import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
@@ -63,6 +65,21 @@ public class STBlocks {
             .initialProperties(SharedProperties::softMetal)
             .transform(pickaxeOnly())
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 32.0))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<LavaDuctTurbineBlock> LAVA_DUCT_TURBINE = REGISTRATE.block("lava_duct_turbine", LavaDuctTurbineBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .transform(pickaxeOnly())
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<LavaDuctShaftBlock> LAVA_DUCT_SHAFT = REGISTRATE.block("lava_duct_shaft", LavaDuctShaftBlock::new)
+            .initialProperties(SharedProperties::stone)
+            .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 256.0))
             .item()
             .build()
             .register();

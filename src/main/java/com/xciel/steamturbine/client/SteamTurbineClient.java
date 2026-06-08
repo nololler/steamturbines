@@ -6,6 +6,8 @@ import com.xciel.steamturbine.content.compressor.SteamCompressorVisual;
 import com.xciel.steamturbine.content.pump.SteamPumpVisual;
 import com.xciel.steamturbine.content.shaft.TurbineShaftRenderer;
 import com.xciel.steamturbine.content.shaft.TurbineShaftVisual;
+import com.xciel.steamturbine.content.shaft.LavaDuctShaftRenderer;
+import com.xciel.steamturbine.content.shaft.LavaDuctShaftVisual;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -14,6 +16,7 @@ public class SteamTurbineClient {
     public static void addClientListeners(FMLClientSetupEvent event) {
         SteamCompressorRenderer.register();
         TurbineShaftRenderer.register();
+        LavaDuctShaftRenderer.register();
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_COMPRESSOR.get())
             .factory(SteamCompressorVisual::new)
@@ -25,6 +28,10 @@ public class SteamTurbineClient {
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_PUMP.get())
             .factory(SteamPumpVisual::new)
+            .apply();
+
+        SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.LAVA_DUCT_SHAFT.get())
+            .factory(LavaDuctShaftVisual::new)
             .apply();
     }
 }

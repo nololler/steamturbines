@@ -38,4 +38,11 @@ public final class SteamConstants {
 
     // Su calculation: SU = throughput * pressure * efficiency
     public static final float SU_PER_THROUGHPUT_PRESSURE = 2.0f;
+
+    // Lava Duct System
+    public static final float LAVA_DUCT_SU_PER_FACE = 2500f;
+    public static final int LAVA_DUCT_MAX_TURBINES = 5;
+    public static final int LAVA_DUCT_MAX_WALK_DEPTH = 5;
+    public static final int LAVA_DUCT_WATER_TANK_CAPACITY = 2000;
+    public static final int LAVA_DUCT_WATER_PER_TICK_PER_TURBINE = 1;
 }

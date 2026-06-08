@@ -10,6 +10,8 @@ public class AllBlockEntityTypes {
     public static final BlockEntityEntry<com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity> STEAM_TURBINE = STBlockEntityTypes.STEAM_TURBINE;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity> TURBINE_SHAFT = STBlockEntityTypes.TURBINE_SHAFT;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.pump.SteamPumpBlockEntity> STEAM_PUMP = STBlockEntityTypes.STEAM_PUMP;
+    public static final BlockEntityEntry<com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity> LAVA_DUCT_TURBINE = STBlockEntityTypes.LAVA_DUCT_TURBINE;
+    public static final BlockEntityEntry<com.xciel.steamturbine.content.shaft.LavaDuctShaftBlockEntity> LAVA_DUCT_SHAFT = STBlockEntityTypes.LAVA_DUCT_SHAFT;
 
     private AllBlockEntityTypes() {}
 }
