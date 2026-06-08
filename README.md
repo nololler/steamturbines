@@ -27,7 +27,7 @@ The code in this codebase is written by AI, I vibe-coded the mod.
 
 The MIT License (MIT)
 
-Copyright (c) 2026 Xciel Xotare
+Copyright (c) Xciel Xotare
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
