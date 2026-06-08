@@ -15,56 +15,66 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class LavaDuctShaftVisual extends KineticBlockEntityVisual<LavaDuctShaftBlockEntity> {
 
-    private RotatingInstance northShaft;
-    private RotatingInstance southShaft;
-    private Direction.Axis rotationAxis = Direction.Axis.Z;
+    private RotatingInstance shaft1;
+    private RotatingInstance shaft2;
+    private Direction dir1;
+    private Direction dir2;
 
     public LavaDuctShaftVisual(VisualizationContext context, LavaDuctShaftBlockEntity blockEntity, float partialTick) {
         super(context, blockEntity, partialTick);
 
+        BlockState state = blockEntity.getBlockState();
+        Direction facing = state.getValue(LavaDuctShaftBlock.FACING);
+        Direction.Axis rotationAxis = facing.getAxis();
+
+        dir1 = facing.getAxis() == Direction.Axis.X ? Direction.EAST : Direction.NORTH;
+        dir2 = dir1.getOpposite();
+
         var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING,
             Models.partial(AllPartialModels.SHAFT_HALF));
 
-        northShaft = instancer.createInstance();
-        northShaft.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
+        shaft1 = instancer.createInstance();
+        shaft1.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
             .setPosition(getVisualPosition())
-            .rotateToFace(Direction.SOUTH, Direction.NORTH)
+            .rotateToFace(Direction.SOUTH, dir1)
             .setChanged();
 
-        southShaft = instancer.createInstance();
-        southShaft.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
+        shaft2 = instancer.createInstance();
+        shaft2.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
             .setPosition(getVisualPosition())
-            .rotateToFace(Direction.NORTH, Direction.SOUTH)
+            .rotateToFace(Direction.SOUTH, dir2)
             .setChanged();
     }
 
     @Override
     public void update(float partialTick) {
         float speed = blockEntity.getSpeed();
+        Direction facing = blockState.getValue(LavaDuctShaftBlock.FACING);
+        Direction.Axis rotationAxis = facing.getAxis();
 
-        northShaft.setup(blockEntity, rotationAxis, speed)
-            .rotateToFace(Direction.SOUTH, Direction.NORTH)
+        shaft1.setup(blockEntity, dir1.getAxis(), speed)
+            .rotateToFace(Direction.SOUTH, dir1)
             .setChanged();
 
-        southShaft.setup(blockEntity, rotationAxis, speed)
-            .rotateToFace(Direction.NORTH, Direction.SOUTH)
+        shaft2.setup(blockEntity, dir2.getAxis(), speed)
+            .rotateToFace(Direction.SOUTH, dir2)
             .setChanged();
     }
 
     @Override
     protected void _delete() {
-        northShaft.delete();
-        southShaft.delete();
+        shaft1.delete();
+        shaft2.delete();
     }
 
     @Override
     public void updateLight(float partialTick) {
-        relight(new FlatLit[]{northShaft, southShaft});
+        relight(new FlatLit[]{shaft1, shaft2});
     }
 
     @Override
     public void collectCrumblingInstances(Consumer<Instance> consumer) {
-        consumer.accept(northShaft);
-        consumer.accept(southShaft);
+        consumer.accept(shaft1);
+        consumer.accept(shaft2);
     }
 }

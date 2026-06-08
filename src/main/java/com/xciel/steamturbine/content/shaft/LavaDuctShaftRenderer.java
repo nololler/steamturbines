@@ -30,14 +30,15 @@ public class LavaDuctShaftRenderer extends KineticBlockEntityRenderer<LavaDuctSh
         float time = AnimationTickHolder.getRenderTime(be.getLevel());
         BlockPos pos = be.getBlockPos();
 
-        float offset = getRotationOffsetForPosition(be, pos, Direction.Axis.Z);
+        Direction.Axis rotationAxis = facing.getAxis();
+
+        float offset = getRotationOffsetForPosition(be, pos, rotationAxis);
         float angle = (time * be.getSpeed() * 3f / 10) % 360;
         angle += offset;
         angle = angle / 180f * (float) Math.PI;
 
         Direction dir1 = facing.getAxis() == Direction.Axis.X ? Direction.EAST : Direction.NORTH;
         Direction dir2 = dir1.getOpposite();
-        Direction.Axis rotationAxis = dir1.getAxis();
 
         SuperByteBuffer dir1Buffer = CachedBuffers.partialFacing(
             AllPartialModels.SHAFT_HALF, state, dir1);

@@ -43,10 +43,8 @@ public class SteamCompressorVisual extends KineticBlockEntityVisual<SteamCompres
     @Override
     public void update(float partialTick) {
         float speed = blockEntity.getSpeed();
-        BlockState state = blockEntity.getBlockState();
-        Direction.Axis rotationAxis = ((IRotate) state.getBlock()).getRotationAxis(state);
         for (RotatingInstance shaft : shafts.values()) {
-            shaft.setup(blockEntity, rotationAxis, speed).setChanged();
+            shaft.setup(blockEntity, speed).setChanged();
         }
     }
 
