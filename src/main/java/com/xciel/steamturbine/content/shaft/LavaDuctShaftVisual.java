@@ -1,11 +1,8 @@
 package com.xciel.steamturbine.content.shaft;
 
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
@@ -20,43 +17,37 @@ public class LavaDuctShaftVisual extends KineticBlockEntityVisual<LavaDuctShaftB
 
     private RotatingInstance northShaft;
     private RotatingInstance southShaft;
+    private Direction.Axis rotationAxis = Direction.Axis.Z;
 
     public LavaDuctShaftVisual(VisualizationContext context, LavaDuctShaftBlockEntity blockEntity, float partialTick) {
         super(context, blockEntity, partialTick);
-
-        BlockState state = blockEntity.getBlockState();
-        Direction facing = state.getValue(LavaDuctShaftBlock.FACING);
-        Direction outputDir = ((LavaDuctShaftBlock) state.getBlock()).getShaftOutputDirection(state);
 
         var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING,
             Models.partial(AllPartialModels.SHAFT_HALF));
 
         northShaft = instancer.createInstance();
-        northShaft.setup(blockEntity, outputDir.getAxis(), blockEntity.getSpeed())
+        northShaft.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
             .setPosition(getVisualPosition())
-            .rotateToFace(Direction.SOUTH, facing)
+            .rotateToFace(Direction.SOUTH, Direction.NORTH)
             .setChanged();
 
         southShaft = instancer.createInstance();
-        southShaft.setup(blockEntity, outputDir.getAxis(), blockEntity.getSpeed())
+        southShaft.setup(blockEntity, rotationAxis, blockEntity.getSpeed())
             .setPosition(getVisualPosition())
-            .rotateToFace(Direction.NORTH, facing.getOpposite())
+            .rotateToFace(Direction.NORTH, Direction.SOUTH)
             .setChanged();
     }
 
     @Override
     public void update(float partialTick) {
         float speed = blockEntity.getSpeed();
-        BlockState state = blockEntity.getBlockState();
-        Direction facing = state.getValue(LavaDuctShaftBlock.FACING);
-        Direction outputDir = ((LavaDuctShaftBlock) state.getBlock()).getShaftOutputDirection(state);
 
-        northShaft.setup(blockEntity, outputDir.getAxis(), speed)
-            .rotateToFace(Direction.SOUTH, facing)
+        northShaft.setup(blockEntity, rotationAxis, speed)
+            .rotateToFace(Direction.SOUTH, Direction.NORTH)
             .setChanged();
 
-        southShaft.setup(blockEntity, outputDir.getAxis(), speed)
-            .rotateToFace(Direction.NORTH, facing.getOpposite())
+        southShaft.setup(blockEntity, rotationAxis, speed)
+            .rotateToFace(Direction.NORTH, Direction.SOUTH)
             .setChanged();
     }
 

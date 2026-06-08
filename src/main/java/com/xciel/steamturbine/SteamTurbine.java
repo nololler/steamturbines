@@ -2,6 +2,7 @@ package com.xciel.steamturbine;
 
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
+import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceKey;
@@ -68,6 +69,15 @@ public class SteamTurbine {
             Capabilities.ItemHandler.BLOCK,
             AllBlockEntityTypes.STEAM_BOILER.get(),
             (be, context) -> be.getItemHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            AllBlockEntityTypes.LAVA_DUCT_SHAFT.get(),
+            (be, context) -> {
+                if (context == null || LavaDuctShaftBlock.hasPipeTowards(be.getLevel(), be.getBlockPos(), be.getBlockState(), context))
+                    return be.getFluidHandler();
+                return null;
+            }
         );
     }
 

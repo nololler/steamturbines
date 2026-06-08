@@ -122,6 +122,12 @@ public class LavaDuctShaftBlock extends Block implements IBE<LavaDuctShaftBlockE
         return state.getValue(FACING).getOpposite();
     }
 
+    public static boolean hasPipeTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        Direction facing = state.getValue(FACING);
+        Direction lavaFace = facing.getClockWise();
+        return lavaFace == face;
+    }
+
     @Override
     public Class<LavaDuctShaftBlockEntity> getBlockEntityClass() {
         return LavaDuctShaftBlockEntity.class;
