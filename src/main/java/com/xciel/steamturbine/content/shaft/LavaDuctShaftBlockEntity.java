@@ -120,11 +120,10 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
     private void spawnSteamParticles() {
         if (level == null) return;
-        if (!canGeneratePower()) return;
         float su = calculateAddedStressCapacity();
         if (su < 100) return;
         Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
-        Direction exhaustFace = facing.getCounterClockWise();
+        Direction exhaustFace = facing.getClockWise();
         BlockPos exhaustPos = worldPosition.relative(exhaustFace);
         if (!level.isLoaded(exhaustPos)) return;
         if (!level.isEmptyBlock(exhaustPos)) return;
@@ -185,7 +184,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     }
 
     private boolean canGeneratePower() {
-        return hasWater && connectedTurbineCount > 0 && totalLavaFaces > 0;
+        return clientHasWater && clientTurbineCount > 0 && clientLavaFaces > 0;
     }
 
     @Override
@@ -215,12 +214,27 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     @Override
     public float calculateAddedStressCapacity() {
         if (kickstartTicks > 0) {
-            return KICKSTART_CAPACITY;
+            this.lastCapacityProvided = KICKSTART_CAPACITY;
+            return this.lastCapacityProvided;
         }
-        if (!canGeneratePower()) return 0f;
-        float speed = Math.abs(rpm);
-        if (speed <= 0f) return 0f;
-        float baseCapacity = totalGeneratedSU / speed;
+        if (!canGeneratePower()) {
+            this.lastCapacityProvided = 0f;
+            return 0f;
+        }
+        float speed;
+        float generatedSU;
+        if (level.isClientSide) {
+            speed = Math.abs(clientLavaFaces * BASE_RPM_PER_FACE);
+            generatedSU = clientGeneratedSU;
+        } else {
+            speed = Math.abs(rpm);
+            generatedSU = totalGeneratedSU;
+        }
+        if (speed <= 0f || generatedSU <= 0f) {
+            this.lastCapacityProvided = 0f;
+            return 0f;
+        }
+        float baseCapacity = generatedSU / speed;
         this.lastCapacityProvided = Math.round(baseCapacity);
         return this.lastCapacityProvided;
     }

@@ -40,7 +40,7 @@ public final class SteamConstants {
     public static final float SU_PER_THROUGHPUT_PRESSURE = 2.0f;
 
     // Lava Duct System
-    public static final float LAVA_DUCT_SU_PER_FACE = 2500f;
+    public static final float LAVA_DUCT_SU_PER_FACE = 475f;
     public static final int LAVA_DUCT_MAX_TURBINES = 5;
     public static final int LAVA_DUCT_MAX_WALK_DEPTH = 5;
     public static final int LAVA_DUCT_WATER_TANK_CAPACITY = 2000;
