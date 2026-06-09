@@ -79,7 +79,6 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         if (wasRunning) {
             kickstartTicks = KICKSTART_DURATION;
         }
-        updateFromConnectedTurbines();
     }
 
     private boolean hasWaterInTank() {
@@ -222,7 +221,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         float speed = Math.abs(rpm);
         if (speed <= 0f) return 0f;
         float baseCapacity = totalGeneratedSU / speed;
-        return Math.round(baseCapacity);
+        this.lastCapacityProvided = Math.round(baseCapacity);
+        return this.lastCapacityProvided;
     }
 
     public void onNeighborChanged() {
@@ -280,14 +280,13 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             clientGeneratedSU = tag.getFloat("ClientGeneratedSU");
             clientLavaFaces = tag.getInt("ClientLavaFaces");
             clientHasWater = tag.getBoolean("ClientHasWater");
-        } else {
-            clientTurbineCount = connectedTurbineCount;
-            clientGeneratedSU = totalGeneratedSU;
-            clientLavaFaces = totalLavaFaces;
-            clientHasWater = hasWater;
         }
         if (tag.contains("WaterTank")) {
             waterTank.readFromNBT(registries, tag.getCompound("WaterTank"));
+        }
+        if (!clientPacket && level != null && !level.isClientSide) {
+            hasWater = hasWaterInTank() && connectedTurbineCount > 0;
+            updateFromConnectedTurbines();
         }
     }
 

@@ -55,7 +55,6 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         if (wasRunning) {
             kickstartTicks = KICKSTART_DURATION;
         }
-        updateFromConnectedTurbines();
     }
 
     @Override
@@ -172,14 +171,19 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
     @Override
     public float calculateAddedStressCapacity() {
         if (kickstartTicks > 0) {
-            return KICKSTART_CAPACITY;
+            this.lastCapacityProvided = KICKSTART_CAPACITY;
+            return this.lastCapacityProvided;
         }
-        if (aggregatedSpeed <= 0f) return 0f;
+        if (aggregatedSpeed <= 0f) {
+            this.lastCapacityProvided = 0f;
+            return 0f;
+        }
 
         float baseMultiplier = 0.095f;
         float stageBonus = 0.98f + (connectedTurbineCount * 0.022f);
         float calculatedStressCapacity = aggregatedSpeed * aggregatedThroughput * baseMultiplier * stageBonus;
-        return Math.round(calculatedStressCapacity);
+        this.lastCapacityProvided = Math.round(calculatedStressCapacity);
+        return this.lastCapacityProvided;
     }
 
     public void onNeighborChanged() {
@@ -203,6 +207,9 @@ public class TurbineShaftBlockEntity extends GeneratingKineticBlockEntity implem
         if (clientPacket) {
             aggregatedSpeed = tag.getFloat("AggregatedSpeed");
             aggregatedThroughput = tag.contains("AggregatedThroughput") ? tag.getFloat("AggregatedThroughput") : 0f;
+        }
+        if (!clientPacket && level != null && !level.isClientSide) {
+            updateFromConnectedTurbines();
         }
     }
 
