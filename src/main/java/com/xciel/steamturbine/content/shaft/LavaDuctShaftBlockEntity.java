@@ -121,12 +121,11 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     private void spawnSteamParticles() {
         if (level == null) return;
         float su = calculateAddedStressCapacity();
-        if (su < 100) return;
+        if (su < 50) return;
         Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
-        Direction exhaustFace = facing.getClockWise();
+        Direction exhaustFace = facing.getCounterClockWise();
         BlockPos exhaustPos = worldPosition.relative(exhaustFace);
         if (!level.isLoaded(exhaustPos)) return;
-        if (!level.isEmptyBlock(exhaustPos)) return;
         float distance;
         if (su < 500) distance = 1.0f;
         else if (su < 1000) distance = 2.0f;
@@ -134,6 +133,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         else if (su < 100000) distance = 5.0f;
         else distance = 8.0f;
         if (level.random.nextInt(3) != 0) return;
+        if (!level.isEmptyBlock(exhaustPos)) return;
         Vec3 normal = Vec3.atLowerCornerOf(exhaustFace.getNormal());
         Vec3 offset = normal.scale(0.5).add(0.5, 0.5, 0.5);
         double speed = distance * 0.05;
