@@ -79,6 +79,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         if (wasRunning) {
             kickstartTicks = KICKSTART_DURATION;
         }
+        sendData();
     }
 
     private boolean hasWaterInTank() {
@@ -184,6 +185,9 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     }
 
     private boolean canGeneratePower() {
+        if (level != null && !level.isClientSide) {
+            return hasWater && connectedTurbineCount > 0 && totalLavaFaces > 0;
+        }
         return clientHasWater && clientTurbineCount > 0 && clientLavaFaces > 0;
     }
 
@@ -217,24 +221,14 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             this.lastCapacityProvided = KICKSTART_CAPACITY;
             return this.lastCapacityProvided;
         }
-        if (!canGeneratePower()) {
+        float faces = level != null && level.isClientSide ? clientLavaFaces : totalLavaFaces;
+        float su = level != null && level.isClientSide ? clientGeneratedSU : totalGeneratedSU;
+        float speed = Math.abs(faces * BASE_RPM_PER_FACE);
+        if (speed <= 0f) {
             this.lastCapacityProvided = 0f;
             return 0f;
         }
-        float speed;
-        float generatedSU;
-        if (level.isClientSide) {
-            speed = Math.abs(clientLavaFaces * BASE_RPM_PER_FACE);
-            generatedSU = clientGeneratedSU;
-        } else {
-            speed = Math.abs(rpm);
-            generatedSU = totalGeneratedSU;
-        }
-        if (speed <= 0f || generatedSU <= 0f) {
-            this.lastCapacityProvided = 0f;
-            return 0f;
-        }
-        float baseCapacity = generatedSU / speed;
+        float baseCapacity = su / speed;
         this.lastCapacityProvided = Math.round(baseCapacity);
         return this.lastCapacityProvided;
     }
@@ -289,12 +283,10 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         super.read(tag, registries, clientPacket);
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
         wasRunning = tag.getBoolean("WasRunning");
-        if (clientPacket) {
-            clientTurbineCount = tag.getInt("ClientTurbineCount");
-            clientGeneratedSU = tag.getFloat("ClientGeneratedSU");
-            clientLavaFaces = tag.getInt("ClientLavaFaces");
-            clientHasWater = tag.getBoolean("ClientHasWater");
-        }
+        clientTurbineCount = tag.getInt("ClientTurbineCount");
+        clientGeneratedSU = tag.getFloat("ClientGeneratedSU");
+        clientLavaFaces = tag.getInt("ClientLavaFaces");
+        clientHasWater = tag.getBoolean("ClientHasWater");
         if (tag.contains("WaterTank")) {
             waterTank.readFromNBT(registries, tag.getCompound("WaterTank"));
         }
