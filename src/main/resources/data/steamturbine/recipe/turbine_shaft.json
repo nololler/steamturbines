@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "S": { "item": "create:shaft" },
-    "Z": { "item": "minecraft:iron_block" },
+    "Z": { "item": "steamturbine:pressured_iron_ingot" },
     "I": { "item": "create:zinc_ingot" },
     "P": { "item": "steamturbine:pressure_pipe" }
   },

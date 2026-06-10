@@ -3,7 +3,7 @@
   "accept_mirrored": false,
   "category": "misc",
   "key": {
-    "Z": { "item": "minecraft:iron_block" },
+    "Z": { "item": "steamturbine:pressured_iron_ingot" },
     "T": { "item": "steamturbine:turbine_fan" },
     "U": { "item": "steamturbine:steam_pump" },
     "P": { "item": "steamturbine:pressure_pipe" }

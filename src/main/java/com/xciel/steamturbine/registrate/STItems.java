@@ -23,5 +23,8 @@ public class STItems {
             .properties(p -> p.rarity(Rarity.RARE))
             .register();
 
+    public static final ItemEntry<Item> PRESSURED_IRON_INGOT = REGISTRATE.item("pressured_iron_ingot", Item::new)
+            .register();
+
     public static void register() {}
 }

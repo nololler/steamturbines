@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "I": { "item": "minecraft:iron_block" },
+    "I": { "item": "steamturbine:pressured_iron_ingot" },
     "T": { "item": "create:fluid_tank" },
     "H": { "item": "steamturbine:core_of_the_hearth" },
     "P": { "item": "steamturbine:steam_pump" },

@@ -3,7 +3,7 @@
   "accept_mirrored": false,
   "category": "misc",
   "key": {
-    "S": { "item": "minecraft:iron_block" },
+    "S": { "item": "steamturbine:pressured_iron_ingot" },
     "A": { "item": "create:andesite_alloy" },
     "Z": { "item": "create:zinc_ingot" }
   },

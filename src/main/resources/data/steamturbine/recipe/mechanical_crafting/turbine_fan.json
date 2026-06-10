@@ -5,7 +5,7 @@
   "key": {
     "B": { "item": "steamturbine:turbine_blade" },
     "S": { "item": "create:shaft" },
-    "A": { "item": "minecraft:iron_block" }
+    "A": { "item": "steamturbine:pressured_iron_ingot" }
   },
   "pattern": [
     "  B  ",

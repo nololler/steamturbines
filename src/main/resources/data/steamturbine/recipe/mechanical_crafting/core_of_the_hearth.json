@@ -3,7 +3,7 @@
   "accept_mirrored": false,
   "category": "misc",
   "key": {
-    "I": { "item": "minecraft:iron_block" },
+    "I": { "item": "steamturbine:pressured_iron_ingot" },
     "N": { "item": "minecraft:netherrack" },
     "H": { "item": "create:empty_blaze_burner" },
     "S": { "item": "minecraft:netherite_scrap" }

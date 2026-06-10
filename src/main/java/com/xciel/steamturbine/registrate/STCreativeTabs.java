@@ -27,9 +27,12 @@ public class STCreativeTabs {
                         output.accept(STBlocks.STEAM_TURBINE.get());
                         output.accept(STBlocks.TURBINE_SHAFT.get());
                         output.accept(STBlocks.STEAM_PUMP.get());
+                        output.accept(STBlocks.LAVA_DUCT_TURBINE.get());
+                        output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
                         output.accept(STItems.TURBINE_BLADE.get());
                         output.accept(STItems.TURBINE_FAN.get());
                         output.accept(STItems.CORE_OF_THE_HEARTH.get());
+                        output.accept(STItems.PRESSURED_IRON_INGOT.get());
                     })
                     .build()
     );

@@ -3,6 +3,7 @@
   "item.steamturbine.core_of_the_hearth": "Core of the Hearth",
   "item.steamturbine.turbine_fan": "Turbine Fan",
   "item.steamturbine.turbine_blade": "Turbine Blade",
+  "item.steamturbine.pressured_iron_ingot": "Pressured Iron Ingot",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
   "block.steamturbine.steam_compressor": "Steam Compressor",
@@ -24,7 +25,7 @@
 
   "block.steamturbine.steam_pump.tooltip.summary": "Pulls steam from all connected Pressurized Steam Pipes into one direction.",
 
-  "block.steamturbine.lava_duct_turbine.tooltip.summary": "Generates SU based on how many faces are touching lava. Each face touching lava produces 2500 SU. Place below a Lava Duct Shaft and stack multiple turbines.",
+  "block.steamturbine.lava_duct_turbine.tooltip.summary": "Generates SU based on how many faces are touching lava. Each face touching lava produces 475 SU. Place below a Lava Duct Shaft and stack multiple turbines up to 5 max.",
 
   "block.steamturbine.lava_duct_shaft.tooltip.summary": "Collects SU from Lava Duct Turbines placed below it. Outputs kinetic power and requires continuous water supply from its EAST face.",
 

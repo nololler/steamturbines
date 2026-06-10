@@ -39,7 +39,7 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         super.tick();
         if (level == null || level.isClientSide) return;
 
-        stageNumber = countTurbinesAbove();
+        stageNumber = findStageNumber();
 
         int prevCount = lavaFaceCount;
 
@@ -61,7 +61,7 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
 
     public void onNeighborChanged() {
         if (level == null || level.isClientSide) return;
-        stageNumber = countTurbinesAbove();
+        stageNumber = findStageNumber();
         int count = 0;
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
@@ -85,18 +85,27 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         return generatedSU;
     }
 
-    private int countTurbinesAbove() {
-        int count = 0;
-        BlockPos current = worldPosition.above();
+    private int findStageNumber() {
+        BlockPos bottom = worldPosition;
+        while (level != null && level.isLoaded(bottom.below())) {
+            if (level.getBlockEntity(bottom.below()) instanceof LavaDuctTurbineBlockEntity) {
+                bottom = bottom.below();
+            } else {
+                break;
+            }
+        }
+        int stage = 0;
+        BlockPos current = bottom;
         while (level != null && level.isLoaded(current)) {
             if (level.getBlockEntity(current) instanceof LavaDuctTurbineBlockEntity) {
-                count++;
+                stage++;
+                if (current.equals(worldPosition)) break;
                 current = current.above();
             } else {
                 break;
             }
         }
-        return count;
+        return stage;
     }
 
     @Override

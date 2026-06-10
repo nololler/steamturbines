@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Z": { "item": "create:propeller" },
+    "P": { "item": "steamturbine:pressured_iron_ingot" }
+  },
+  "pattern": [
+    "PPP",
+    "PZP",
+    "PPP"
+  ],
+  "result": { "count": 1, "id": "steamturbine:lava_duct_turbine" }
+}
