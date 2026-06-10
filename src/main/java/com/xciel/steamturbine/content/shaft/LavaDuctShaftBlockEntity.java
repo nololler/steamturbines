@@ -201,16 +201,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         tooltip.add(Component.literal("    Lava Duct Shaft: ").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("    Connected Turbines: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.literal("    Turbines Connected: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("    Lava Faces: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.valueOf(totalLavaFaces)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("    Total SU/tick: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f", totalGeneratedSU / 20f)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("    Has Water: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(hasWater ? "Yes" : "No").withStyle(hasWater ? ChatFormatting.GREEN : ChatFormatting.RED)));
-        tooltip.add(Component.literal("    Water: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(waterTank.getFluidAmount() + " / " + WATER_TANK_CAPACITY + "mb").withStyle(ChatFormatting.DARK_GRAY)));
         return true;
     }
 

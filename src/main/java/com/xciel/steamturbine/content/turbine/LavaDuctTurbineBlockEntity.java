@@ -84,10 +84,6 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         tooltip.add(Component.literal("    Lava Duct Turbine").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("    Lava Faces: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.valueOf(lavaFaceCount)).withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("    Generated SU: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.0f", generatedSU)).withStyle(ChatFormatting.WHITE)));
         return true;
     }
 
