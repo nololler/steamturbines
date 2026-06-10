@@ -15,10 +15,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import net.minecraft.world.level.material.Fluids;
 
 import java.util.List;
 
@@ -28,31 +28,24 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     private static final int WATER_PER_TICK_PER_TURBINE = SteamConstants.LAVA_DUCT_WATER_PER_TICK_PER_TURBINE;
     private static final int KICKSTART_DURATION = 40;
     private static final float KICKSTART_CAPACITY = 10000000f;
-
-    private static final float SU_PER_FACE = SteamConstants.LAVA_DUCT_SU_PER_FACE;
     private static final float BASE_RPM_PER_FACE = 5.0f;
     private static final float MAX_RPM = 256.0f;
 
     private final FluidTank waterTank;
     private final IFluidHandler waterHandler;
 
-    private int connectedTurbineCount = 0;
-    private int totalLavaFaces = 0;
-    private float totalGeneratedSU = 0f;
-    private float rpm = 0f;
-    private int kickstartTicks = 0;
-    private boolean wasRunning = false;
-    private boolean hasWater = false;
+    private int connectedTurbineCount;
+    private int totalLavaFaces;
+    private float totalGeneratedSU;
+    private int kickstartTicks;
+    private boolean wasRunning;
+    private boolean hasWater;
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
-    private int clientTurbineCount = 0;
-    private float clientGeneratedSU = 0f;
-    private int clientLavaFaces = 0;
-    private boolean clientHasWater = false;
 
     public LavaDuctShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         setLazyTickRate(10);
-        waterTank = new FluidTank(WATER_TANK_CAPACITY, fluidStack -> fluidStack.getFluid() == Fluids.WATER) {
+        waterTank = new FluidTank(WATER_TANK_CAPACITY, fs -> fs.getFluid() == Fluids.WATER) {
             @Override
             protected void onContentsChanged() {
                 setChanged();
@@ -76,14 +69,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     public void onLoad() {
         super.onLoad();
         if (level == null || level.isClientSide) return;
-        if (wasRunning) {
-            kickstartTicks = KICKSTART_DURATION;
-        }
+        if (wasRunning) kickstartTicks = KICKSTART_DURATION;
         sendData();
-    }
-
-    private boolean hasWaterInTank() {
-        return waterTank.getFluidAmount() > 0;
     }
 
     @Override
@@ -96,24 +83,18 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             return;
         }
 
-        if (kickstartTicks > 0) {
-            kickstartTicks--;
-        }
+        if (kickstartTicks > 0) kickstartTicks--;
 
         boolean prevHasWater = hasWater;
-        hasWater = hasWaterInTank() && connectedTurbineCount > 0;
-        if (hasWater != prevHasWater) {
-            updateGeneratedRotation();
-        }
+        hasWater = waterTank.getFluidAmount() > 0 && connectedTurbineCount > 0;
+        if (hasWater != prevHasWater) updateGeneratedRotation();
 
-        wasRunning = canGeneratePower();
+        wasRunning = hasWater && connectedTurbineCount > 0 && totalLavaFaces > 0;
 
         updateFromConnectedTurbines();
 
-        if (connectedTurbineCount > 0 && hasWaterInTank()) {
-            int waterNeeded = connectedTurbineCount * WATER_PER_TICK_PER_TURBINE;
-            waterTank.drain(waterNeeded, IFluidHandler.FluidAction.EXECUTE);
-        }
+        if (connectedTurbineCount > 0 && waterTank.getFluidAmount() > 0)
+            waterTank.drain(connectedTurbineCount * WATER_PER_TICK_PER_TURBINE, IFluidHandler.FluidAction.EXECUTE);
 
         setChanged();
         sendData();
@@ -126,15 +107,14 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
         Direction exhaustFace = facing.getCounterClockWise();
         BlockPos exhaustPos = worldPosition.relative(exhaustFace);
-        if (!level.isLoaded(exhaustPos)) return;
+        if (!level.isLoaded(exhaustPos) || !level.isEmptyBlock(exhaustPos)) return;
+        if (level.random.nextInt(3) != 0) return;
         float distance;
         if (su < 500) distance = 1.0f;
         else if (su < 1000) distance = 2.0f;
         else if (su < 10000) distance = 3.0f;
         else if (su < 100000) distance = 5.0f;
         else distance = 8.0f;
-        if (level.random.nextInt(3) != 0) return;
-        if (!level.isEmptyBlock(exhaustPos)) return;
         Vec3 normal = Vec3.atLowerCornerOf(exhaustFace.getNormal());
         Vec3 offset = normal.scale(0.5).add(0.5, 0.5, 0.5);
         double speed = distance * 0.05;
@@ -153,10 +133,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     }
 
     private void updateFromConnectedTurbines() {
-        Direction walkDir = Direction.DOWN;
-
         LavaDuctNetworkWalker walker = new LavaDuctNetworkWalker(level);
-        List<LavaDuctNetworkWalker.TurbineInfo> turbines = walker.findTurbines(worldPosition, walkDir);
+        List<LavaDuctNetworkWalker.TurbineInfo> turbines = walker.findTurbines(worldPosition, Direction.DOWN);
 
         float totalSU = 0f;
         int totalFaces = 0;
@@ -164,10 +142,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
         for (LavaDuctNetworkWalker.TurbineInfo info : turbines) {
             if (info.turbine != null) {
-                float turbineSU = info.turbine.getGeneratedSU();
-                int turbineFaces = info.turbine.getLavaFaceCount();
-                totalSU += turbineSU;
-                totalFaces += turbineFaces;
+                totalSU += info.turbine.getGeneratedSU();
+                totalFaces += info.turbine.getLavaFaceCount();
                 count++;
             }
         }
@@ -176,43 +152,18 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         totalLavaFaces = totalFaces;
         connectedTurbineCount = count;
 
-        clientTurbineCount = count;
-        clientGeneratedSU = totalSU;
-        clientLavaFaces = totalFaces;
-        clientHasWater = hasWaterInTank() && count > 0;
-
         updateGeneratedRotation();
-    }
-
-    private boolean canGeneratePower() {
-        if (level != null && !level.isClientSide) {
-            return hasWater && connectedTurbineCount > 0 && totalLavaFaces > 0;
-        }
-        return clientHasWater && clientTurbineCount > 0 && clientLavaFaces > 0;
     }
 
     @Override
     public float getGeneratedSpeed() {
-        if (kickstartTicks > 0) {
-            float speed = MAX_RPM;
-            if (movementDirection != null && movementDirection.getValue() == 1) {
-                speed = -speed;
-            }
-            return speed;
-        }
-        if (!canGeneratePower()) return 0f;
-        rpm = Math.min(totalLavaFaces * BASE_RPM_PER_FACE, MAX_RPM);
-        if (movementDirection != null && movementDirection.getValue() == 1) {
-            rpm = -rpm;
-        }
-        return rpm;
-    }
+        if (kickstartTicks > 0)
+            return (movementDirection != null && movementDirection.getValue() == 1 ? -MAX_RPM : MAX_RPM);
 
-    public boolean canConnect(Direction direction) {
-        BlockState state = getBlockState();
-        Direction facing = state.getValue(LavaDuctShaftBlock.FACING);
-        Direction lavaFace = facing.getClockWise();
-        return direction == lavaFace;
+        if (connectedTurbineCount <= 0 || totalLavaFaces <= 0 || !hasWater) return 0f;
+
+        float speed = Math.min(totalLavaFaces * BASE_RPM_PER_FACE, MAX_RPM);
+        return movementDirection != null && movementDirection.getValue() == 1 ? -speed : speed;
     }
 
     @Override
@@ -221,16 +172,21 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             this.lastCapacityProvided = KICKSTART_CAPACITY;
             return this.lastCapacityProvided;
         }
-        float faces = level != null && level.isClientSide ? clientLavaFaces : totalLavaFaces;
-        float su = level != null && level.isClientSide ? clientGeneratedSU : totalGeneratedSU;
-        float speed = Math.abs(faces * BASE_RPM_PER_FACE);
+
+        float speed = Math.abs(totalLavaFaces * BASE_RPM_PER_FACE);
         if (speed <= 0f) {
             this.lastCapacityProvided = 0f;
             return 0f;
         }
-        float baseCapacity = su / speed;
-        this.lastCapacityProvided = Math.round(baseCapacity);
+
+        float capacity = totalGeneratedSU / speed;
+        this.lastCapacityProvided = Math.round(capacity);
         return this.lastCapacityProvided;
+    }
+
+    public boolean canConnect(Direction direction) {
+        Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
+        return direction == facing.getClockWise();
     }
 
     public void onNeighborChanged() {
@@ -241,38 +197,19 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         return waterHandler;
     }
 
-    public int getWaterAmount() {
-        return waterTank.getFluidAmount();
-    }
-
-    public int getConnectedTurbineCount() {
-        return connectedTurbineCount;
-    }
-
-    public float getTotalGeneratedSU() {
-        return totalGeneratedSU;
-    }
-
-    public int getTotalLavaFaces() {
-        return totalLavaFaces;
-    }
-
-    public boolean hasWater() {
-        return hasWater;
-    }
-
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         tooltip.add(Component.literal("    Lava Duct Shaft: ").withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("    Connected Turbines: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.valueOf(clientTurbineCount)).withStyle(ChatFormatting.WHITE)));
+            .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("    Lava Faces: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.valueOf(clientLavaFaces)).withStyle(ChatFormatting.WHITE)));
+            .append(Component.literal(String.valueOf(totalLavaFaces)).withStyle(ChatFormatting.WHITE)));
+        float suTick = totalGeneratedSU / 20f;
         tooltip.add(Component.literal("    Total SU/tick: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f", clientGeneratedSU / 20f)).withStyle(ChatFormatting.WHITE)));
+            .append(Component.literal(String.format("%.1f", suTick)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("    Has Water: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(clientHasWater ? "Yes" : "No").withStyle(clientHasWater ? ChatFormatting.GREEN : ChatFormatting.RED)));
+            .append(Component.literal(hasWater ? "Yes" : "No").withStyle(hasWater ? ChatFormatting.GREEN : ChatFormatting.RED)));
         tooltip.add(Component.literal("    Water: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(waterTank.getFluidAmount() + " / " + WATER_TANK_CAPACITY + "mb").withStyle(ChatFormatting.DARK_GRAY)));
         return true;
@@ -282,16 +219,13 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
+        totalLavaFaces = tag.getInt("TotalLavaFaces");
+        totalGeneratedSU = tag.getFloat("TotalGeneratedSU");
         wasRunning = tag.getBoolean("WasRunning");
-        clientTurbineCount = tag.getInt("ClientTurbineCount");
-        clientGeneratedSU = tag.getFloat("ClientGeneratedSU");
-        clientLavaFaces = tag.getInt("ClientLavaFaces");
-        clientHasWater = tag.getBoolean("ClientHasWater");
-        if (tag.contains("WaterTank")) {
+        if (tag.contains("WaterTank"))
             waterTank.readFromNBT(registries, tag.getCompound("WaterTank"));
-        }
         if (!clientPacket && level != null && !level.isClientSide) {
-            hasWater = hasWaterInTank() && connectedTurbineCount > 0;
+            hasWater = waterTank.getFluidAmount() > 0 && connectedTurbineCount > 0;
             updateFromConnectedTurbines();
         }
     }
@@ -300,11 +234,9 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
+        tag.putInt("TotalLavaFaces", totalLavaFaces);
+        tag.putFloat("TotalGeneratedSU", totalGeneratedSU);
         tag.putBoolean("WasRunning", wasRunning);
-        tag.putInt("ClientTurbineCount", clientTurbineCount);
-        tag.putFloat("ClientGeneratedSU", clientGeneratedSU);
-        tag.putInt("ClientLavaFaces", clientLavaFaces);
-        tag.putBoolean("ClientHasWater", clientHasWater);
         CompoundTag waterTag = new CompoundTag();
         waterTank.writeToNBT(registries, waterTag);
         tag.put("WaterTank", waterTag);
