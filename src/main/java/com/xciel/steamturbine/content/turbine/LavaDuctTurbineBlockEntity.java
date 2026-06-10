@@ -21,10 +21,8 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
 
     private static final float SU_PER_LAVA_FACE = SteamConstants.LAVA_DUCT_SU_PER_FACE;
 
-    private int lavaFaceCount = 0;
-    private float generatedSU = 0f;
-    private int lastLavaFaceCount = 0;
-    private float lastGeneratedSU = 0f;
+    private int lavaFaceCount;
+    private float generatedSU;
 
     public LavaDuctTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -39,23 +37,18 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
     public void tick() {
         super.tick();
         if (level == null || level.isClientSide) return;
-        updateLavaContacts();
-    }
 
-    public void updateLavaContacts() {
-        if (level == null) return;
+        int prevCount = lavaFaceCount;
 
         int count = 0;
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
             if (!level.isLoaded(neighborPos)) continue;
-            BlockState neighborState = level.getBlockState(neighborPos);
-            if (neighborState.is(Blocks.LAVA)) {
+            if (level.getBlockState(neighborPos).is(Blocks.LAVA))
                 count++;
-            }
         }
 
-        if (count != lavaFaceCount) {
+        if (count != prevCount) {
             lavaFaceCount = count;
             generatedSU = lavaFaceCount * SU_PER_LAVA_FACE;
             setChanged();
@@ -64,7 +57,18 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
     }
 
     public void onNeighborChanged() {
-        updateLavaContacts();
+        if (level == null || level.isClientSide) return;
+        int count = 0;
+        for (Direction dir : Direction.values()) {
+            BlockPos neighborPos = worldPosition.relative(dir);
+            if (!level.isLoaded(neighborPos)) continue;
+            if (level.getBlockState(neighborPos).is(Blocks.LAVA))
+                count++;
+        }
+        lavaFaceCount = count;
+        generatedSU = lavaFaceCount * SU_PER_LAVA_FACE;
+        setChanged();
+        sendData();
     }
 
     @Override
@@ -92,13 +96,6 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         super.read(tag, registries, clientPacket);
         lavaFaceCount = tag.getInt("LavaFaceCount");
         generatedSU = tag.getFloat("GeneratedSU");
-        if (clientPacket) {
-            lastLavaFaceCount = tag.getInt("LastLavaFaceCount");
-            lastGeneratedSU = tag.getFloat("LastGeneratedSU");
-        } else {
-            lastLavaFaceCount = lavaFaceCount;
-            lastGeneratedSU = generatedSU;
-        }
     }
 
     @Override
@@ -106,7 +103,5 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         super.write(tag, registries, clientPacket);
         tag.putInt("LavaFaceCount", lavaFaceCount);
         tag.putFloat("GeneratedSU", generatedSU);
-        tag.putInt("LastLavaFaceCount", lastLavaFaceCount);
-        tag.putFloat("LastGeneratedSU", lastGeneratedSU);
     }
 }

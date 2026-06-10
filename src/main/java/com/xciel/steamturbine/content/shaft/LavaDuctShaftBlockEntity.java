@@ -37,9 +37,10 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     private int connectedTurbineCount;
     private int totalLavaFaces;
     private float totalGeneratedSU;
+    private boolean hasWater;
     private int kickstartTicks;
     private boolean wasRunning;
-    private boolean hasWater;
+
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     public LavaDuctShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -102,18 +103,18 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
     private void spawnSteamParticles() {
         if (level == null) return;
-        float su = calculateAddedStressCapacity();
-        if (su < 50) return;
+        float cap = calculateAddedStressCapacity();
+        if (cap < 50) return;
         Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
         Direction exhaustFace = facing.getCounterClockWise();
         BlockPos exhaustPos = worldPosition.relative(exhaustFace);
         if (!level.isLoaded(exhaustPos) || !level.isEmptyBlock(exhaustPos)) return;
         if (level.random.nextInt(3) != 0) return;
         float distance;
-        if (su < 500) distance = 1.0f;
-        else if (su < 1000) distance = 2.0f;
-        else if (su < 10000) distance = 3.0f;
-        else if (su < 100000) distance = 5.0f;
+        if (cap < 500) distance = 1.0f;
+        else if (cap < 1000) distance = 2.0f;
+        else if (cap < 10000) distance = 3.0f;
+        else if (cap < 100000) distance = 5.0f;
         else distance = 8.0f;
         Vec3 normal = Vec3.atLowerCornerOf(exhaustFace.getNormal());
         Vec3 offset = normal.scale(0.5).add(0.5, 0.5, 0.5);
@@ -179,8 +180,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             return 0f;
         }
 
-        float capacity = totalGeneratedSU / speed;
-        this.lastCapacityProvided = Math.round(capacity);
+        this.lastCapacityProvided = Math.round(totalGeneratedSU / speed);
         return this.lastCapacityProvided;
     }
 
@@ -205,9 +205,8 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             .append(Component.literal(String.valueOf(connectedTurbineCount)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("    Lava Faces: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(String.valueOf(totalLavaFaces)).withStyle(ChatFormatting.WHITE)));
-        float suTick = totalGeneratedSU / 20f;
         tooltip.add(Component.literal("    Total SU/tick: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format("%.1f", suTick)).withStyle(ChatFormatting.WHITE)));
+            .append(Component.literal(String.format("%.1f", totalGeneratedSU / 20f)).withStyle(ChatFormatting.WHITE)));
         tooltip.add(Component.literal("    Has Water: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(hasWater ? "Yes" : "No").withStyle(hasWater ? ChatFormatting.GREEN : ChatFormatting.RED)));
         tooltip.add(Component.literal("    Water: ").withStyle(ChatFormatting.GRAY)
@@ -221,13 +220,10 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         connectedTurbineCount = tag.getInt("ConnectedTurbineCount");
         totalLavaFaces = tag.getInt("TotalLavaFaces");
         totalGeneratedSU = tag.getFloat("TotalGeneratedSU");
+        hasWater = tag.getBoolean("HasWater");
         wasRunning = tag.getBoolean("WasRunning");
         if (tag.contains("WaterTank"))
             waterTank.readFromNBT(registries, tag.getCompound("WaterTank"));
-        if (!clientPacket && level != null && !level.isClientSide) {
-            hasWater = waterTank.getFluidAmount() > 0 && connectedTurbineCount > 0;
-            updateFromConnectedTurbines();
-        }
     }
 
     @Override
@@ -236,6 +232,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
         tag.putInt("ConnectedTurbineCount", connectedTurbineCount);
         tag.putInt("TotalLavaFaces", totalLavaFaces);
         tag.putFloat("TotalGeneratedSU", totalGeneratedSU);
+        tag.putBoolean("HasWater", hasWater);
         tag.putBoolean("WasRunning", wasRunning);
         CompoundTag waterTag = new CompoundTag();
         waterTank.writeToNBT(registries, waterTag);

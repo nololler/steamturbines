@@ -2,7 +2,6 @@ package com.xciel.steamturbine.content.shaft;
 
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlock;
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity;
-import com.xciel.steamturbine.steam.transfer.ILavaDuctTurbineEndpoint;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -45,47 +44,25 @@ public class LavaDuctNetworkWalker {
     }
 
     private void walk(BlockPos current, Direction cameFrom, int depth) {
-        if (depth > MAX_DEPTH || !level.isLoaded(current) || visited.contains(current)) {
+        if (depth > MAX_DEPTH || !level.isLoaded(current) || visited.contains(current))
             return;
-        }
         visited.add(current);
 
         BlockState state = level.getBlockState(current);
         Block block = state.getBlock();
 
         if (block instanceof LavaDuctTurbineBlock) {
-            var be = level.getBlockEntity(current);
-            if (be instanceof LavaDuctTurbineBlockEntity turbine) {
+            if (level.getBlockEntity(current) instanceof LavaDuctTurbineBlockEntity turbine) {
                 foundTurbines.add(new TurbineInfo(current, turbine, depth));
 
-                Direction continueDir = Direction.DOWN;
-                BlockPos next = current.relative(continueDir);
-                if (!visited.contains(next)) {
-                    walk(next, continueDir.getOpposite(), depth + 1);
-                }
+                BlockPos next = current.relative(Direction.DOWN);
+                if (!visited.contains(next))
+                    walk(next, Direction.DOWN.getOpposite(), depth + 1);
             }
             return;
         }
 
-        if (block instanceof LavaDuctShaftBlock) {
+        if (block instanceof LavaDuctShaftBlock)
             return;
-        }
-    }
-
-    public static TurbineInfo findLastTurbine(List<TurbineInfo> turbines) {
-        if (turbines.isEmpty()) return null;
-        return turbines.stream()
-                .max(Comparator.comparingInt(t -> t.distance))
-                .orElse(null);
-    }
-
-    public static float sumTurbineSU(List<TurbineInfo> turbines) {
-        float sum = 0f;
-        for (TurbineInfo info : turbines) {
-            if (info.turbine != null) {
-                sum += info.turbine.getGeneratedSU();
-            }
-        }
-        return sum;
     }
 }
