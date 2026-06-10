@@ -23,6 +23,7 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
 
     private int lavaFaceCount;
     private float generatedSU;
+    private int stageNumber;
 
     public LavaDuctTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -37,6 +38,8 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
     public void tick() {
         super.tick();
         if (level == null || level.isClientSide) return;
+
+        stageNumber = countTurbinesAbove();
 
         int prevCount = lavaFaceCount;
 
@@ -58,6 +61,7 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
 
     public void onNeighborChanged() {
         if (level == null || level.isClientSide) return;
+        stageNumber = countTurbinesAbove();
         int count = 0;
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
@@ -81,9 +85,25 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         return generatedSU;
     }
 
+    private int countTurbinesAbove() {
+        int count = 0;
+        BlockPos current = worldPosition.above();
+        while (level != null && level.isLoaded(current)) {
+            if (level.getBlockEntity(current) instanceof LavaDuctTurbineBlockEntity) {
+                count++;
+                current = current.above();
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         tooltip.add(Component.literal("    Lava Duct Turbine").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    Stage: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(String.valueOf(stageNumber)).withStyle(ChatFormatting.WHITE)));
         return true;
     }
 
@@ -92,6 +112,7 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         super.read(tag, registries, clientPacket);
         lavaFaceCount = tag.getInt("LavaFaceCount");
         generatedSU = tag.getFloat("GeneratedSU");
+        stageNumber = tag.getInt("StageNumber");
     }
 
     @Override
@@ -99,5 +120,6 @@ public class LavaDuctTurbineBlockEntity extends SmartBlockEntity implements ILav
         super.write(tag, registries, clientPacket);
         tag.putInt("LavaFaceCount", lavaFaceCount);
         tag.putFloat("GeneratedSU", generatedSU);
+        tag.putInt("StageNumber", stageNumber);
     }
 }
