@@ -3,6 +3,7 @@ package com.xciel.steamturbine.client;
 import com.xciel.steamturbine.AllBlockEntityTypes;
 import com.xciel.steamturbine.content.compressor.SteamCompressorRenderer;
 import com.xciel.steamturbine.content.compressor.SteamCompressorVisual;
+import com.xciel.steamturbine.content.pump.SteamPumpRenderer;
 import com.xciel.steamturbine.content.pump.SteamPumpVisual;
 import com.xciel.steamturbine.content.shaft.TurbineShaftRenderer;
 import com.xciel.steamturbine.content.shaft.TurbineShaftVisual;
@@ -14,6 +15,7 @@ public class SteamTurbineClient {
 
     public static void addClientListeners(FMLClientSetupEvent event) {
         SteamCompressorRenderer.register();
+        SteamPumpRenderer.register();
         TurbineShaftRenderer.register();
         LavaDuctShaftRenderer.register();
 
