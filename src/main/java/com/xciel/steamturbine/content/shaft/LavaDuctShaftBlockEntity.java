@@ -103,6 +103,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
     private void spawnSteamParticles() {
         if (level == null) return;
+        if (!wasRunning) return;
         float cap = calculateAddedStressCapacity();
         if (cap < 50) return;
         Direction facing = getBlockState().getValue(LavaDuctShaftBlock.FACING);
