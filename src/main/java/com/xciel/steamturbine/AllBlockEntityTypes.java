@@ -1,6 +1,8 @@
 package com.xciel.steamturbine;
 
 import com.xciel.steamturbine.registrate.STBlockEntityTypes;
+import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity;
+import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
 public class AllBlockEntityTypes {
@@ -12,6 +14,7 @@ public class AllBlockEntityTypes {
     public static final BlockEntityEntry<com.xciel.steamturbine.content.pump.SteamPumpBlockEntity> STEAM_PUMP = STBlockEntityTypes.STEAM_PUMP;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity> LAVA_DUCT_TURBINE = STBlockEntityTypes.LAVA_DUCT_TURBINE;
     public static final BlockEntityEntry<com.xciel.steamturbine.content.shaft.LavaDuctShaftBlockEntity> LAVA_DUCT_SHAFT = STBlockEntityTypes.LAVA_DUCT_SHAFT;
+    public static final BlockEntityEntry<DirectionalAnalogGearshiftBlockEntity> DIRECTIONAL_ANALOG_GEARSHIFT = STBlockEntityTypes.DIRECTIONAL_ANALOG_GEARSHIFT;
 
     private AllBlockEntityTypes() {}
 }

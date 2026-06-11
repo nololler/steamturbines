@@ -8,6 +8,7 @@ import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
+import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -80,6 +81,13 @@ public class STBlocks {
             .initialProperties(SharedProperties::stone)
             .transform(pickaxeOnly())
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 256.0))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<DirectionalAnalogGearshiftBlock> DIRECTIONAL_ANALOG_GEARSHIFT = REGISTRATE.block("directional_analog_gearshift", DirectionalAnalogGearshiftBlock::new)
+            .initialProperties(SharedProperties::stone)
+            .transform(pickaxeOnly())
             .item()
             .build()
             .register();

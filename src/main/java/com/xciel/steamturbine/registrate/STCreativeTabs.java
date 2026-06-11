@@ -33,6 +33,7 @@ public class STCreativeTabs {
                         output.accept(STItems.TURBINE_FAN.get());
                         output.accept(STItems.CORE_OF_THE_HEARTH.get());
                         output.accept(STItems.PRESSURED_IRON_INGOT.get());
+                        output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
                     })
                     .build()
     );

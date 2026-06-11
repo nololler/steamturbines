@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "create:shaft" },
+    "Z": { "item": "steamturbine:pressured_iron_ingot" },
+    "C": { "item": "create:electron_tube" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": [
+    " Z ",
+    "RSC",
+    " Z "
+  ],
+  "result": { "count": 1, "id": "steamturbine:directional_analog_gearshift" }
+}
