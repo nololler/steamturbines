@@ -3,6 +3,7 @@ package com.xciel.steamturbine.content.dag;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,11 +32,16 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
+
+        Direction facing = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING);
+        boolean isVertical = facing == Direction.UP || facing == Direction.DOWN;
+        ValueBoxTransform slot = isVertical ? new DAGDirectionOption.DAGDirectionOptionVertical() : new DAGDirectionOption();
+
         movementDirection = new ScrollOptionBehaviour<>(
             WindmillBearingBlockEntity.RotationDirection.class,
             Component.translatable("steamturbine.dag.redstone_lock"),
             this,
-            new DAGDirectionOption());
+            slot);
         movementDirection.withCallback(v -> {
             redstoneLocked = movementDirection.getValue() == 1;
             detachKinetics();
