@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -18,12 +19,135 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.TickPriority;
 
 public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock implements IBE<SplitShaftBlockEntity> {
 
     public static final IntegerProperty LEFT_POWER = IntegerProperty.create("left_power", 0, 15);
     public static final IntegerProperty RIGHT_POWER = IntegerProperty.create("right_power", 0, 15);
+
+    public static final VoxelShape SHAPE_NORTH = Shapes.or(
+        Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 15.0),
+        Block.box(0.0, 0.0, 4.0, 2.0, 16.0, 12.0),
+        Block.box(14.0, 0.0, 4.0, 16.0, 16.0, 12.0),
+        Block.box(2.0, 14.0, 4.0, 14.0, 16.0, 12.0),
+        Block.box(2.0, 0.0, 4.0, 14.0, 2.0, 12.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 2.0, 7.0, 9.0, 14.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_EAST = Shapes.or(
+        Block.box(1.0, 4.0, 4.0, 15.0, 12.0, 12.0),
+        Block.box(4.0, 0.0, 0.0, 12.0, 16.0, 2.0),
+        Block.box(4.0, 0.0, 14.0, 12.0, 16.0, 16.0),
+        Block.box(4.0, 14.0, 2.0, 12.0, 16.0, 14.0),
+        Block.box(4.0, 0.0, 2.0, 12.0, 2.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(7.0, 2.0, 7.0, 9.0, 14.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_SOUTH = Shapes.or(
+        Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 15.0),
+        Block.box(14.0, 0.0, 4.0, 16.0, 16.0, 12.0),
+        Block.box(0.0, 0.0, 4.0, 2.0, 16.0, 12.0),
+        Block.box(2.0, 14.0, 4.0, 14.0, 16.0, 12.0),
+        Block.box(2.0, 0.0, 4.0, 14.0, 2.0, 12.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 2.0, 7.0, 9.0, 14.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_WEST = Shapes.or(
+        Block.box(1.0, 4.0, 4.0, 15.0, 12.0, 12.0),
+        Block.box(4.0, 0.0, 14.0, 12.0, 16.0, 16.0),
+        Block.box(4.0, 0.0, 0.0, 12.0, 16.0, 2.0),
+        Block.box(4.0, 14.0, 2.0, 12.0, 16.0, 14.0),
+        Block.box(4.0, 0.0, 2.0, 12.0, 2.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(7.0, 2.0, 7.0, 9.0, 14.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_NORTH = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
+        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
+        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_EAST = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
+        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
+        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
+        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_SOUTH = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
+        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_WEST = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
+        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
+        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
+        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_NORTH = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
+        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_EAST = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
+        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
+        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
+        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_SOUTH = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
+        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
+        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
+        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_WEST = Shapes.or(
+        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
+        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
+        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
+        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
+        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
+        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
+        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
+    );
 
     public DirectionalAnalogGearshiftBlock(Properties properties) {
         super(properties);
@@ -38,6 +162,25 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
         return state.getValue(FACING).getAxis();
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Direction facing = state.getValue(FACING);
+        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
+        return switch (facing) {
+            case SOUTH -> SHAPE_SOUTH;
+            case EAST -> SHAPE_EAST;
+            case WEST -> SHAPE_WEST;
+            case UP -> alongFirst ? SHAPE_UP_EAST : SHAPE_UP_NORTH;
+            case DOWN -> alongFirst ? SHAPE_DOWN_EAST : SHAPE_DOWN_NORTH;
+            default -> SHAPE_NORTH;
+        };
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getShape(state, level, pos, context);
     }
 
     @Override
