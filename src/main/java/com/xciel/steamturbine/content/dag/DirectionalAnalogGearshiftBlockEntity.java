@@ -25,8 +25,8 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         if (face == getSourceFacing()) return 1;
 
         BlockState state = getBlockState();
-        int leftPhysical = state.getValue(DirectionalAnalogGearshiftBlock.LEFT_POWERED) ? 15 : 0;
-        int rightPhysical = state.getValue(DirectionalAnalogGearshiftBlock.RIGHT_POWERED) ? 15 : 0;
+        int leftPhysical = state.getValue(DirectionalAnalogGearshiftBlock.LEFT_POWER);
+        int rightPhysical = state.getValue(DirectionalAnalogGearshiftBlock.RIGHT_POWER);
 
         Direction source = getSourceFacing();
         Direction facing = state.getValue(DirectionalAnalogGearshiftBlock.FACING);

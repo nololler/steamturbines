@@ -17,22 +17,22 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.ticks.TickPriority;
 
 public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock implements IBE<SplitShaftBlockEntity> {
 
-    public static final BooleanProperty LEFT_POWERED = BooleanProperty.create("left_powered");
-    public static final BooleanProperty RIGHT_POWERED = BooleanProperty.create("right_powered");
+    public static final IntegerProperty LEFT_POWER = IntegerProperty.create("left_power", 0, 15);
+    public static final IntegerProperty RIGHT_POWER = IntegerProperty.create("right_power", 0, 15);
 
     public DirectionalAnalogGearshiftBlock(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(LEFT_POWERED, false).setValue(RIGHT_POWERED, false));
+        registerDefaultState(defaultBlockState().setValue(LEFT_POWER, 0).setValue(RIGHT_POWER, 0));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder.add(LEFT_POWERED).add(RIGHT_POWERED));
+        super.createBlockStateDefinition(builder.add(LEFT_POWER).add(RIGHT_POWER));
     }
 
     @Override
@@ -49,9 +49,9 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     public BlockState getPoweredState(Level level, BlockState state, BlockPos pos) {
         Direction leftFace = getLeftFace(state);
         Direction rightFace = getRightFace(state);
-        boolean leftPowered = level.getSignal(pos.relative(leftFace), leftFace) > 0;
-        boolean rightPowered = level.getSignal(pos.relative(rightFace), rightFace) > 0;
-        return state.setValue(LEFT_POWERED, leftPowered).setValue(RIGHT_POWERED, rightPowered);
+        int leftPower = level.getSignal(pos.relative(leftFace), leftFace);
+        int rightPower = level.getSignal(pos.relative(rightFace), rightFace);
+        return state.setValue(LEFT_POWER, leftPower).setValue(RIGHT_POWER, rightPower);
     }
 
     public static Direction getLeftFace(BlockState state) {
@@ -70,9 +70,9 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
         if (worldIn.isClientSide) return;
         BlockState newState = getPoweredState(worldIn, state, pos);
-        boolean leftChanged = newState.getValue(LEFT_POWERED) != state.getValue(LEFT_POWERED);
-        boolean rightChanged = newState.getValue(RIGHT_POWERED) != state.getValue(RIGHT_POWERED);
-        if (leftChanged || rightChanged) {
+        int newLeft = newState.getValue(LEFT_POWER);
+        int newRight = newState.getValue(RIGHT_POWER);
+        if (newLeft != state.getValue(LEFT_POWER) || newRight != state.getValue(RIGHT_POWER)) {
             detachKinetics(worldIn, pos, true);
             worldIn.setBlock(pos, newState, Block.UPDATE_CLIENTS);
         }
