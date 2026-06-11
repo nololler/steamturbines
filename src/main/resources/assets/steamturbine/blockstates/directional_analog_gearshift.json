@@ -1,9 +1,13 @@
 {
   "variants": {
-    "facing=north": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 0 },
-    "facing=south": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 180 },
-    "facing=east": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 90 },
-    "facing=west": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 270 },
+    "facing=north,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 0 },
+    "facing=south,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 180 },
+    "facing=east,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 90 },
+    "facing=west,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 270 },
+    "facing=north,axis_along_first=true": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 0 },
+    "facing=south,axis_along_first=true": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 180 },
+    "facing=east,axis_along_first=true": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 90 },
+    "facing=west,axis_along_first=true": { "model": "steamturbine:block/dag/directional_analog_gearshift", "y": 270 },
     "facing=up,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "x": 270, "y": 0 },
     "facing=up,axis_along_first=true": { "model": "steamturbine:block/dag/directional_analog_gearshift", "x": 270, "y": 90 },
     "facing=down,axis_along_first=false": { "model": "steamturbine:block/dag/directional_analog_gearshift", "x": 90, "y": 0 },

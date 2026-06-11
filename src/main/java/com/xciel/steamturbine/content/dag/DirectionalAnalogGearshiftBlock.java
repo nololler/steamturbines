@@ -36,29 +36,22 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     }
 
     @Override
+    public Direction.Axis getRotationAxis(BlockState state) {
+        return state.getValue(FACING).getAxis();
+    }
+
+    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = super.getStateForPlacement(context);
         return getPoweredState(context.getLevel(), state, context.getClickedPos());
     }
 
     public BlockState getPoweredState(Level level, BlockState state, BlockPos pos) {
-        Direction leftDir = getLeftDirection(state);
-        Direction rightDir = getRightDirection(state);
-        int leftSignal = level.getSignal(pos.relative(leftDir), leftDir);
-        int rightSignal = level.getSignal(pos.relative(rightDir), rightDir);
-        if (state.getValue(LEFT_POWERED) != (leftSignal > 0))
-            state = state.setValue(LEFT_POWERED, leftSignal > 0);
-        if (state.getValue(RIGHT_POWERED) != (rightSignal > 0))
-            state = state.setValue(RIGHT_POWERED, rightSignal > 0);
-        return state;
-    }
-
-    public static Direction getLeftDirection(BlockState state) {
-        return state.getValue(FACING);
-    }
-
-    public static Direction getRightDirection(BlockState state) {
-        return getLeftDirection(state).getOpposite();
+        Direction leftFace = getLeftFace(state);
+        Direction rightFace = getRightFace(state);
+        boolean leftPowered = level.getSignal(pos.relative(leftFace), leftFace) > 0;
+        boolean rightPowered = level.getSignal(pos.relative(rightFace), rightFace) > 0;
+        return state.setValue(LEFT_POWERED, leftPowered).setValue(RIGHT_POWERED, rightPowered);
     }
 
     public static Direction getLeftFace(BlockState state) {
@@ -73,38 +66,13 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
         return getLeftFace(state).getOpposite();
     }
 
-    public static int getSignalForLeft(Level world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        Direction face = getLeftFace(state);
-        return world.getSignal(pos.relative(face), face);
-    }
-
-    public static int getSignalForRight(Level world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        Direction face = getRightFace(state);
-        return world.getSignal(pos.relative(face), face);
-    }
-
-    @Override
-    public Direction.Axis getRotationAxis(BlockState state) {
-        Direction facing = state.getValue(FACING);
-        if (facing.getAxis().isHorizontal())
-            return facing.getAxis();
-        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
-        return alongFirst ? Direction.Axis.X : Direction.Axis.Z;
-    }
-
-    @Override
-    public boolean hasShaftTowards(net.minecraft.world.level.LevelReader world, BlockPos pos, BlockState state, Direction face) {
-        return face.getAxis() == getRotationAxis(state);
-    }
-
     @Override
     public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
         if (worldIn.isClientSide) return;
         BlockState newState = getPoweredState(worldIn, state, pos);
-        if (newState.getValue(LEFT_POWERED) != state.getValue(LEFT_POWERED)
-                || newState.getValue(RIGHT_POWERED) != state.getValue(RIGHT_POWERED)) {
+        boolean leftChanged = newState.getValue(LEFT_POWERED) != state.getValue(LEFT_POWERED);
+        boolean rightChanged = newState.getValue(RIGHT_POWERED) != state.getValue(RIGHT_POWERED);
+        if (leftChanged || rightChanged) {
             detachKinetics(worldIn, pos, true);
             worldIn.setBlock(pos, newState, Block.UPDATE_CLIENTS);
         }
@@ -121,15 +89,13 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     @Override
     public void tick(BlockState state, ServerLevel worldIn, BlockPos pos, RandomSource random) {
         BlockEntity be = worldIn.getBlockEntity(pos);
-        if (be == null || !(be instanceof KineticBlockEntity kte))
-            return;
+        if (be == null || !(be instanceof KineticBlockEntity kte)) return;
         RotationPropagator.handleAdded(worldIn, pos, kte);
     }
 
     public void detachKinetics(Level worldIn, BlockPos pos, boolean reAttachNextTick) {
         BlockEntity be = worldIn.getBlockEntity(pos);
-        if (be == null || !(be instanceof KineticBlockEntity))
-            return;
+        if (be == null || !(be instanceof KineticBlockEntity)) return;
         RotationPropagator.handleRemoved(worldIn, pos, (KineticBlockEntity) be);
         if (reAttachNextTick)
             worldIn.scheduleTick(pos, this, 1, TickPriority.EXTREMELY_HIGH);
