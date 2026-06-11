@@ -46,5 +46,8 @@
   "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
   "steamturbine.goggles.pipe.idle": "  Idle  ",
   "steamturbine.goggles.boiler.burn_time_infinite": "Infinite",
+  "steamturbine.dag.redstone_lock": "Redstone Lock",
+  "create.generic.clockwise": "Unlocked",
+  "create.generic.counter_clockwise": "Redstone Locked",
   "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting"
 }

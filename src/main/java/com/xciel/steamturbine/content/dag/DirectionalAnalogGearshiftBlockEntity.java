@@ -1,10 +1,18 @@
 package com.xciel.steamturbine.content.dag;
 
+import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.List;
 
 public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity {
 
@@ -13,9 +21,28 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     private static final int MAX_RPM = 256;
 
     private Direction lastSourceFacing;
+    private boolean redstoneLocked;
+    private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     public DirectionalAnalogGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    @Override
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+        movementDirection = new ScrollOptionBehaviour<>(
+            WindmillBearingBlockEntity.RotationDirection.class,
+            Component.translatable("steamturbine.dag.redstone_lock"),
+            this,
+            new DAGDirectionOption());
+        movementDirection.withCallback(v -> {
+            redstoneLocked = movementDirection.getValue() == 1;
+            detachKinetics();
+            removeSource();
+            attachKinetics();
+        });
+        behaviours.add(movementDirection);
     }
 
     @Override
@@ -40,7 +67,12 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         int rpm = Math.abs(diff) * RPM_PER_LEVEL;
         if (Math.abs(diff) == 15) rpm += ONE_AT_MAX;
 
-        return rpm / (float) MAX_RPM;
+        float modifier = rpm / (float) MAX_RPM;
+
+        if (redstoneLocked && diff < 0)
+            return -modifier;
+
+        return modifier;
     }
 
     @Override
@@ -57,5 +89,17 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
                 attachKinetics();
             }
         }
+    }
+
+    @Override
+    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(tag, registries, clientPacket);
+        redstoneLocked = tag.getBoolean("RedstoneLocked");
+    }
+
+    @Override
+    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(tag, registries, clientPacket);
+        tag.putBoolean("RedstoneLocked", redstoneLocked);
     }
 }
