@@ -89,26 +89,6 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
         Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
     );
 
-    public static final VoxelShape SHAPE_UP_SOUTH = Shapes.or(
-        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
-        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
-        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
-        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
-        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
-        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
-        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
-    );
-
-    public static final VoxelShape SHAPE_UP_WEST = Shapes.or(
-        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
-        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
-        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
-        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
-        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
-        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
-        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
-    );
-
     public static final VoxelShape SHAPE_DOWN_NORTH = Shapes.or(
         Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
         Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
@@ -125,26 +105,6 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
         Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
         Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
         Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
-        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
-        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
-    );
-
-    public static final VoxelShape SHAPE_DOWN_SOUTH = Shapes.or(
-        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
-        Block.box(14.0, 4.0, 0.0, 16.0, 12.0, 16.0),
-        Block.box(0.0, 4.0, 0.0, 2.0, 12.0, 16.0),
-        Block.box(2.0, 4.0, 0.0, 14.0, 12.0, 2.0),
-        Block.box(2.0, 4.0, 14.0, 14.0, 12.0, 16.0),
-        Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0),
-        Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0)
-    );
-
-    public static final VoxelShape SHAPE_DOWN_WEST = Shapes.or(
-        Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),
-        Block.box(0.0, 4.0, 14.0, 16.0, 12.0, 16.0),
-        Block.box(0.0, 4.0, 0.0, 16.0, 12.0, 2.0),
-        Block.box(14.0, 4.0, 2.0, 16.0, 12.0, 14.0),
-        Block.box(0.0, 4.0, 2.0, 2.0, 12.0, 14.0),
         Block.box(7.0, 7.0, 2.0, 9.0, 9.0, 14.0),
         Block.box(2.0, 7.0, 7.0, 14.0, 9.0, 9.0)
     );

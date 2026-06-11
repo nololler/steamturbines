@@ -12,7 +12,6 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     private static final int ONE_AT_MAX = 1;
     private static final int MAX_RPM = 256;
 
-    private boolean needsReattach;
     private Direction lastSourceFacing;
 
     public DirectionalAnalogGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -41,26 +40,13 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         int rpm = Math.abs(diff) * RPM_PER_LEVEL;
         if (Math.abs(diff) == 15) rpm += ONE_AT_MAX;
 
-        float modifier = rpm / (float) MAX_RPM;
-        return diff > 0 ? modifier : -modifier;
-    }
-
-    public void neighborChanged() {
-        if (level == null || level.isClientSide) return;
-        needsReattach = true;
+        return rpm / (float) MAX_RPM;
     }
 
     @Override
     public void tick() {
         super.tick();
         if (level == null || level.isClientSide) return;
-
-        if (needsReattach) {
-            needsReattach = false;
-            detachKinetics();
-            removeSource();
-            attachKinetics();
-        }
 
         Direction currentSource = hasSource() ? getSourceFacing() : null;
         if (currentSource != lastSourceFacing) {
