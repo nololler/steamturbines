@@ -105,21 +105,23 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
             this,
             slot);
         movementDirection.withCallback(v -> {
+            boolean wasLocked = redstoneLocked;
             redstoneLocked = movementDirection.getValue() == 1;
             if (hasLevel() && !level.isClientSide) {
                 detachKinetics();
                 removeSource();
-                speed = 0;
-                setNetwork(null);
-                lastSourcePos = null;
-                if (redstoneLocked) {
+                if (!wasLocked && redstoneLocked) {
                     float target = computeModeBSpeed();
+                    speed = target;
                     if (target != 0) {
-                        speed = target;
                         setNetwork(worldPosition.asLong());
-                        attachKinetics();
+                    } else {
+                        setNetwork(null);
                     }
+                    attachKinetics();
                 } else {
+                    speed = 0;
+                    setNetwork(null);
                     attachKinetics();
                 }
                 setChanged();

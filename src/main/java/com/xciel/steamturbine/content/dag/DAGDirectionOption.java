@@ -58,16 +58,16 @@ public class DAGDirectionOption extends ValueBoxTransform.Sided {
             boolean alongFirst = state.getValue(DirectionalAnalogGearshiftBlock.AXIS_ALONG_FIRST_COORDINATE);
 
             if (facing == Direction.UP && !alongFirst) {
-                return side == Direction.NORTH || side == Direction.SOUTH;
+                return side == Direction.EAST || side == Direction.WEST;
             }
             if (facing == Direction.UP && alongFirst) {
-                return side == Direction.EAST || side == Direction.WEST;
-            }
-            if (facing == Direction.DOWN && !alongFirst) {
                 return side == Direction.NORTH || side == Direction.SOUTH;
             }
-            if (facing == Direction.DOWN && alongFirst) {
+            if (facing == Direction.DOWN && !alongFirst) {
                 return side == Direction.EAST || side == Direction.WEST;
+            }
+            if (facing == Direction.DOWN && alongFirst) {
+                return side == Direction.NORTH || side == Direction.SOUTH;
             }
             return false;
         }

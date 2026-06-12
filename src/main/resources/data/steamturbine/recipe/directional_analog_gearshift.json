@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "S": { "item": "create:shaft" },
+    "S": { "item": "create:brass_casing" },
     "Z": { "item": "steamturbine:pressured_iron_ingot" },
     "C": { "item": "create:electron_tube" },
     "R": { "item": "minecraft:redstone" }
