@@ -3,12 +3,13 @@
   "category": "misc",
   "key": {
     "Z": { "item": "create:propeller" },
-    "P": { "item": "steamturbine:pressured_iron_ingot" }
+    "P": { "item": "steamturbine:pressured_iron_ingot" },
+    "#": { "item": "create:iron_sheet" }
   },
   "pattern": [
-    "PPP",
-    "PZP",
-    "PPP"
+    "P#P",
+    "#Z#",
+    "P#P"
   ],
   "result": { "count": 1, "id": "steamturbine:lava_duct_turbine" }
 }

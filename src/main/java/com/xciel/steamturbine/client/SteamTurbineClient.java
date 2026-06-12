@@ -8,6 +8,8 @@ import com.xciel.steamturbine.content.pump.SteamPumpVisual;
 import com.xciel.steamturbine.content.shaft.TurbineShaftRenderer;
 import com.xciel.steamturbine.content.shaft.TurbineShaftVisual;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftRenderer;
+import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftRenderer;
+import com.simibubi.create.content.kinetics.transmission.SplitShaftVisual;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -19,6 +21,8 @@ public class SteamTurbineClient {
         TurbineShaftRenderer.register();
         LavaDuctShaftRenderer.register();
 
+        DirectionalAnalogGearshiftRenderer.register();
+
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_COMPRESSOR.get())
             .factory(SteamCompressorVisual::new)
             .apply();
@@ -29,6 +33,10 @@ public class SteamTurbineClient {
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_PUMP.get())
             .factory(SteamPumpVisual::new)
+            .apply();
+
+        SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.DIRECTIONAL_ANALOG_GEARSHIFT.get())
+            .factory(SplitShaftVisual::new)
             .apply();
     }
 }

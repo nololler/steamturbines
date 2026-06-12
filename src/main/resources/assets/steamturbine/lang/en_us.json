@@ -12,6 +12,15 @@
   "block.steamturbine.steam_pump": "Pressurized Steam Pump",
   "block.steamturbine.lava_duct_turbine": "Lava Duct Turbine",
   "block.steamturbine.lava_duct_shaft": "Lava Duct Shaft",
+  "block.steamturbine.directional_analog_gearshift": "Directional Analog Gearshift",
+
+  "block.steamturbine.directional_analog_gearshift.tooltip.summary": "A directional gearshift controlled by analog redstone signals. The LEFT and RIGHT sides determine output speed and direction from their signal differential.",
+  "block.steamturbine.directional_analog_gearshift.tooltip.condition1": "When Unlocked",
+  "block.steamturbine.directional_analog_gearshift.tooltip.behaviour1": "Output speed follows the input direction with an RPM modifier based on the redstone differential. Higher differential = higher speed.",
+  "block.steamturbine.directional_analog_gearshift.tooltip.condition2": "When Redstone Locked",
+  "block.steamturbine.directional_analog_gearshift.tooltip.behaviour2": "Output direction is locked to an absolute direction determined by which redstone side is stronger. The input direction is completely ignored; only the speed magnitude is used.",
+  "block.steamturbine.directional_analog_gearshift.tooltip.condition3": "Input Direction",
+  "block.steamturbine.directional_analog_gearshift.tooltip.behaviour3": "Kinetic input must be supplied from the BACK side (Marked Red). The OPPOSITE side (Marked Blue) is the output.",
 
   "block.steamturbine.steam_boiler.tooltip.summary": "Produces Steam which can be fed to Steam Turbines, Steam Compressors, and Pressurized Steam Pipes. Make sure to feed it fuel and water!",
 
@@ -45,5 +54,8 @@
   "steamturbine.goggles.pipe.active_dirs": "  Active: %d directions  ",
   "steamturbine.goggles.pipe.idle": "  Idle  ",
   "steamturbine.goggles.boiler.burn_time_infinite": "Infinite",
+  "steamturbine.dag.redstone_lock": "Redstone Lock",
+  "create.generic.clockwise": "Unlocked",
+  "create.generic.counter_clockwise": "Redstone Locked",
   "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting"
 }

@@ -8,6 +8,7 @@ import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlockEntity;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity;
+import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
 import static com.xciel.steamturbine.SteamTurbine.REGISTRATE;
@@ -52,6 +53,11 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<LavaDuctShaftBlockEntity> LAVA_DUCT_SHAFT = REGISTRATE
             .blockEntity("lava_duct_shaft", LavaDuctShaftBlockEntity::new)
             .validBlocks(STBlocks.LAVA_DUCT_SHAFT)
+            .register();
+
+    public static final BlockEntityEntry<DirectionalAnalogGearshiftBlockEntity> DIRECTIONAL_ANALOG_GEARSHIFT = REGISTRATE
+            .blockEntity("directional_analog_gearshift", DirectionalAnalogGearshiftBlockEntity::new)
+            .validBlocks(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT)
             .register();
 
     public static void register() {}
