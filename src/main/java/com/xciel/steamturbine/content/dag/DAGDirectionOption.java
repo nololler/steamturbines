@@ -89,7 +89,7 @@ public class DAGDirectionOption extends ValueBoxTransform.Sided {
 
         @Override
         protected Vec3 getSouthLocation() {
-            return VecHelper.voxelSpace(8, 8, 15.5f);
+            return VecHelper.voxelSpace(8, 8, 8);
         }
 
         @Override

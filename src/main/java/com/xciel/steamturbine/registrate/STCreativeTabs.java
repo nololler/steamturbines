@@ -31,9 +31,9 @@ public class STCreativeTabs {
                         output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
                         output.accept(STItems.TURBINE_BLADE.get());
                         output.accept(STItems.TURBINE_FAN.get());
+                        output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
                         output.accept(STItems.CORE_OF_THE_HEARTH.get());
                         output.accept(STItems.PRESSURED_IRON_INGOT.get());
-                        output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
                     })
                     .build()
     );

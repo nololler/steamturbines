@@ -21,9 +21,23 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     private static final int ONE_AT_MAX = 1;
     private static final int MAX_RPM = 256;
 
+    // Mode B output direction: true = CW (modifier positive), false = CCW (modifier negative)
+    // These are constants you can tweak per facing direction
+    private static final boolean DIR_NORTH_LEFT  = true;
+    private static final boolean DIR_NORTH_RIGHT = false;
+    private static final boolean DIR_SOUTH_LEFT  = false;
+    private static final boolean DIR_SOUTH_RIGHT = true;
+    private static final boolean DIR_EAST_LEFT   = false;
+    private static final boolean DIR_EAST_RIGHT  = true;
+    private static final boolean DIR_WEST_LEFT   = true;
+    private static final boolean DIR_WEST_RIGHT  = false;
+    private static final boolean DIR_UP_LEFT     = true;
+    private static final boolean DIR_UP_RIGHT    = false;
+    private static final boolean DIR_DOWN_LEFT   = true;
+    private static final boolean DIR_DOWN_RIGHT  = false;
+
     private boolean redstoneLocked;
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
-    private float lastInputSpeed;
 
     public DirectionalAnalogGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -68,59 +82,35 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
 
         float modifier = rpm / (float) MAX_RPM;
 
-        // Get input direction
-        float inputSpeed = getSpeed();
-        boolean inputIsCW = inputSpeed > 0;
-        boolean inputIsCCW = inputSpeed < 0;
-
         if (redstoneLocked) {
-            // Mode B: Determine ABSOLUTE output direction
-            // LEFT dominant → CW output (absolute)
-            // RIGHT dominant → CCW output (absolute)
-            if (diff > 0) {
-                // LEFT dominant → want CW output
-                if (inputIsCW) return modifier;      // Input already CW, follow along
-                if (inputIsCCW) return -modifier;    // Input is CCW, reverse it to get CW
-                return modifier;                     // No input, output CW
-            } else {
-                // RIGHT dominant → want CCW output
-                if (inputIsCCW) return modifier;     // Input already CCW, follow along
-                if (inputIsCW) return -modifier;     // Input is CW, reverse it to get CCW
-                return -modifier;                    // No input, output CCW
-            }
+            Direction facing = state.getValue(DirectionalAnalogGearshiftBlock.FACING);
+            boolean wantCW = outputCW(facing, diff > 0);
+            return wantCW ? modifier : -modifier;
         }
 
-        // Mode A: always follow input direction at reduced speed
         return modifier;
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        if (level == null || level.isClientSide) return;
-
-        float currentSpeed = getSpeed();
-        if (Math.abs(currentSpeed - lastInputSpeed) > 0.001f) {
-            lastInputSpeed = currentSpeed;
-            if (hasSource()) {
-                detachKinetics();
-                removeSource();
-                attachKinetics();
-            }
-        }
+    private static boolean outputCW(Direction facing, boolean leftDominant) {
+        return switch (facing) {
+            case NORTH -> leftDominant ? DIR_NORTH_LEFT : DIR_NORTH_RIGHT;
+            case SOUTH -> leftDominant ? DIR_SOUTH_LEFT : DIR_SOUTH_RIGHT;
+            case EAST -> leftDominant ? DIR_EAST_LEFT : DIR_EAST_RIGHT;
+            case WEST -> leftDominant ? DIR_WEST_LEFT : DIR_WEST_RIGHT;
+            case UP -> leftDominant ? DIR_UP_LEFT : DIR_UP_RIGHT;
+            case DOWN -> leftDominant ? DIR_DOWN_LEFT : DIR_DOWN_RIGHT;
+        };
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         redstoneLocked = tag.getBoolean("RedstoneLocked");
-        lastInputSpeed = tag.getFloat("LastInputSpeed");
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putBoolean("RedstoneLocked", redstoneLocked);
-        tag.putFloat("LastInputSpeed", lastInputSpeed);
     }
 }
