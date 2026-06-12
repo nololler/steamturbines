@@ -109,9 +109,19 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
             if (hasLevel() && !level.isClientSide) {
                 detachKinetics();
                 removeSource();
-                lastSourcePos = null;
                 speed = 0;
                 setNetwork(null);
+                lastSourcePos = null;
+                if (redstoneLocked) {
+                    float target = computeModeBSpeed();
+                    if (target != 0) {
+                        speed = target;
+                        setNetwork(worldPosition.asLong());
+                        attachKinetics();
+                    }
+                } else {
+                    attachKinetics();
+                }
                 setChanged();
                 sendData();
             }

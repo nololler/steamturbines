@@ -7,6 +7,7 @@
 		"4": "steamturbine:block/dag/casing-EASTWESTv2",
 		"5": "steamturbine:block/dag/casing-UPDOWNv2",
 		"6": "steamturbine:block/dag/casing-COREv2",
+		"7": "steamturbine:block/dag/analog-gearshift-casing-SOUTH",
 		"8": "steamturbine:block/dag/analog-gearshift-casing",
 		"particle": "steamturbine:block/dag/analog-gearshift-casing"
 	},
@@ -17,10 +18,10 @@
 			"to": [12, 12, 15],
 			"faces": {
 				"north": {"uv": [4, 4, 12, 12], "texture": "#8"},
-				"east": {"uv": [4, 1, 12, 15], "rotation": 90, "texture": "#3"},
-				"south": {"uv": [4, 4, 12, 12], "texture": "#8"},
+				"east": {"uv": [4, 1, 12, 15], "rotation": 270, "texture": "#3"},
+				"south": {"uv": [4, 4, 12, 12], "texture": "#7"},
 				"west": {"uv": [4, 1, 12, 15], "rotation": 90, "texture": "#3"},
-				"up": {"uv": [4, 1, 12, 15], "texture": "#3"},
+				"up": {"uv": [4, 1, 12, 15], "rotation": 180, "texture": "#3"},
 				"down": {"uv": [4, 1, 12, 15], "texture": "#3"}
 			}
 		},
