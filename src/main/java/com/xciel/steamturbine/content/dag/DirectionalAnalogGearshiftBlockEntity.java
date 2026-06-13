@@ -1,7 +1,7 @@
 package com.xciel.steamturbine.content.dag;
 
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
-import com.simibubi.create.content.kinetics.KineticNetwork;
+import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -12,7 +12,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -44,6 +43,10 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         super(type, pos, state);
     }
 
+    public boolean isRedstoneLocked() {
+        return redstoneLocked;
+    }
+
     private float computeModifier() {
         BlockState state = getBlockState();
         int leftPower = state.getValue(DirectionalAnalogGearshiftBlock.LEFT_POWER);
@@ -55,42 +58,23 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         return Math.min(modifier, 1f);
     }
 
-    private float computeModeBSpeed() {
+    private float computeModeBOutputSpeed(float inputSpeed) {
         BlockState state = getBlockState();
         int leftPower = state.getValue(DirectionalAnalogGearshiftBlock.LEFT_POWER);
         int rightPower = state.getValue(DirectionalAnalogGearshiftBlock.RIGHT_POWER);
         int diff = leftPower - rightPower;
         if (diff == 0) return 0;
 
-        float modifier = Math.abs(diff) * RPM_PER_LEVEL / MAX_RPM;
-        if (Math.abs(diff) == 15) modifier += ONE_AT_MAX / MAX_RPM;
-        modifier = Math.min(modifier, 1f);
-
-        float inputSpeed = getInputSpeed();
-        float magnitude = Math.abs(inputSpeed) * modifier;
+        float magnitude = Math.abs(inputSpeed) * computeModifier();
 
         Direction facing = state.getValue(DirectionalAnalogGearshiftBlock.FACING);
         return outputCW(facing, diff > 0) ? magnitude : -magnitude;
     }
 
-    private float getInputSpeed() {
-        Direction inputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING).getOpposite();
-        BlockPos inputPos = worldPosition.relative(inputFace);
-        if (level.isLoaded(inputPos)) {
-            BlockEntity be = level.getBlockEntity(inputPos);
-            if (be instanceof KineticBlockEntity kbe) return kbe.getSpeed();
-        }
-        return 0;
-    }
-
-    private Long getInputNetwork() {
-        Direction inputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING).getOpposite();
-        BlockPos inputPos = worldPosition.relative(inputFace);
-        if (level.isLoaded(inputPos)) {
-            BlockEntity be = level.getBlockEntity(inputPos);
-            if (be instanceof KineticBlockEntity kbe) return kbe.network;
-        }
-        return null;
+    private float computeModeBOutputModifier() {
+        float inputSpeed = getTheoreticalSpeed();
+        if (inputSpeed == 0) return 0;
+        return computeModeBOutputSpeed(inputSpeed) / inputSpeed;
     }
 
     private static boolean outputCW(Direction facing, boolean leftDominant) {
@@ -121,26 +105,10 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
             boolean wasLocked = redstoneLocked;
             redstoneLocked = movementDirection.getValue() == 1;
             if (hasLevel() && !level.isClientSide) {
+                if (wasLocked == redstoneLocked) return;
                 detachKinetics();
                 removeSource();
-                if (!wasLocked && redstoneLocked) {
-                    float target = computeModeBSpeed();
-                    speed = target;
-                    Long upstreamNetwork = getInputNetwork();
-                    setNetwork(upstreamNetwork != null ? upstreamNetwork : worldPosition.asLong());
-                    attachKinetics();
-                    if (hasNetwork() && target != 0) {
-                        KineticNetwork network = getOrCreateNetwork();
-                        network.updateNetwork();
-                        network.updateCapacityFor(this, network.calculateCapacity());
-                        network.updateStressFor(this, calculateStressApplied());
-                        network.updateNetwork();
-                    }
-                } else {
-                    speed = 0;
-                    setNetwork(null);
-                    attachKinetics();
-                }
+                attachKinetics();
                 setChanged();
                 sendData();
             }
@@ -152,7 +120,9 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     public float getRotationSpeedModifier(Direction face) {
         if (redstoneLocked) {
             Direction outputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING);
-            if (face == outputFace) return 1;
+            Direction inputFace = outputFace.getOpposite();
+            if (face == inputFace) return 1;
+            if (face == outputFace) return computeModeBOutputModifier();
             return 0;
         }
         if (!hasSource()) return 0;
@@ -162,51 +132,6 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         if (modifier == 0) return 0;
 
         return modifier;
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-
-        if (level == null || level.isClientSide) return;
-
-        if (redstoneLocked) {
-            float target = computeModeBSpeed();
-
-            if (speed != target) {
-                detachKinetics();
-                removeSource();
-                speed = target;
-                Long upstreamNetwork = getInputNetwork();
-                setNetwork(upstreamNetwork != null ? upstreamNetwork : worldPosition.asLong());
-                attachKinetics();
-                if (hasNetwork() && target != 0) {
-                    KineticNetwork network = getOrCreateNetwork();
-                    network.updateNetwork();
-                    network.updateCapacityFor(this, network.calculateCapacity());
-                    network.updateStressFor(this, calculateStressApplied());
-                    network.updateNetwork();
-                }
-                sendData();
-            } else if (hasNetwork() && target != 0) {
-                getOrCreateNetwork().updateCapacityFor(this, calculateAddedStressCapacity());
-            }
-        }
-    }
-
-    @Override
-    public float getGeneratedSpeed() {
-        if (redstoneLocked) return speed;
-        return 0;
-    }
-
-    @Override
-    public float calculateAddedStressCapacity() {
-        if (redstoneLocked && hasNetwork()) {
-            float networkCapacity = getOrCreateNetwork().calculateCapacity();
-            if (networkCapacity > 0) return networkCapacity;
-        }
-        return super.calculateAddedStressCapacity();
     }
 
     @Override
@@ -220,10 +145,13 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
 
     @Override
     public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff, boolean connectedByAxis, boolean connectedByCogs) {
-        if (redstoneLocked && connectedByAxis) {
+        if (redstoneLocked) {
             Direction face = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
             Direction outputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING);
-            return face == outputFace ? 1f : 0f;
+            if (face != outputFace) return 0f;
+            if (!(stateTo.getBlock() instanceof IRotate targetRotation)) return 0f;
+            if (!targetRotation.hasShaftTowards(level, target.getBlockPos(), stateTo, face.getOpposite())) return 0f;
+            return computeModeBOutputModifier();
         }
         return 0;
     }
