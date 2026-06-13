@@ -15,7 +15,10 @@ The code in this codebase is written by AI, I vibe-coded the mod.
 | **Pressurized Pipe** | Transports steam between machines |
 | **Steam Compressor** | Compresses steam for higher pressure and throughput |
 | **Steam Turbine** | Converts steam pressure into rotational force which is sent to Turbine Shaft |
-| **Turbine Shaft** | Aggregates rotational power from turbines |
+| **Turbine Shaft** | Aggregates rotational power from steam turbines |
+| **Lava Duct Shaft** | Aggregates rotational power from lava duct turbines |
+| **Lava Duct Turbine** | Converts water supplied from the Lava Duct Shaft into steam by using lava thats in contact which turns the turbines and generates power which is sent back to the Lava Duct Shaft |
+| **Directional Analog Gearshift** | Changes RPM and rotation direction based on redstone differential |
 
 ## Dependencies
 
