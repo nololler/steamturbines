@@ -1,6 +1,7 @@
 package com.xciel.steamturbine.content.dag;
 
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
+import com.simibubi.create.content.kinetics.KineticNetwork;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -38,7 +39,6 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
 
     private boolean redstoneLocked;
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
-    private BlockPos lastSourcePos;
 
     public DirectionalAnalogGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -74,10 +74,23 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     }
 
     private float getInputSpeed() {
-        if (lastSourcePos == null) return 0;
-        BlockEntity be = level.getBlockEntity(lastSourcePos);
-        if (be instanceof KineticBlockEntity kbe) return kbe.getSpeed();
+        Direction inputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING).getOpposite();
+        BlockPos inputPos = worldPosition.relative(inputFace);
+        if (level.isLoaded(inputPos)) {
+            BlockEntity be = level.getBlockEntity(inputPos);
+            if (be instanceof KineticBlockEntity kbe) return kbe.getSpeed();
+        }
         return 0;
+    }
+
+    private Long getInputNetwork() {
+        Direction inputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING).getOpposite();
+        BlockPos inputPos = worldPosition.relative(inputFace);
+        if (level.isLoaded(inputPos)) {
+            BlockEntity be = level.getBlockEntity(inputPos);
+            if (be instanceof KineticBlockEntity kbe) return kbe.network;
+        }
+        return null;
     }
 
     private static boolean outputCW(Direction facing, boolean leftDominant) {
@@ -113,12 +126,16 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
                 if (!wasLocked && redstoneLocked) {
                     float target = computeModeBSpeed();
                     speed = target;
-                    if (target != 0) {
-                        setNetwork(worldPosition.asLong());
-                    } else {
-                        setNetwork(null);
-                    }
+                    Long upstreamNetwork = getInputNetwork();
+                    setNetwork(upstreamNetwork != null ? upstreamNetwork : worldPosition.asLong());
                     attachKinetics();
+                    if (hasNetwork() && target != 0) {
+                        KineticNetwork network = getOrCreateNetwork();
+                        network.updateNetwork();
+                        network.updateCapacityFor(this, network.calculateCapacity());
+                        network.updateStressFor(this, calculateStressApplied());
+                        network.updateNetwork();
+                    }
                 } else {
                     speed = 0;
                     setNetwork(null);
@@ -154,23 +171,25 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         if (level == null || level.isClientSide) return;
 
         if (redstoneLocked) {
-            if (lastSourcePos == null) {
-                lastSourcePos = source;
-            }
-
             float target = computeModeBSpeed();
 
             if (speed != target) {
                 detachKinetics();
                 removeSource();
                 speed = target;
-                if (target != 0) {
-                    setNetwork(worldPosition.asLong());
-                } else {
-                    setNetwork(null);
-                }
+                Long upstreamNetwork = getInputNetwork();
+                setNetwork(upstreamNetwork != null ? upstreamNetwork : worldPosition.asLong());
                 attachKinetics();
+                if (hasNetwork() && target != 0) {
+                    KineticNetwork network = getOrCreateNetwork();
+                    network.updateNetwork();
+                    network.updateCapacityFor(this, network.calculateCapacity());
+                    network.updateStressFor(this, calculateStressApplied());
+                    network.updateNetwork();
+                }
                 sendData();
+            } else if (hasNetwork() && target != 0) {
+                getOrCreateNetwork().updateCapacityFor(this, calculateAddedStressCapacity());
             }
         }
     }
@@ -179,6 +198,15 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     public float getGeneratedSpeed() {
         if (redstoneLocked) return speed;
         return 0;
+    }
+
+    @Override
+    public float calculateAddedStressCapacity() {
+        if (redstoneLocked && hasNetwork()) {
+            float networkCapacity = getOrCreateNetwork().calculateCapacity();
+            if (networkCapacity > 0) return networkCapacity;
+        }
+        return super.calculateAddedStressCapacity();
     }
 
     @Override
@@ -204,17 +232,11 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         redstoneLocked = tag.getBoolean("RedstoneLocked");
-        if (tag.contains("LastSourcePos")) {
-            lastSourcePos = BlockPos.of(tag.getLong("LastSourcePos"));
-        }
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putBoolean("RedstoneLocked", redstoneLocked);
-        if (lastSourcePos != null) {
-            tag.putLong("LastSourcePos", lastSourcePos.asLong());
-        }
     }
 }
