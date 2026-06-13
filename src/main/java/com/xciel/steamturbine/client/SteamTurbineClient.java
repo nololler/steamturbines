@@ -3,6 +3,7 @@ package com.xciel.steamturbine.client;
 import com.xciel.steamturbine.AllBlockEntityTypes;
 import com.xciel.steamturbine.content.compressor.SteamCompressorRenderer;
 import com.xciel.steamturbine.content.compressor.SteamCompressorVisual;
+import com.xciel.steamturbine.content.nd.NetworkDiagnoserRenderer;
 import com.xciel.steamturbine.content.pump.SteamPumpRenderer;
 import com.xciel.steamturbine.content.pump.SteamPumpVisual;
 import com.xciel.steamturbine.content.shaft.TurbineShaftRenderer;
@@ -22,6 +23,7 @@ public class SteamTurbineClient {
         LavaDuctShaftRenderer.register();
 
         DirectionalAnalogGearshiftRenderer.register();
+        NetworkDiagnoserRenderer.register();
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_COMPRESSOR.get())
             .factory(SteamCompressorVisual::new)

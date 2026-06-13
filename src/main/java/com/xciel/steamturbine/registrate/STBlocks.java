@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
+import com.xciel.steamturbine.content.nd.NetworkDiagnoserBlock;
 import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlock;
@@ -88,6 +89,15 @@ public class STBlocks {
     public static final BlockEntry<DirectionalAnalogGearshiftBlock> DIRECTIONAL_ANALOG_GEARSHIFT = REGISTRATE.block("directional_analog_gearshift", DirectionalAnalogGearshiftBlock::new)
             .initialProperties(SharedProperties::stone)
             .transform(pickaxeOnly())
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<NetworkDiagnoserBlock> NETWORK_DIAGNOSER = REGISTRATE.block("network_diagnoser", NetworkDiagnoserBlock::new)
+            .initialProperties(SharedProperties::stone)
+            .transform(pickaxeOnly())
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 0.0))
+            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 0.0))
             .item()
             .build()
             .register();

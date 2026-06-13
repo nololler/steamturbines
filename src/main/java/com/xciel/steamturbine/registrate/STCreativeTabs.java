@@ -21,6 +21,7 @@ public class STCreativeTabs {
                     .icon(() -> STBlocks.STEAM_TURBINE.get().asItem().getDefaultInstance())
                     .title(Component.translatable("itemGroup." + MOD_ID + ".main"))
                     .displayItems((itemDisplayParameters, output) -> {
+                        // Blocks
                         output.accept(STBlocks.STEAM_BOILER.get());
                         output.accept(STBlocks.STEAM_COMPRESSOR.get());
                         output.accept(STBlocks.PRESSURE_PIPE.get());
@@ -30,6 +31,7 @@ public class STCreativeTabs {
                         output.accept(STBlocks.LAVA_DUCT_TURBINE.get());
                         output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
                         output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
+                        // Items
                         output.accept(STItems.TURBINE_BLADE.get());
                         output.accept(STItems.TURBINE_FAN.get());
                         output.accept(STItems.CORE_OF_THE_HEARTH.get());

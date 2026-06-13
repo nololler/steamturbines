@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "y": 0 },
+    "facing=south,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "y": 180 },
+    "facing=east,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "y": 90 },
+    "facing=west,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "y": 270 },
+    "facing=north,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "y": 0 },
+    "facing=south,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "y": 180 },
+    "facing=east,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "y": 90 },
+    "facing=west,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "y": 270 },
+    "facing=up,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "x": 270, "y": 0 },
+    "facing=up,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "x": 270, "y": 90 },
+    "facing=down,axis_along_first=false": { "model": "steamturbine:block/nd/network_diagnoser", "x": 90, "y": 0 },
+    "facing=down,axis_along_first=true": { "model": "steamturbine:block/nd/network_diagnoser", "x": 90, "y": 270 }
+  }
+}

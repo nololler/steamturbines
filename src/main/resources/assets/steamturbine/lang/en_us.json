@@ -57,5 +57,9 @@
   "steamturbine.dag.redstone_lock": "Redstone Lock",
   "create.generic.clockwise": "Unlocked",
   "create.generic.counter_clockwise": "Redstone Locked",
-  "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting"
+  "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting",
+  "block.steamturbine.network_diagnoser": "Network Diagnoser",
+  "steamturbine.nd.max_rpm": "Max RPM",
+  "steamturbine.nd.max_su": "Max SU",
+  "steamturbine.nd.settings": "Diagnoser Settings"
 }

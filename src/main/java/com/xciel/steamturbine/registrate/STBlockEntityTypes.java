@@ -2,6 +2,7 @@ package com.xciel.steamturbine.registrate;
 
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlockEntity;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlockEntity;
+import com.xciel.steamturbine.content.nd.NetworkDiagnoserBlockEntity;
 import com.xciel.steamturbine.content.pump.SteamPumpBlockEntity;
 import com.xciel.steamturbine.content.shaft.TurbineShaftBlockEntity;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlockEntity;
@@ -58,6 +59,11 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<DirectionalAnalogGearshiftBlockEntity> DIRECTIONAL_ANALOG_GEARSHIFT = REGISTRATE
             .blockEntity("directional_analog_gearshift", DirectionalAnalogGearshiftBlockEntity::new)
             .validBlocks(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT)
+            .register();
+
+    public static final BlockEntityEntry<NetworkDiagnoserBlockEntity> NETWORK_DIAGNOSER = REGISTRATE
+            .blockEntity("network_diagnoser", NetworkDiagnoserBlockEntity::new)
+            .validBlocks(STBlocks.NETWORK_DIAGNOSER)
             .register();
 
     public static void register() {}
