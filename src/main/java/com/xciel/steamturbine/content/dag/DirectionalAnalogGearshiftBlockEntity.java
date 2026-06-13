@@ -1,8 +1,6 @@
 package com.xciel.steamturbine.content.dag;
 
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
@@ -144,27 +142,23 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     }
 
     @Override
-    public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff, boolean connectedByAxis, boolean connectedByCogs) {
-        if (redstoneLocked) {
-            Direction face = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
-            Direction outputFace = getBlockState().getValue(DirectionalAnalogGearshiftBlock.FACING);
-            if (face != outputFace) return 0f;
-            if (!(stateTo.getBlock() instanceof IRotate targetRotation)) return 0f;
-            if (!targetRotation.hasShaftTowards(level, target.getBlockPos(), stateTo, face.getOpposite())) return 0f;
-            return computeModeBOutputModifier();
-        }
-        return 0;
-    }
-
-    @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         redstoneLocked = tag.getBoolean("RedstoneLocked");
+        if (redstoneLocked && !clientPacket)
+            clearKineticInformation();
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
+        if (redstoneLocked && !clientPacket) {
+            tag.remove("Speed");
+            tag.remove("Source");
+            tag.remove("Network");
+            tag.remove("Sequence");
+            tag.remove("NeedsSpeedUpdate");
+        }
         tag.putBoolean("RedstoneLocked", redstoneLocked);
     }
 }

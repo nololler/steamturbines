@@ -13,7 +13,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -123,14 +122,6 @@ public class DirectionalAnalogGearshiftBlock extends DirectionalAxisKineticBlock
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
         return state.getValue(FACING).getAxis();
-    }
-
-    @Override
-    public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
-        BlockEntity be = world.getBlockEntity(pos);
-        if (be instanceof DirectionalAnalogGearshiftBlockEntity dag && dag.isRedstoneLocked())
-            return face == state.getValue(FACING).getOpposite();
-        return super.hasShaftTowards(world, pos, state, face);
     }
 
     @Override
