@@ -3,14 +3,14 @@
   "category": "misc",
   "key": {
     "S": { "item": "create:brass_casing" },
-    "Z": { "item": "steamturbine:pressured_iron_ingot" },
-    "C": { "item": "create:electron_tube" },
-    "R": { "item": "minecraft:redstone" }
+    "R": { "item": "minecraft:red_dye" },
+    "B": { "item": "minecraft:blue_dye" },
+    "T": { "item": "create:electron_tube" }
   },
   "pattern": [
-    " Z ",
-    "RSC",
-    " Z "
+    " R ",
+    "TST",
+    " B "
   ],
   "result": { "count": 1, "id": "steamturbine:directional_analog_gearshift" }
 }
