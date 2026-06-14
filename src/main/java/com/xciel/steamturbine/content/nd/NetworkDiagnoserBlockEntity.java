@@ -17,10 +17,8 @@ import java.util.List;
 
 public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHaveGoggleInformation {
 
-    private static final float DEFAULT_MAX_RPM = 256f;
     private static final float DEFAULT_MAX_SU = 1024f;
 
-    private float maxTestRPM = DEFAULT_MAX_RPM;
     private float maxTestSU = DEFAULT_MAX_SU;
     private boolean stressTesting = false;
 
@@ -50,11 +48,9 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
     @Override
     public float calculateStressApplied() {
         if (stressTesting && hasNetwork()) {
-            float speedRatio = Math.abs(getSpeed()) / maxTestRPM;
-            speedRatio = Math.min(speedRatio, 1f);
             float suRatio = (capacity > 0) ? (stress / capacity) : 0f;
             suRatio = Math.min(suRatio, 1f);
-            return Math.max(speedRatio, suRatio) * maxTestSU / 20f;
+            return suRatio * maxTestSU / 20f;
         }
         return super.calculateStressApplied();
     }
@@ -113,24 +109,22 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
         return stressTesting;
     }
 
-    public void setMaxTestRPM(float rpm) {
-        this.maxTestRPM = rpm;
-        setChanged();
-        sendData();
-    }
-
     public void setMaxTestSU(float su) {
         this.maxTestSU = su;
         setChanged();
         sendData();
     }
 
-    public float getMaxTestRPM() {
-        return maxTestRPM;
-    }
-
     public float getMaxTestSU() {
         return maxTestSU;
+    }
+
+    public float getNetworkStress() {
+        return stress;
+    }
+
+    public float getNetworkCapacity() {
+        return capacity;
     }
 
     @Override
@@ -140,7 +134,7 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
         tooltip.add(Component.literal("  Network SU: " + String.format("%.1f / %.1f", stress, capacity)).withStyle(ChatFormatting.GRAY));
         if (stressTesting) {
             tooltip.add(Component.literal("  Stress Test: ACTIVE").withStyle(ChatFormatting.RED));
-            tooltip.add(Component.literal("  Testing at: " + String.format("%.1f RPM, %.1f SU", maxTestRPM, maxTestSU)).withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("  Testing at: " + String.format("%.1f SU", maxTestSU)).withStyle(ChatFormatting.DARK_GRAY));
         } else {
             tooltip.add(Component.literal("  Stress Test: OFF").withStyle(ChatFormatting.DARK_GRAY));
         }
@@ -150,7 +144,6 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
     @Override
     public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        maxTestRPM = tag.getFloat("MaxTestRPM");
         maxTestSU = tag.getFloat("MaxTestSU");
         stressTesting = tag.getBoolean("StressTesting");
     }
@@ -158,7 +151,6 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
     @Override
     public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        tag.putFloat("MaxTestRPM", maxTestRPM);
         tag.putFloat("MaxTestSU", maxTestSU);
         tag.putBoolean("StressTesting", stressTesting);
     }

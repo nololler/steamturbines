@@ -3,16 +3,25 @@ package com.xciel.steamturbine.content.nd;
 import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.steamturbine.registrate.STBlockEntityTypes;
+import net.createmod.catnip.gui.ScreenOpener;
+import net.createmod.catnip.platform.CatnipServices;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 public class NetworkDiagnoserBlock extends DirectionalAxisKineticBlock implements IBE<NetworkDiagnoserBlockEntity> {
 
@@ -101,5 +110,23 @@ public class NetworkDiagnoserBlock extends DirectionalAxisKineticBlock implement
     @Override
     public BlockEntityType<? extends NetworkDiagnoserBlockEntity> getBlockEntityType() {
         return STBlockEntityTypes.NETWORK_DIAGNOSER.get();
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                               Player player, BlockHitResult hitResult) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        CatnipServices.PLATFORM.executeOnClientOnly(
+            () -> () -> withBlockEntityDo(level, pos, be -> this.displayScreen(be, player)));
+        return InteractionResult.SUCCESS;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    protected void displayScreen(NetworkDiagnoserBlockEntity be, Player player) {
+        if (player instanceof LocalPlayer) {
+            ScreenOpener.open(new DiagnoserScreen(be));
+        }
     }
 }

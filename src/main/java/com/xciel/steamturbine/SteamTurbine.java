@@ -3,6 +3,7 @@ package com.xciel.steamturbine;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
+import com.xciel.steamturbine.network.SteamTurbinePackets;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceKey;
@@ -53,6 +54,7 @@ public class SteamTurbine {
     }
 
     private void setup(final FMLCommonSetupEvent event) {
+        SteamTurbinePackets.register();
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
