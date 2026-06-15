@@ -6,7 +6,7 @@ issueTrackerURL=""
 [[mods]]
 modId="steamturbine"
 version="${mod_version}"
-displayName="Steam Turbine"
+displayName="Create: Steam Turbines"
 authors="Xciel"
 description='''Power of Steam to turn Turbines for Create'''
 logoFile = "icon.png"
