@@ -62,9 +62,10 @@ public class DiagnoserScreen extends AbstractSimiScreen {
 
         suInput = new EditBox(font, x + SU_INPUT_X, y + SU_INPUT_Y, 80, 16, Component.literal("SU"));
         suInput.setMaxLength(10);
-        suInput.setValue(String.valueOf(be.getMaxTestSU()));
+        suInput.setValue(String.format("%.0f", be.getMaxTestSU()));
         suInput.setBordered(false);
         suInput.setTextColor(0xFFFFFF);
+        suInput.setResponder(this::onSUChanged);
         addRenderableWidget(suInput);
 
         stressTestButton = new IconButton(x + STRESS_TEST_BUTTON_X, y + STRESS_TEST_BUTTON_Y, 50, 18, AllIcons.I_CONFIRM);
@@ -103,17 +104,44 @@ public class DiagnoserScreen extends AbstractSimiScreen {
         float stress = be.getNetworkStress();
         float capacity = be.getNetworkCapacity();
 
-        currentRpmLabel.text = Component.literal(String.format("N-RPM: %.1f", speed));
-        currentSuLabel.text = Component.literal(String.format("N-SU: %.1f / %.1f", stress, capacity));
+        currentRpmLabel.text = Component.literal(String.format("N-RPM: %.0f", speed));
+        currentSuLabel.text = Component.literal(String.format("N-SU: %.0f / %.0f", stress, capacity));
 
         String stressTestStatus = stressTestButton.green ? "ON" : "OFF";
         ChatFormatting color = stressTestButton.green ? ChatFormatting.GREEN : ChatFormatting.RED;
         graphics.drawString(font, "Stress Test: " + stressTestStatus, x + STRESS_TEST_STATUS_X, y + STRESS_TEST_STATUS_Y, color.getColor() != null ? color.getColor() : 0xFFFFFF, false);
     }
 
+    private void onSUChanged(String text) {
+        float newSU = initialMaxTestSU;
+        try {
+            if (!text.isEmpty()) {
+                newSU = Float.parseFloat(text);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        CatnipServices.NETWORK.sendToServer(
+            DiagnoserEditPacket.create(be.getBlockPos(), newSU, stressTestButton.green)
+        );
+    }
+
     private void onStressTestToggle() {
-        boolean newState = !be.isStressTesting();
+        boolean newState = !stressTestButton.green;
         stressTestButton.green = newState;
+        CatnipServices.NETWORK.sendToServer(
+            DiagnoserEditPacket.create(be.getBlockPos(), getCurrentSU(), newState)
+        );
+    }
+
+    private float getCurrentSU() {
+        try {
+            String text = suInput.getValue();
+            if (!text.isEmpty()) {
+                return Float.parseFloat(text);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return initialMaxTestSU;
     }
 
     private void sendPacket() {

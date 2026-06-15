@@ -26,51 +26,147 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class NetworkDiagnoserBlock extends DirectionalAxisKineticBlock implements IBE<NetworkDiagnoserBlockEntity> {
 
     public static final VoxelShape SHAPE_NORTH = Shapes.or(
-        Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
-        Block.box(4.0, 4.0, 14.0, 12.0, 12.0, 15.0),
-        Block.box(1.0, 1.0, 4.0, 2.0, 15.0, 12.0),
-        Block.box(1.0, 0.0, 1.0, 2.0, 1.0, 15.0),
-        Block.box(1.0, 15.0, 1.0, 2.0, 16.0, 15.0),
-        Block.box(14.0, 0.0, 1.0, 15.0, 1.0, 15.0),
-        Block.box(14.0, 1.0, 4.0, 15.0, 15.0, 12.0),
-        Block.box(14.0, 15.0, 1.0, 15.0, 16.0, 15.0),
-        Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 2.0)
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 4.0, 14.0, 12.0, 12.0, 15.0),
+            Block.box(1.0, 1.0, 4.0, 2.0, 15.0, 12.0),
+            Block.box(1.0, 0.0, 1.0, 2.0, 1.0, 15.0),
+            Block.box(1.0, 15.0, 1.0, 2.0, 16.0, 15.0),
+            Block.box(14.0, 0.0, 1.0, 15.0, 1.0, 15.0),
+            Block.box(14.0, 1.0, 4.0, 15.0, 15.0, 12.0),
+            Block.box(14.0, 15.0, 1.0, 15.0, 16.0, 15.0),
+            Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 2.0)
     );
 
     public static final VoxelShape SHAPE_EAST = Shapes.or(
-        Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
-        Block.box(1.0, 4.0, 4.0, 2.0, 12.0, 12.0),
-        Block.box(4.0, 1.0, 1.0, 12.0, 15.0, 2.0),
-        Block.box(1.0, 0.0, 1.0, 15.0, 1.0, 2.0),
-        Block.box(1.0, 15.0, 1.0, 15.0, 16.0, 2.0),
-        Block.box(1.0, 0.0, 14.0, 15.0, 1.0, 15.0),
-        Block.box(4.0, 1.0, 14.0, 12.0, 15.0, 15.0),
-        Block.box(1.0, 15.0, 14.0, 15.0, 16.0, 15.0),
-        Block.box(14.0, 4.0, 4.0, 15.0, 12.0, 12.0)
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(1.0, 4.0, 4.0, 2.0, 12.0, 12.0),
+            Block.box(4.0, 1.0, 1.0, 12.0, 15.0, 2.0),
+            Block.box(1.0, 0.0, 1.0, 15.0, 1.0, 2.0),
+            Block.box(1.0, 15.0, 1.0, 15.0, 16.0, 2.0),
+            Block.box(1.0, 0.0, 14.0, 15.0, 1.0, 15.0),
+            Block.box(4.0, 1.0, 14.0, 12.0, 15.0, 15.0),
+            Block.box(1.0, 15.0, 14.0, 15.0, 16.0, 15.0),
+            Block.box(14.0, 4.0, 4.0, 15.0, 12.0, 12.0)
     );
 
     public static final VoxelShape SHAPE_SOUTH = Shapes.or(
-        Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
-        Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 2.0),
-        Block.box(14.0, 1.0, 4.0, 15.0, 15.0, 12.0),
-        Block.box(14.0, 0.0, 1.0, 15.0, 1.0, 15.0),
-        Block.box(14.0, 15.0, 1.0, 15.0, 16.0, 15.0),
-        Block.box(1.0, 0.0, 1.0, 2.0, 1.0, 15.0),
-        Block.box(1.0, 1.0, 4.0, 2.0, 15.0, 12.0),
-        Block.box(1.0, 15.0, 1.0, 2.0, 16.0, 15.0),
-        Block.box(4.0, 4.0, 14.0, 12.0, 12.0, 15.0)
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 4.0, 1.0, 12.0, 12.0, 2.0),
+            Block.box(14.0, 1.0, 4.0, 15.0, 15.0, 12.0),
+            Block.box(14.0, 0.0, 1.0, 15.0, 1.0, 15.0),
+            Block.box(14.0, 15.0, 1.0, 15.0, 16.0, 15.0),
+            Block.box(1.0, 0.0, 1.0, 2.0, 1.0, 15.0),
+            Block.box(1.0, 1.0, 4.0, 2.0, 15.0, 12.0),
+            Block.box(1.0, 15.0, 1.0, 2.0, 16.0, 15.0),
+            Block.box(4.0, 4.0, 14.0, 12.0, 12.0, 15.0)
     );
 
     public static final VoxelShape SHAPE_WEST = Shapes.or(
-        Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
-        Block.box(14.0, 4.0, 4.0, 15.0, 12.0, 12.0),
-        Block.box(4.0, 1.0, 14.0, 12.0, 15.0, 15.0),
-        Block.box(1.0, 0.0, 14.0, 15.0, 1.0, 15.0),
-        Block.box(1.0, 15.0, 14.0, 15.0, 16.0, 15.0),
-        Block.box(1.0, 0.0, 1.0, 15.0, 1.0, 2.0),
-        Block.box(4.0, 1.0, 1.0, 12.0, 15.0, 2.0),
-        Block.box(1.0, 15.0, 1.0, 15.0, 16.0, 2.0),
-        Block.box(1.0, 4.0, 4.0, 2.0, 12.0, 12.0)
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(14.0, 4.0, 4.0, 15.0, 12.0, 12.0),
+            Block.box(4.0, 1.0, 14.0, 12.0, 15.0, 15.0),
+            Block.box(1.0, 0.0, 14.0, 15.0, 1.0, 15.0),
+            Block.box(1.0, 15.0, 14.0, 15.0, 16.0, 15.0),
+            Block.box(1.0, 0.0, 1.0, 15.0, 1.0, 2.0),
+            Block.box(4.0, 1.0, 1.0, 12.0, 15.0, 2.0),
+            Block.box(1.0, 15.0, 1.0, 15.0, 16.0, 2.0),
+            Block.box(1.0, 4.0, 4.0, 2.0, 12.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_NORTH = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0),
+            Block.box(1.0, 4.0, 1.0, 2.0, 12.0, 15.0),
+            Block.box(1.0, 1.0, 15.0, 2.0, 15.0, 16.0),
+            Block.box(1.0, 1.0, 0.0, 2.0, 15.0, 1.0),
+            Block.box(14.0, 1.0, 15.0, 15.0, 15.0, 16.0),
+            Block.box(14.0, 4.0, 1.0, 15.0, 12.0, 15.0),
+            Block.box(14.0, 1.0, 0.0, 15.0, 15.0, 1.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_EAST = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0),
+            Block.box(1.0, 4.0, 1.0, 15.0, 12.0, 2.0),
+            Block.box(0.0, 1.0, 1.0, 1.0, 15.0, 2.0),
+            Block.box(15.0, 1.0, 1.0, 16.0, 15.0, 2.0),
+            Block.box(0.0, 1.0, 14.0, 1.0, 15.0, 15.0),
+            Block.box(1.0, 4.0, 14.0, 15.0, 12.0, 15.0),
+            Block.box(15.0, 1.0, 14.0, 16.0, 15.0, 15.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_SOUTH = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0),
+            Block.box(14.0, 4.0, 1.0, 15.0, 12.0, 15.0),
+            Block.box(14.0, 1.0, 0.0, 15.0, 15.0, 1.0),
+            Block.box(14.0, 1.0, 15.0, 15.0, 15.0, 16.0),
+            Block.box(1.0, 1.0, 0.0, 2.0, 15.0, 1.0),
+            Block.box(1.0, 4.0, 1.0, 2.0, 12.0, 15.0),
+            Block.box(1.0, 1.0, 15.0, 2.0, 15.0, 16.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_UP_WEST = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0),
+            Block.box(1.0, 4.0, 14.0, 15.0, 12.0, 15.0),
+            Block.box(15.0, 1.0, 14.0, 16.0, 15.0, 15.0),
+            Block.box(0.0, 1.0, 14.0, 1.0, 15.0, 15.0),
+            Block.box(15.0, 1.0, 1.0, 16.0, 15.0, 2.0),
+            Block.box(1.0, 4.0, 1.0, 15.0, 12.0, 2.0),
+            Block.box(0.0, 1.0, 1.0, 1.0, 15.0, 2.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_NORTH = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0),
+            Block.box(1.0, 4.0, 1.0, 2.0, 12.0, 15.0),
+            Block.box(1.0, 1.0, 0.0, 2.0, 15.0, 1.0),
+            Block.box(1.0, 1.0, 15.0, 2.0, 15.0, 16.0),
+            Block.box(14.0, 1.0, 0.0, 15.0, 15.0, 1.0),
+            Block.box(14.0, 4.0, 1.0, 15.0, 12.0, 15.0),
+            Block.box(14.0, 1.0, 15.0, 15.0, 15.0, 16.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_EAST = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0),
+            Block.box(1.0, 4.0, 1.0, 15.0, 12.0, 2.0),
+            Block.box(15.0, 1.0, 1.0, 16.0, 15.0, 2.0),
+            Block.box(0.0, 1.0, 1.0, 1.0, 15.0, 2.0),
+            Block.box(15.0, 1.0, 14.0, 16.0, 15.0, 15.0),
+            Block.box(1.0, 4.0, 14.0, 15.0, 12.0, 15.0),
+            Block.box(0.0, 1.0, 14.0, 1.0, 15.0, 15.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_SOUTH = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0),
+            Block.box(14.0, 4.0, 1.0, 15.0, 12.0, 15.0),
+            Block.box(14.0, 1.0, 15.0, 15.0, 15.0, 16.0),
+            Block.box(14.0, 1.0, 0.0, 15.0, 15.0, 1.0),
+            Block.box(1.0, 1.0, 15.0, 2.0, 15.0, 16.0),
+            Block.box(1.0, 4.0, 1.0, 2.0, 12.0, 15.0),
+            Block.box(1.0, 1.0, 0.0, 2.0, 15.0, 1.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0)
+    );
+
+    public static final VoxelShape SHAPE_DOWN_WEST = Shapes.or(
+            Block.box(2.0, 2.0, 2.0, 14.0, 14.0, 14.0),
+            Block.box(4.0, 1.0, 4.0, 12.0, 2.0, 12.0),
+            Block.box(1.0, 4.0, 14.0, 15.0, 12.0, 15.0),
+            Block.box(0.0, 1.0, 14.0, 1.0, 15.0, 15.0),
+            Block.box(15.0, 1.0, 14.0, 16.0, 15.0, 15.0),
+            Block.box(0.0, 1.0, 1.0, 1.0, 15.0, 2.0),
+            Block.box(1.0, 4.0, 1.0, 15.0, 12.0, 2.0),
+            Block.box(15.0, 1.0, 1.0, 16.0, 15.0, 2.0),
+            Block.box(4.0, 14.0, 4.0, 12.0, 15.0, 12.0)
     );
 
     public NetworkDiagnoserBlock(Properties properties) {
@@ -89,7 +185,14 @@ public class NetworkDiagnoserBlock extends DirectionalAxisKineticBlock implement
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return switch (state.getValue(FACING)) {
+        Direction facing = state.getValue(FACING);
+        if (facing == Direction.UP) {
+            return state.getValue(AXIS_ALONG_FIRST_COORDINATE) ? SHAPE_UP_EAST : SHAPE_UP_NORTH;
+        }
+        if (facing == Direction.DOWN) {
+            return state.getValue(AXIS_ALONG_FIRST_COORDINATE) ? SHAPE_DOWN_WEST : SHAPE_DOWN_NORTH;
+        }
+        return switch (facing) {
             case EAST -> SHAPE_EAST;
             case WEST -> SHAPE_WEST;
             case SOUTH -> SHAPE_SOUTH;

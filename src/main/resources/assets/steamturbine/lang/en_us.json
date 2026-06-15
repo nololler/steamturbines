@@ -59,6 +59,11 @@
   "create.generic.counter_clockwise": "Redstone Locked",
   "steamturbine.jei.category.mechanical_crafting": "Mechanical Crafting",
   "block.steamturbine.network_diagnoser": "Network Diagnoser",
+  "block.steamturbine.network_diagnoser.tooltip.summary": "Displays network RPM, SU usage, and allows stress testing. Right-click to configure.",
+  "block.steamturbine.network_diagnoser.tooltip.condition1": "Networked",
+  "block.steamturbine.network_diagnoser.tooltip.behaviour1": "Shows live RPM and stress data from the connected kinetic network when viewed with engineer goggles.",
+  "block.steamturbine.network_diagnoser.tooltip.condition2": "Stress Testing",
+  "block.steamturbine.network_diagnoser.tooltip.behaviour2": "When active, injects configurable stress into the network to test capacity limits.",
   "steamturbine.nd.max_rpm": "Max RPM",
   "steamturbine.nd.max_su": "Max SU",
   "steamturbine.nd.settings": "Diagnoser Settings"

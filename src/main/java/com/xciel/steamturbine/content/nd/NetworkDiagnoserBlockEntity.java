@@ -1,12 +1,13 @@
 package com.xciel.steamturbine.content.nd;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.gauge.GaugeBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.item.TooltipHelper;
+import com.simibubi.create.foundation.utility.CreateLang;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -17,7 +18,7 @@ import java.util.List;
 
 public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHaveGoggleInformation {
 
-    private static final float DEFAULT_MAX_SU = 1024f;
+    private static final float DEFAULT_MAX_SU = 64f;
 
     private float maxTestSU = DEFAULT_MAX_SU;
     private boolean stressTesting = false;
@@ -129,14 +130,40 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        tooltip.add(Component.literal("Network Diagnoser").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("  Network RPM: " + String.format("%.1f", getSpeed())).withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("  Network SU: " + String.format("%.1f / %.1f", stress, capacity)).withStyle(ChatFormatting.GRAY));
-        if (stressTesting) {
-            tooltip.add(Component.literal("  Stress Test: ACTIVE").withStyle(ChatFormatting.RED));
-            tooltip.add(Component.literal("  Testing at: " + String.format("%.1f SU", maxTestSU)).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.literal("    Network Diagnoser").withStyle(ChatFormatting.GOLD));
+
+        double networkCapacity = this.capacity;
+        double stressFraction = (networkCapacity > 0) ? stress / networkCapacity : 0;
+
+        IRotate.SpeedLevel.getFormattedSpeedText(getSpeed(), false).forGoggles(tooltip);
+
+        if (getTheoreticalSpeed() == 0) {
+            CreateLang.text(TooltipHelper.makeProgressBar(3, 0))
+                .translate("gui.stressometer.no_rotation")
+                .style(ChatFormatting.DARK_GRAY)
+                .forGoggles(tooltip);
         } else {
-            tooltip.add(Component.literal("  Stress Test: OFF").withStyle(ChatFormatting.DARK_GRAY));
+            IRotate.StressImpact.getFormattedStressText(stressFraction).forGoggles(tooltip);
+
+            if (networkCapacity > 0) {
+                CreateLang.translate("gui.stressometer.capacity")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip);
+
+                double remainingCapacity = networkCapacity - stress;
+                IRotate.StressImpact stressLevel = IRotate.StressImpact.of(stressFraction);
+                CreateLang.number((int) remainingCapacity)
+                    .translate("generic.unit.stress")
+                    .style(stressLevel.getRelativeColor())
+                    .forGoggles(tooltip, 1);
+            }
+        }
+
+        if (stressTesting) {
+            tooltip.add(Component.literal("    Stress Test: ACTIVE").withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("    Testing at: " + String.format("%.0f SU", maxTestSU)).withStyle(ChatFormatting.DARK_GRAY));
+        } else {
+            tooltip.add(Component.literal("    Stress Test: OFF").withStyle(ChatFormatting.DARK_GRAY));
         }
         return true;
     }
