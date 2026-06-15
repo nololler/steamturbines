@@ -7,7 +7,7 @@
   "pattern": [
     "###",
     "###",
-    "###"
+    "   "
   ],
   "result": { "count": 1, "id": "steamturbine:pressured_iron_ingot" }
 }

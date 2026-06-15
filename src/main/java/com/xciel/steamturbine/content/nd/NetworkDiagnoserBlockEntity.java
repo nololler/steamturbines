@@ -49,9 +49,11 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
     @Override
     public float calculateStressApplied() {
         if (stressTesting && hasNetwork()) {
-            float suRatio = (capacity > 0) ? (stress / capacity) : 0f;
-            suRatio = Math.min(suRatio, 1f);
-            return suRatio * maxTestSU / 20f;
+            float speed = getTheoreticalSpeed();
+            if (speed != 0) {
+                return maxTestSU / Math.abs(speed);
+            }
+            return 0;
         }
         return super.calculateStressApplied();
     }
@@ -112,6 +114,9 @@ public class NetworkDiagnoserBlockEntity extends GaugeBlockEntity implements IHa
 
     public void setMaxTestSU(float su) {
         this.maxTestSU = su;
+        if (stressTesting && hasNetwork()) {
+            getOrCreateNetwork().updateStressFor(this, calculateStressApplied());
+        }
         setChanged();
         sendData();
     }
