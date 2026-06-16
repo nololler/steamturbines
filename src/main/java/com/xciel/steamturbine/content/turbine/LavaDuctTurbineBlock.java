@@ -1,5 +1,6 @@
 package com.xciel.steamturbine.content.turbine;
 
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.steamturbine.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -11,7 +12,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class LavaDuctTurbineBlock extends Block implements IBE<LavaDuctTurbineBlockEntity> {
+public class LavaDuctTurbineBlock extends Block implements IBE<LavaDuctTurbineBlockEntity>, IWrenchable {
 
     private static final VoxelShape SHAPE = Shapes.or(
         Block.box(4.0, 1.0, 4.0, 12.0, 15.0, 12.0),

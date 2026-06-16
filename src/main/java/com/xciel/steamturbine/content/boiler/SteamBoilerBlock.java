@@ -1,6 +1,7 @@
 package com.xciel.steamturbine.content.boiler;
 
 import com.xciel.steamturbine.AllBlockEntityTypes;
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,7 +29,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntity> {
+public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntity>, IWrenchable {
 
     public static final Property<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
@@ -200,12 +201,11 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.hasBlockEntity() || level.isClientSide)
+        if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
             return;
-        if (newState.is(state.getBlock()))
-            return;
+
         SteamBoilerBlockEntity be = getBlockEntity(level, pos);
-        if (be != null) {
+        if (be != null && !isMoving) {
             ItemStack fuel = be.getItemHandler().getStackInSlot(0);
             if (!fuel.isEmpty()) {
                 Block.popResource(level, pos, fuel);

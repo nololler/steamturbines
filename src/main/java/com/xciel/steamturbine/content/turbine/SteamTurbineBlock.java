@@ -1,5 +1,6 @@
 package com.xciel.steamturbine.content.turbine;
 
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.steamturbine.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -16,7 +17,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class SteamTurbineBlock extends Block implements IBE<SteamTurbineBlockEntity> {
+public class SteamTurbineBlock extends Block implements IBE<SteamTurbineBlockEntity>, IWrenchable {
 
     public static final Property<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 

@@ -1,0 +1,9 @@
+{
+  "values": [
+    "steamturbine:pressure_pipe",
+    "steamturbine:turbine_shaft",
+    "steamturbine:lava_duct_shaft",
+    "steamturbine:directional_analog_gearshift",
+    "steamturbine:network_diagnoser"
+  ]
+}

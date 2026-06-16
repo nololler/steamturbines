@@ -1,0 +1,9 @@
+{
+  "values": [
+    "steamturbine:steam_boiler",
+    "steamturbine:steam_compressor",
+    "steamturbine:steam_turbine",
+    "steamturbine:steam_pump",
+    "steamturbine:lava_duct_turbine"
+  ]
+}

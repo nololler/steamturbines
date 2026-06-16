@@ -73,6 +73,7 @@ neoForge {
 }
 
 sourceSets {
+    main.resources { srcDir 'src/generated/resources' }
     test {
         java {
             srcDirs = ['src/test/java']

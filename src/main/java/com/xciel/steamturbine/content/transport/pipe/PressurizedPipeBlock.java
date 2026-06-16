@@ -1,6 +1,7 @@
 package com.xciel.steamturbine.content.transport.pipe;
 
 import com.xciel.steamturbine.AllBlockEntityTypes;
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.item.context.BlockPlaceContext;
 
-public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity> {
+public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity>, IWrenchable {
 
     public static final BooleanProperty NORTH = BooleanProperty.create("north");
     public static final BooleanProperty SOUTH = BooleanProperty.create("south");

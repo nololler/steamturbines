@@ -1,0 +1,14 @@
+{
+  "values": [
+    "steamturbine:steam_boiler",
+    "steamturbine:steam_compressor",
+    "steamturbine:pressure_pipe",
+    "steamturbine:steam_turbine",
+    "steamturbine:turbine_shaft",
+    "steamturbine:steam_pump",
+    "steamturbine:lava_duct_turbine",
+    "steamturbine:lava_duct_shaft",
+    "steamturbine:directional_analog_gearshift",
+    "steamturbine:network_diagnoser"
+  ]
+}
