@@ -11,6 +11,7 @@ import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlock;
+import com.xciel.steamturbine.content.sjth.SteamJetThrusterBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -167,6 +168,21 @@ public class STBlocks {
                             .when(ExplosionCondition.survivesExplosion()))))
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(b, () -> 0.0))
             .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 0.0))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<SteamJetThrusterBlock> STEAM_JET_THRUSTER = REGISTRATE.block("steam_jet_thruster", SteamJetThrusterBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops())
+            .properties(p -> p.noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
             .item()
             .build()
             .register();

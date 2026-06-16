@@ -10,6 +10,7 @@ import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.steamturbine.content.turbine.LavaDuctTurbineBlockEntity;
 import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlockEntity;
+import com.xciel.steamturbine.content.sjth.SteamJetThrusterBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
 import static com.xciel.steamturbine.SteamTurbine.REGISTRATE;
@@ -64,6 +65,11 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<NetworkDiagnoserBlockEntity> NETWORK_DIAGNOSER = REGISTRATE
             .blockEntity("network_diagnoser", NetworkDiagnoserBlockEntity::new)
             .validBlocks(STBlocks.NETWORK_DIAGNOSER)
+            .register();
+
+    public static final BlockEntityEntry<SteamJetThrusterBlockEntity> STEAM_JET_THRUSTER = REGISTRATE
+            .blockEntity("steam_jet_thruster", SteamJetThrusterBlockEntity::new)
+            .validBlocks(STBlocks.STEAM_JET_THRUSTER)
             .register();
 
     public static void register() {}

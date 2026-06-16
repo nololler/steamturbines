@@ -4,6 +4,7 @@
     "steamturbine:steam_compressor",
     "steamturbine:steam_turbine",
     "steamturbine:steam_pump",
-    "steamturbine:lava_duct_turbine"
+    "steamturbine:lava_duct_turbine",
+    "steamturbine:steam_jet_thruster"
   ]
 }

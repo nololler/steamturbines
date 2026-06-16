@@ -10,6 +10,7 @@ import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
@@ -29,7 +30,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class SteamPumpBlockEntity extends KineticBlockEntity implements ISteamEndpoint, ISteamConsumer {
+public class SteamPumpBlockEntity extends KineticBlockEntity implements IPressurizedConsumer, ISteamEndpoint, ISteamConsumer {
     private static final float MAX_TARGET_RATE = 75f;
     private static final int SCROLL_MIN = 0;
     private static final int SCROLL_MAX = 75;

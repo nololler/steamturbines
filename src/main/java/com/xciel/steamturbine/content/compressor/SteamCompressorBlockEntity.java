@@ -11,7 +11,7 @@ import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
 import com.xciel.steamturbine.steam.transfer.ICompressorEndpoint;
-import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
+import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
@@ -135,8 +135,10 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
             if (transport.canConnect(outputDir.getOpposite())) {
                 transport.pushSteam(outputDir.getOpposite(), outputSteam);
             }
-        } else if (neighbor instanceof SteamTurbineBlockEntity) {
-            ((ISteamConsumer) neighbor).receiveSteam(outputDir.getOpposite(), outputSteam);
+        } else if (neighbor instanceof IPressurizedConsumer consumer) {
+            if (consumer.canReceive(outputDir.getOpposite())) {
+                consumer.receiveSteam(outputDir.getOpposite(), outputSteam);
+            }
         }
     }
 

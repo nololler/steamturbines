@@ -13,6 +13,7 @@
   "block.steamturbine.lava_duct_turbine": "Lava Duct Turbine",
   "block.steamturbine.lava_duct_shaft": "Lava Duct Shaft",
   "block.steamturbine.directional_analog_gearshift": "Directional Analog Gearshift",
+  "block.steamturbine.steam_jet_thruster": "Steam Jet Thruster",
 
   "block.steamturbine.directional_analog_gearshift.tooltip.summary": "A directional gearshift controlled by analog redstone signals. The LEFT and RIGHT sides determine output speed and direction from their signal differential.",
   "block.steamturbine.directional_analog_gearshift.tooltip.condition1": "When Unlocked",
@@ -64,6 +65,8 @@
   "block.steamturbine.network_diagnoser.tooltip.behaviour1": "Shows live RPM and stress data from the connected kinetic network when viewed with engineer goggles.",
   "block.steamturbine.network_diagnoser.tooltip.condition2": "Stress Testing",
   "block.steamturbine.network_diagnoser.tooltip.behaviour2": "When active, injects configurable stress into the network to test capacity limits.",
+  "block.steamturbine.steam_jet_thruster.tooltip.summary": "Consumes Steam to produce directed thrust. Connect a shaft to the back for increased efficiency. Pushes entities and players in the faced direction.",
+
   "steamturbine.nd.max_rpm": "Max RPM",
   "steamturbine.nd.max_su": "Max SU",
   "steamturbine.nd.settings": "Diagnoser Settings"

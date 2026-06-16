@@ -8,6 +8,7 @@ import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
@@ -23,7 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
-public class SteamTurbineBlockEntity extends SmartBlockEntity implements ISteamConsumer, ISteamEndpoint, ITurbineEndpoint, IHaveGoggleInformation {
+public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressurizedConsumer, ISteamEndpoint, ITurbineEndpoint, IHaveGoggleInformation {
     private static final float MAX_RPM = 256f;
     private static final float MIN_PRESSURE_FOR_OPERATION = 0.5f;
     private static final float MAX_THROUGHPUT = 50.0f;

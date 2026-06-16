@@ -92,6 +92,7 @@ repositories {
     maven { url = "https://maven.blamejared.com" }
     maven { url = "https://maven.shedaniel.me" }
     maven { url = "https://maven.neoforged.net/releases/" }
+    maven { url = "https://maven.ryanhcode.dev/releases" }
     maven {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
@@ -110,6 +111,7 @@ dependencies {
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+    implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

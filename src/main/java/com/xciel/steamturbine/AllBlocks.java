@@ -3,6 +3,7 @@ package com.xciel.steamturbine;
 import com.xciel.steamturbine.registrate.STBlocks;
 import com.xciel.steamturbine.content.dag.DirectionalAnalogGearshiftBlock;
 import com.xciel.steamturbine.content.nd.NetworkDiagnoserBlock;
+import com.xciel.steamturbine.content.sjth.SteamJetThrusterBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
 
@@ -17,6 +18,7 @@ public class AllBlocks {
     public static final BlockEntry<com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock> LAVA_DUCT_SHAFT = STBlocks.LAVA_DUCT_SHAFT;
     public static final BlockEntry<DirectionalAnalogGearshiftBlock> DIRECTIONAL_ANALOG_GEARSHIFT = STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT;
     public static final BlockEntry<NetworkDiagnoserBlock> NETWORK_DIAGNOSER = STBlocks.NETWORK_DIAGNOSER;
+    public static final BlockEntry<SteamJetThrusterBlock> STEAM_JET_THRUSTER = STBlocks.STEAM_JET_THRUSTER;
 
     private AllBlocks() {}
 }

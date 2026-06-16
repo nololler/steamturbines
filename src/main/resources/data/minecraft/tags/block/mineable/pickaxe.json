@@ -9,6 +9,7 @@
     "steamturbine:lava_duct_turbine",
     "steamturbine:lava_duct_shaft",
     "steamturbine:directional_analog_gearshift",
-    "steamturbine:network_diagnoser"
+    "steamturbine:network_diagnoser",
+    "steamturbine:steam_jet_thruster"
   ]
 }

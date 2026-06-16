@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
+import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamProducer;
@@ -24,7 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISteamTransport, ITurbineEndpoint {
+public class PressurizedPipeBlockEntity extends SmartBlockEntity implements IPressurizedConsumer, ISteamTransport, ITurbineEndpoint {
     private static final float LERP_FACTOR = 0.2f;
     private static final float DECAY_FACTOR = 0.98f;
     private static final float MAX_THROUGHPUT = 10.0f;
@@ -54,6 +55,7 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
     }
 
+    @Override
     public void receiveSteam(Direction from, SteamData steam) {
         if (steam.isEmpty()) return;
         storage = Math.min(storage + steam.getThroughput(), MAX_STORAGE);
@@ -241,6 +243,16 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements ISte
     @Override
     public boolean canConnect(Direction direction) {
         return true;
+    }
+
+    @Override
+    public boolean canReceive(Direction direction) {
+        return canConnect(direction);
+    }
+
+    @Override
+    public float getMaxReceiveRate(Direction direction) {
+        return MAX_THROUGHPUT;
     }
 
     @Override
