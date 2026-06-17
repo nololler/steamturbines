@@ -1,0 +1,7 @@
+{
+  "fluid": "steamturbine:pearlescent_dew",
+  "burnTime": 72000,
+  "superheated": true,
+  "heatLevel": 4.0,
+  "consumptionMultiplier": 0.25
+}

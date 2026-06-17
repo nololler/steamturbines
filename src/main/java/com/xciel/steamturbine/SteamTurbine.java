@@ -54,6 +54,7 @@ public class SteamTurbine {
         STBlocks.register();
         STBlockEntityTypes.register();
         STItems.register();
+        STFluids.register();
         STCreativeTabs.register(eventBus);
 
         Registry.register(

@@ -4,6 +4,8 @@
   "item.steamturbine.turbine_fan": "Turbine Fan",
   "item.steamturbine.turbine_blade": "Turbine Blade",
   "item.steamturbine.pressured_iron_ingot": "Pressured Iron Ingot",
+  "item.steamturbine.pearlescent_dew_bucket": "Bucket of Pearlescent Dew",
+  "fluid_type.steamturbine.pearlescent_dew": "Pearlescent Dew",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
   "block.steamturbine.steam_compressor": "Steam Compressor",

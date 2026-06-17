@@ -68,6 +68,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private float heatLevel;
     private boolean boilerActive;
     private int fuelSyncCooldown;
+    private float activeHeatTarget;
+    private float fuelConsumptionAccumulator;
 
     private enum FuelType {
         NONE,
@@ -155,6 +157,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         clientTotalBurnTime = 0;
         activeFuel = FuelType.NONE;
         liquidFuelActive = false;
+        activeHeatTarget = 0f;
+        fuelConsumptionAccumulator = 0f;
         heatLevel = 0f;
         boilerActive = false;
     }
@@ -216,12 +220,12 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         } else {
             if (!fuelStack.isEmpty()) {
                 tryConsumeFuel();
-            } else {
+            } else if (!liquidFuelActive) {
                 activeFuel = FuelType.NONE;
             }
         }
 
-        if (remainingBurnTime <= 0 && fuelStack.isEmpty()) {
+        if (remainingBurnTime <= 0 && fuelStack.isEmpty() && !liquidFuelActive) {
             activeFuel = FuelType.NONE;
         }
     }
@@ -240,8 +244,21 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (activeFuel != FuelType.NONE) return;
         if (fuelFluidTank.getFluid().getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) return;
 
-        activeFuel = LiquidFuelManager.isSuperheated(fluid) ? FuelType.SPECIAL : FuelType.NORMAL;
+        LiquidFuelData data = LiquidFuelManager.getData(fluid);
+        if (data == null) return;
+
+        if (data.hasHeatOverride()) {
+            activeHeatTarget = data.heatLevel();
+            activeFuel = FuelType.SPECIAL;
+        } else {
+            activeHeatTarget = 0f;
+            activeFuel = data.superheated() ? FuelType.SPECIAL : FuelType.NORMAL;
+        }
+        boolean wasActive = liquidFuelActive;
         liquidFuelActive = true;
+        if (!wasActive) {
+            fuelConsumptionAccumulator = 0f;
+        }
         setChanged();
         sendData();
     }
@@ -254,22 +271,31 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (current.isEmpty() || current.getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) {
             activeFuel = FuelType.NONE;
             liquidFuelActive = false;
+            activeHeatTarget = 0f;
+            fuelConsumptionAccumulator = 0f;
             setChanged();
             sendData();
             return;
         }
 
-        int newAmount = current.getAmount() - LIQUID_FUEL_CONSUMPTION_UNIT;
-        if (newAmount <= 0) {
-            fuelFluidTank.setFluid(FluidStack.EMPTY);
-            activeFuel = FuelType.NONE;
-            liquidFuelActive = false;
-            setChanged();
-            sendData();
-            return;
-        }
+        float rate = LiquidFuelManager.getConsumptionMultiplier(fluid);
+        fuelConsumptionAccumulator += rate;
 
-        fuelFluidTank.setFluid(new FluidStack(fluid, newAmount));
+        if (fuelConsumptionAccumulator >= 1.0f) {
+            int newAmount = current.getAmount() - LIQUID_FUEL_CONSUMPTION_UNIT;
+            if (newAmount <= 0) {
+                fuelFluidTank.setFluid(FluidStack.EMPTY);
+                activeFuel = FuelType.NONE;
+                liquidFuelActive = false;
+                activeHeatTarget = 0f;
+                fuelConsumptionAccumulator = 0f;
+                setChanged();
+                sendData();
+                return;
+            }
+            fuelFluidTank.setFluid(new FluidStack(fluid, newAmount));
+            fuelConsumptionAccumulator -= 1.0f;
+        }
 
         fuelSyncCooldown--;
         if (fuelSyncCooldown <= 0) {
@@ -357,7 +383,9 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private void updateHeat() {
         float targetHeat = 0f;
 
-        if (activeFuel == FuelType.SPECIAL) {
+        if (activeHeatTarget > 0f) {
+            targetHeat = activeHeatTarget;
+        } else if (activeFuel == FuelType.SPECIAL) {
             targetHeat = SteamConstants.HEAT_LEVEL_MAX;
         } else if (activeFuel == FuelType.NORMAL) {
             targetHeat = SteamConstants.HEAT_LEVEL_NORMAL;
@@ -371,7 +399,9 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         heatLevel += (targetHeat - heatLevel) * lerpSpeed;
 
         if (heatLevel < 0.05f) heatLevel = 0f;
-        if (heatLevel > SteamConstants.HEAT_LEVEL_MAX) heatLevel = SteamConstants.HEAT_LEVEL_MAX;
+        if (activeHeatTarget <= 0f && heatLevel > SteamConstants.HEAT_LEVEL_MAX) {
+            heatLevel = SteamConstants.HEAT_LEVEL_MAX;
+        }
     }
 
     private float getBlockHeat(BlockState state) {
@@ -682,6 +712,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         }
         activeFuel = FuelType.valueOf(tag.contains("ActiveFuel") ? tag.getString("ActiveFuel") : "NONE");
         liquidFuelActive = tag.getBoolean("LiquidFuelActive");
+        activeHeatTarget = tag.getFloat("ActiveHeatTarget");
         heatLevel = tag.getFloat("HeatLevel");
         boilerActive = tag.getBoolean("BoilerActive");
         fuelInventory.deserializeNBT(registries, tag.getCompound("FuelInventory"));
@@ -701,6 +732,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         tag.putInt("ClientTotalBurnTime", getTotalBurnTime());
         tag.putString("ActiveFuel", activeFuel.name());
         tag.putBoolean("LiquidFuelActive", liquidFuelActive);
+        tag.putFloat("ActiveHeatTarget", activeHeatTarget);
         tag.putFloat("HeatLevel", heatLevel);
         tag.putBoolean("BoilerActive", boilerActive);
         tag.put("FuelInventory", fuelInventory.serializeNBT(registries));

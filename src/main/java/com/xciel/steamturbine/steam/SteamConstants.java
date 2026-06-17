@@ -28,6 +28,7 @@ public final class SteamConstants {
     // Boiler
     public static final float HEAT_LEVEL_MAX = 3.0f;
     public static final float HEAT_LEVEL_NORMAL = 2.0f;
+    public static final float HEAT_LEVEL_PEARLESCENT = 4.0f;
     public static final float MIN_HEAT_FOR_STEAM = 0.25f;
     public static final int WATER_PER_STEAM = 250;
     public static final int WATER_TANK_CAPACITY = 2000;

@@ -4,8 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.serialization.JsonOps;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -41,6 +39,8 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
             String fluidStr = obj.get("fluid").getAsString();
             int burnTime = obj.get("burnTime").getAsInt();
             boolean superheated = obj.has("superheated") && obj.get("superheated").getAsBoolean();
+            float heatLevel = obj.has("heatLevel") ? obj.get("heatLevel").getAsFloat() : 0f;
+            float consumptionMultiplier = obj.has("consumptionMultiplier") ? obj.get("consumptionMultiplier").getAsFloat() : 1.0f;
 
             ResourceLocation fluidId = ResourceLocation.tryParse(fluidStr);
             if (fluidId == null) continue;
@@ -50,7 +50,7 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
 
             if (burnTime <= 0) continue;
 
-            FUEL_MAP.put(fluid, new LiquidFuelData(burnTime, superheated));
+            FUEL_MAP.put(fluid, new LiquidFuelData(burnTime, superheated, heatLevel, consumptionMultiplier));
         }
     }
 
@@ -67,6 +67,16 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
     public static boolean isSuperheated(Fluid fluid) {
         LiquidFuelData data = FUEL_MAP.get(fluid);
         return data != null && data.superheated();
+    }
+
+    public static float getHeatLevel(Fluid fluid) {
+        LiquidFuelData data = FUEL_MAP.get(fluid);
+        return data != null && data.hasHeatOverride() ? data.heatLevel() : 0f;
+    }
+
+    public static float getConsumptionMultiplier(Fluid fluid) {
+        LiquidFuelData data = FUEL_MAP.get(fluid);
+        return data != null ? data.consumptionMultiplier() : 1.0f;
     }
 
     public static boolean isLiquidFuel(Fluid fluid) {
