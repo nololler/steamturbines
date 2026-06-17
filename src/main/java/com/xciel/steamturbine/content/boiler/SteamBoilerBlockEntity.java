@@ -321,6 +321,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             fuelInventory.setStackInSlot(0, fuelStack);
         }
         remainingBurnTime = burnTime;
+        activeHeatTarget = 0f;
+        liquidFuelActive = false;
 
         var holder = fuelStack.getItem().builtInRegistryHolder();
         BlazeBurnerFuel superheated = holder.getData(CreateDataMaps.SUPERHEATED_BLAZE_BURNER_FUELS);
