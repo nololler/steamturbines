@@ -30,9 +30,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -46,6 +48,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private static final int WATER_TANK_CAPACITY = 2000;
     private static final int WATER_PER_STEAM = 5;
     private static final int INFINITE_THRESHOLD = 20 * 3600 * 24 * 30;
+    private static final int FUEL_FLUID_CAPACITY = 4000;
+    private static final int LIQUID_FUEL_CONSUMPTION_UNIT = 1;
 
     private final EnumMap<Direction, Boolean> connections = new EnumMap<>(Direction.class);
     private final EnumMap<Direction, SteamData> receivedSteam = new EnumMap<>(Direction.class);
@@ -54,12 +58,16 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private final ItemStackHandler fuelInventory;
     private final FluidTank waterTank;
     private final IFluidHandler waterHandler;
+    private final FluidTank fuelFluidTank;
+    private final IFluidHandler combinedFluidHandler;
     private int remainingBurnTime;
     private int clientRemainingBurnTime;
     private int clientTotalBurnTime;
     private FuelType activeFuel;
+    private boolean liquidFuelActive;
     private float heatLevel;
     private boolean boilerActive;
+    private int fuelSyncCooldown;
 
     private enum FuelType {
         NONE,
@@ -92,10 +100,61 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             }
         };
         waterHandler = waterTank;
+        fuelFluidTank = new FluidTank(FUEL_FLUID_CAPACITY, fluidStack -> LiquidFuelManager.isLiquidFuel(fluidStack.getFluid())) {
+            @Override
+            protected void onContentsChanged() {
+                setChanged();
+            }
+        };
+        combinedFluidHandler = new IFluidHandler() {
+            @Override
+            public int getTanks() {
+                return 2;
+            }
+
+            @Override
+            public FluidStack getFluidInTank(int tank) {
+                return tank == 0 ? fuelFluidTank.getFluid() : waterTank.getFluid();
+            }
+
+            @Override
+            public int getTankCapacity(int tank) {
+                return tank == 0 ? fuelFluidTank.getCapacity() : waterTank.getCapacity();
+            }
+
+            @Override
+            public boolean isFluidValid(int tank, FluidStack stack) {
+                return tank == 0 ? fuelFluidTank.isFluidValid(stack) : waterTank.isFluidValid(stack);
+            }
+
+            @Override
+            public int fill(FluidStack resource, FluidAction action) {
+                if (resource.isEmpty()) return 0;
+                Fluid fluid = resource.getFluid();
+                if (LiquidFuelManager.isLiquidFuel(fluid)) {
+                    return fuelFluidTank.fill(resource, action);
+                }
+                if (fluid == Fluids.WATER) {
+                    return waterTank.fill(resource, action);
+                }
+                return 0;
+            }
+
+            @Override
+            public FluidStack drain(FluidStack resource, FluidAction action) {
+                return waterTank.drain(resource, action);
+            }
+
+            @Override
+            public FluidStack drain(int maxDrain, FluidAction action) {
+                return waterTank.drain(maxDrain, action);
+            }
+        };
         remainingBurnTime = 0;
         clientRemainingBurnTime = 0;
         clientTotalBurnTime = 0;
         activeFuel = FuelType.NONE;
+        liquidFuelActive = false;
         heatLevel = 0f;
         boilerActive = false;
     }
@@ -112,6 +171,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             clientVisualUpdate();
         } else {
             updateFuel();
+            updateLiquidFuel();
             updateHeat();
             generateSteam();
             pushSteamOutput();
@@ -161,12 +221,60 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             }
         }
 
-        if (remainingBurnTime <= 0) {
+        if (remainingBurnTime <= 0 && fuelStack.isEmpty()) {
             activeFuel = FuelType.NONE;
         }
+    }
 
-        if (fuelStack.isEmpty() && remainingBurnTime <= 0) {
+    private void updateLiquidFuel() {
+        FluidStack fuelFluid = fuelFluidTank.getFluid();
+        if (fuelFluid.isEmpty()) return;
+
+        Fluid fluid = fuelFluid.getFluid();
+
+        boostLiquidFuel(fluid);
+        dripLiquidFuel(fluid);
+    }
+
+    private void boostLiquidFuel(Fluid fluid) {
+        if (activeFuel != FuelType.NONE) return;
+        if (fuelFluidTank.getFluid().getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) return;
+
+        activeFuel = LiquidFuelManager.isSuperheated(fluid) ? FuelType.SPECIAL : FuelType.NORMAL;
+        liquidFuelActive = true;
+        setChanged();
+        sendData();
+    }
+
+    private void dripLiquidFuel(Fluid fluid) {
+        if (activeFuel == FuelType.NONE) return;
+        if (remainingBurnTime > 0) return;
+
+        FluidStack current = fuelFluidTank.getFluid();
+        if (current.isEmpty() || current.getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) {
             activeFuel = FuelType.NONE;
+            liquidFuelActive = false;
+            setChanged();
+            sendData();
+            return;
+        }
+
+        int newAmount = current.getAmount() - LIQUID_FUEL_CONSUMPTION_UNIT;
+        if (newAmount <= 0) {
+            fuelFluidTank.setFluid(FluidStack.EMPTY);
+            activeFuel = FuelType.NONE;
+            liquidFuelActive = false;
+            setChanged();
+            sendData();
+            return;
+        }
+
+        fuelFluidTank.setFluid(new FluidStack(fluid, newAmount));
+
+        fuelSyncCooldown--;
+        if (fuelSyncCooldown <= 0) {
+            fuelSyncCooldown = 20;
+            sendData();
         }
     }
 
@@ -350,7 +458,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     }
 
     public IFluidHandler getFluidHandler() {
-        return waterHandler;
+        return combinedFluidHandler;
     }
 
     public Direction getOutputDirection() {
@@ -470,6 +578,8 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         }
 
         ItemStack fuelStack = fuelInventory.getStackInSlot(0);
+        FluidStack fuelFluid = fuelFluidTank.getFluid();
+
         if (!fuelStack.isEmpty()) {
             tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel",
                             fuelStack.getHoverName(),
@@ -498,7 +608,11 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
                                 formatTime(clientRemainingBurnTime))
                         .withStyle(ChatFormatting.DARK_GRAY)));
             }
-        } else {
+        } else if (liquidFuelActive && !fuelFluid.isEmpty()) {
+            tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel_fluid_name",
+                            fuelFluid.getFluid().getFluidType().getDescription())
+                    .withStyle(ChatFormatting.GRAY)));
+        } else if (!liquidFuelActive) {
             tooltip.add(Component.literal("   ").append(Component.translatable("steamturbine.goggles.boiler.fuel_empty")
                     .withStyle(ChatFormatting.DARK_GRAY)));
         }
@@ -507,6 +621,17 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
                         waterTank.getFluidAmount(),
                         WATER_TANK_CAPACITY)
                 .withStyle(ChatFormatting.GRAY)));
+
+        if (!fuelFluid.isEmpty()) {
+            tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.fuel_fluid",
+                            fuelFluid.getFluid().getFluidType().getDescription(),
+                            fuelFluid.getAmount(),
+                            FUEL_FLUID_CAPACITY)
+                    .withStyle(ChatFormatting.DARK_RED)));
+        } else if (!liquidFuelActive) {
+            tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.fuel_fluid_empty")
+                    .withStyle(ChatFormatting.DARK_RED)));
+        }
 
         if (outputSteam.shouldPropagate()) {
             tooltip.add(Component.literal("  ").append(Component.translatable("steamturbine.goggles.boiler.steam_output",
@@ -556,9 +681,11 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
             clientTotalBurnTime = tag.getInt("ClientTotalBurnTime");
         }
         activeFuel = FuelType.valueOf(tag.contains("ActiveFuel") ? tag.getString("ActiveFuel") : "NONE");
+        liquidFuelActive = tag.getBoolean("LiquidFuelActive");
         heatLevel = tag.getFloat("HeatLevel");
         boilerActive = tag.getBoolean("BoilerActive");
         fuelInventory.deserializeNBT(registries, tag.getCompound("FuelInventory"));
+        fuelFluidTank.readFromNBT(registries, tag.getCompound("FuelFluidTank"));
         waterTank.readFromNBT(registries, tag.getCompound("WaterTank"));
         for (Direction dir : Direction.values()) {
             connections.put(dir, tag.getBoolean("conn_" + dir.getName()));
@@ -573,14 +700,26 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         tag.putInt("ClientRemainingBurnTime", remainingBurnTime);
         tag.putInt("ClientTotalBurnTime", getTotalBurnTime());
         tag.putString("ActiveFuel", activeFuel.name());
+        tag.putBoolean("LiquidFuelActive", liquidFuelActive);
         tag.putFloat("HeatLevel", heatLevel);
         tag.putBoolean("BoilerActive", boilerActive);
         tag.put("FuelInventory", fuelInventory.serializeNBT(registries));
+        CompoundTag fuelFluidTag = new CompoundTag();
+        fuelFluidTank.writeToNBT(registries, fuelFluidTag);
+        tag.put("FuelFluidTank", fuelFluidTag);
         CompoundTag waterTag = new CompoundTag();
         waterTank.writeToNBT(registries, waterTag);
         tag.put("WaterTank", waterTag);
         for (Direction dir : Direction.values()) {
             tag.putBoolean("conn_" + dir.getName(), connections.getOrDefault(dir, false));
         }
+    }
+
+    public FluidTank getFuelFluidTank() {
+        return fuelFluidTank;
+    }
+
+    public int getFuelFluidAmount() {
+        return fuelFluidTank.getFluidAmount();
     }
 }

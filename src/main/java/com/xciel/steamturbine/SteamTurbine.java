@@ -3,6 +3,7 @@ package com.xciel.steamturbine;
 import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
+import com.xciel.steamturbine.content.boiler.LiquidFuelManager;
 import com.xciel.steamturbine.content.boiler.SteamBoilerArmInteractionPointType;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.network.SteamTurbinePackets;
@@ -21,6 +22,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
 
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.TooltipModifier;
@@ -58,6 +60,10 @@ public class SteamTurbine {
             CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE,
             rl("steam_boiler"),
             SteamBoilerArmInteractionPointType.getInstance()
+        );
+
+        NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, event ->
+            event.addListener(new LiquidFuelManager())
         );
 
         LOGGER.info("Steam Turbine Initialized!");
