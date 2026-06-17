@@ -11,16 +11,15 @@ public class BlockLoopingSoundInstance extends AbstractTickableSoundInstance {
 
     private boolean active;
     private int keepAlive;
-    private float maxVolume;
+    private float directVolume;
 
-    public BlockLoopingSoundInstance(SoundEvent event, BlockPos pos, float maxVolume) {
+    public BlockLoopingSoundInstance(SoundEvent event, BlockPos pos) {
         super(event, SoundSource.BLOCKS, SoundInstance.createUnseededRandom());
         this.attenuation = Attenuation.LINEAR;
         this.looping = true;
         this.delay = 0;
-        this.volume = 0.05f;
+        this.directVolume = 1.0f;
         this.active = true;
-        this.maxVolume = maxVolume;
 
         Vec3 center = Vec3.atCenterOf(pos);
         this.x = center.x;
@@ -32,21 +31,27 @@ public class BlockLoopingSoundInstance extends AbstractTickableSoundInstance {
         keepAlive = 2;
     }
 
+    public void setVolume(float volume) {
+        this.directVolume = volume;
+    }
+
     public void stopSound() {
         this.active = false;
     }
 
     @Override
+    public float getVolume() {
+        return directVolume;
+    }
+
+    @Override
     public void tick() {
-        if (active) {
-            volume = Math.min(maxVolume, volume + 0.25f);
-            keepAlive--;
-            if (keepAlive <= 0)
-                stopSound();
+        if (!active) {
+            stop();
             return;
         }
-        volume = Math.max(0, volume - 0.25f);
-        if (volume == 0)
-            stop();
+        keepAlive--;
+        if (keepAlive <= 0)
+            stopSound();
     }
 }

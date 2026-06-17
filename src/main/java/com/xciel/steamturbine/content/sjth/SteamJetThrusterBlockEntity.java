@@ -181,10 +181,12 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
     private void tickAudio() {
         if (isActive()) {
             if (soundInstance == null || soundInstance.isStopped()) {
-                soundInstance = new BlockLoopingSoundInstance(STSounds.STEAM_THRUSTER.get(), worldPosition, 0.5f);
+                soundInstance = new BlockLoopingSoundInstance(STSounds.STEAM_THRUSTER.get(), worldPosition);
                 Minecraft.getInstance().getSoundManager().play(soundInstance);
             }
             soundInstance.keepAlive();
+            float targetVolume = Math.min(1.0f, (float)(currentThrust / 200.0));
+            soundInstance.setVolume(targetVolume);
         } else {
             if (soundInstance != null) {
                 soundInstance.stopSound();
