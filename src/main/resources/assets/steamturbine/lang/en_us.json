@@ -65,7 +65,7 @@
   "block.steamturbine.network_diagnoser.tooltip.behaviour1": "Shows live RPM and stress data from the connected kinetic network when viewed with engineer goggles.",
   "block.steamturbine.network_diagnoser.tooltip.condition2": "Stress Testing",
   "block.steamturbine.network_diagnoser.tooltip.behaviour2": "When active, injects configurable stress into the network to test capacity limits.",
-  "block.steamturbine.steam_jet_thruster.tooltip.summary": "Consumes Steam to produce directed thrust. Connect a shaft to the back for increased efficiency. Pushes entities and players in the faced direction.",
+  "block.steamturbine.steam_jet_thruster.tooltip.summary": "Consumes Steam to produce directed thrust. Connect a compressor along with a pump for increased efficiency and power.",
 
   "steamturbine.nd.max_rpm": "Max RPM",
   "steamturbine.nd.max_su": "Max SU",

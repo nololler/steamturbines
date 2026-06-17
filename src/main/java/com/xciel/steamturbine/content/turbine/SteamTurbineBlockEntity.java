@@ -144,7 +144,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
                     soundInstance = new BlockLoopingSoundInstance(STSounds.STEAM_TURBINE.get(), worldPosition);
                     Minecraft.getInstance().getSoundManager().play(soundInstance);
                 }
-                soundInstance.setVolume(0.225f);
+                soundInstance.setVolume(0.08f);
                 soundInstance.keepAlive();
             } else {
                 if (soundInstance != null) {

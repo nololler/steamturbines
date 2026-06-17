@@ -14,7 +14,6 @@ import com.xciel.steamturbine.client.sound.BlockLoopingSoundInstance;
 import com.xciel.steamturbine.registrate.STSounds;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
-import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 
 import net.minecraft.ChatFormatting;
@@ -27,14 +26,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import org.joml.Vector3d;
@@ -44,11 +38,10 @@ import java.util.List;
 public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
     IPressurizedConsumer, ISteamEndpoint, IHaveGoggleInformation, BlockEntitySubLevelActor {
 
-    public static float PUSH_STRENGTH = 2.2f;
+    public static float PUSH_STRENGTH = 6f;
 
     private static final float MAX_THROUGHPUT = 50.0f;
-    private static final float MAX_PUSH_RANGE = 5.0f;
-    private static final float MAX_THRUST = 800.0f;
+    private static final float MAX_THRUST = 2000.0f;
 
     private SteamData inputSteam = SteamData.empty();
     private SteamData lastInputSteam = SteamData.empty();
@@ -75,9 +68,7 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
         }
 
         if (isActive()) {
-            if (!level.isClientSide) {
-                pushEntities();
-            } else {
+            if (level.isClientSide) {
                 spawnExhaustParticles();
                 tickAudio();
             }
@@ -143,38 +134,6 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
 
         QueuedForceGroup forceGroup = subLevel.getOrCreateQueuedForceGroup(ForceGroups.PROPULSION.get());
         forceGroup.applyAndRecordPointForce(position, force);
-    }
-
-    private void pushEntities() {
-        Direction facing = getFacing();
-        Vec3 thrustVec = Vec3.atLowerCornerOf(facing.getNormal()).scale(currentThrust * 0.02);
-
-        float range = Math.min((float) (currentThrust / MAX_THRUST * MAX_PUSH_RANGE), MAX_PUSH_RANGE);
-        Vec3 blockCenter = Vec3.atCenterOf(worldPosition);
-        Vec3 min = blockCenter.add(Vec3.atLowerCornerOf(facing.getNormal()).scale(-1));
-        Vec3 max = blockCenter.add(Vec3.atLowerCornerOf(facing.getNormal()).scale(range));
-        AABB aabb = new AABB(min, max).inflate(1.5);
-
-        List<Entity> entities = level.getEntities(null, aabb);
-        for (Entity entity : entities) {
-            if (!(entity instanceof LivingEntity || entity instanceof ItemEntity || entity instanceof AbstractMinecart)) {
-                continue;
-            }
-
-            Vec3 entityCenter = entity.getBoundingBox().getCenter();
-            Vec3 relative = entityCenter.subtract(blockCenter);
-
-            float dot = (float) relative.dot(Vec3.atLowerCornerOf(facing.getNormal()));
-            if (dot < 0) continue;
-
-            float distanceFactor = 1.0f - (dot / range);
-            if (distanceFactor < 0) continue;
-            distanceFactor = Math.min(distanceFactor * distanceFactor, 1.0f);
-
-            Vec3 push = thrustVec.scale(distanceFactor);
-            entity.push(push.x, push.y, push.z);
-            entity.fallDistance = 0;
-        }
     }
 
     @OnlyIn(Dist.CLIENT)

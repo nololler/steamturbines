@@ -122,7 +122,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
             soundInstance = new BlockLoopingSoundInstance(STSounds.LAVA_DUCT_SHAFT.get(), worldPosition);
             Minecraft.getInstance().getSoundManager().play(soundInstance);
         }
-        soundInstance.setVolume(0.225f);
+        soundInstance.setVolume(0.08f);
         soundInstance.keepAlive();
     }
 
