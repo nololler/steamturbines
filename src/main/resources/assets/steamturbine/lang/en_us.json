@@ -69,5 +69,9 @@
 
   "steamturbine.nd.max_rpm": "Max RPM",
   "steamturbine.nd.max_su": "Max SU",
-  "steamturbine.nd.settings": "Diagnoser Settings"
+  "steamturbine.nd.settings": "Diagnoser Settings",
+
+  "subtitles.steamturbine.lava_duct_shaft": "Lava Duct Shaft rumbles",
+  "subtitles.steamturbine.steam_turbine": "Steam Turbine spins",
+  "subtitles.steamturbine.steam_thruster": "Steam Jet Thruster fires"
 }

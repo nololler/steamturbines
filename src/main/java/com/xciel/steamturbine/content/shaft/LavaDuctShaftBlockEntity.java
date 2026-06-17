@@ -5,8 +5,11 @@ import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEnti
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.xciel.steamturbine.client.sound.BlockLoopingSoundInstance;
+import com.xciel.steamturbine.registrate.STSounds;
 import com.xciel.steamturbine.steam.SteamConstants;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -17,6 +20,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
@@ -36,6 +41,9 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
     private int totalLavaFaces;
     private float totalGeneratedSU;
     private boolean hasWater;
+
+    @OnlyIn(Dist.CLIENT)
+    private BlockLoopingSoundInstance soundInstance;
 
     private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
@@ -76,6 +84,7 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
         if (level.isClientSide) {
             spawnSteamParticles();
+            tickSound();
             return;
         }
 
@@ -90,6 +99,30 @@ public class LavaDuctShaftBlockEntity extends GeneratingKineticBlockEntity imple
 
         setChanged();
         sendData();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void tickSound() {
+        if (getGeneratedSpeed() == 0) {
+            if (soundInstance != null) {
+                soundInstance.stopSound();
+                soundInstance = null;
+            }
+            return;
+        }
+        float cap = calculateAddedStressCapacity();
+        if (cap < 50) {
+            if (soundInstance != null) {
+                soundInstance.stopSound();
+                soundInstance = null;
+            }
+            return;
+        }
+        if (soundInstance == null || soundInstance.isStopped()) {
+            soundInstance = new BlockLoopingSoundInstance(STSounds.LAVA_DUCT_SHAFT.get(), worldPosition, 0.225f);
+            Minecraft.getInstance().getSoundManager().play(soundInstance);
+        }
+        soundInstance.keepAlive();
     }
 
     private void spawnSteamParticles() {

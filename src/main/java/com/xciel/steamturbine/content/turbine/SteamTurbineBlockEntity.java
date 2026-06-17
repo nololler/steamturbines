@@ -5,6 +5,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlockEntity;
+import com.xciel.steamturbine.client.sound.BlockLoopingSoundInstance;
+import com.xciel.steamturbine.registrate.STSounds;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.SteamType;
@@ -14,12 +16,15 @@ import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 import com.xciel.steamturbine.steam.transfer.ISteamTransport;
 import com.xciel.steamturbine.steam.transfer.ITurbineEndpoint;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
@@ -38,6 +43,10 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
     private float turbineSpeed = 0f;
     private int stageNumber = 0;
     private float stageEfficiency = 1.0f;
+
+    @OnlyIn(Dist.CLIENT)
+    private BlockLoopingSoundInstance soundInstance;
+
     private SteamData lastInputSteam = SteamData.empty();
     private SteamData lastExhaustSteam = SteamData.empty();
     private Direction inputSource = null;
@@ -53,80 +62,96 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) return;
+        if (level == null) return;
 
-        BlockState state = getBlockState();
-        Direction facing = state.getValue(SteamTurbineBlock.FACING);
+        if (!level.isClientSide) {
+            BlockState state = getBlockState();
+            Direction facing = state.getValue(SteamTurbineBlock.FACING);
 
-        stageNumber = countTurbinesBehind(worldPosition, facing);
-        int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
-        stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
+            stageNumber = countTurbinesBehind(worldPosition, facing);
+            int efficiencyIndex = Math.min(stageNumber, STAGE_EFFICIENCY.length - 1);
+            stageEfficiency = STAGE_EFFICIENCY[efficiencyIndex];
 
-        boolean usedBuffer = false;
-        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
-            if (steamBuffer > 0 && bufferedSteamType != null) {
-                float bufferPressure = steamBuffer / MAX_STEAM_BUFFER * 3f;
-                inputSteam = SteamData.of(bufferPressure, bufferedSteamType, 1f, 1f, steamBuffer * BUFFER_DRAIN_RATE);
-                usedBuffer = true;
-            }
-        }
-
-        if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
-            inputSteam = SteamData.empty();
-            lastInputSteam = SteamData.empty();
-            turbineSpeed = 0f;
-            lastExhaustSteam = SteamData.empty();
-            if (usedBuffer) {
-                steamBuffer *= (1f - BUFFER_DRAIN_RATE);
-                if (steamBuffer < 1f) steamBuffer = 0f;
-            }
-            setChanged();
-            sendData();
-            return;
-        }
-
-        lastInputSteam = inputSteam.withThroughput(Math.min(inputSteam.getThroughput(), MAX_THROUGHPUT));
-
-        float inputPressure = inputSteam.getPressure();
-        float inputThroughput = inputSteam.getThroughput();
-
-        if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
-            float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
-            turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
-            float exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
-            float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
-            lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
-
-            Direction outputDir = facing;
-            BlockPos outputPos = worldPosition.relative(outputDir);
-            if (level.isLoaded(outputPos)) {
-                var outputBE = level.getBlockEntity(outputPos);
-                if (outputBE instanceof PressurizedPipeBlockEntity pipe) {
-                    pipe.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
-                } else if (outputBE instanceof ISteamTransport transport) {
-                    if (transport.canConnect(outputDir.getOpposite())) {
-                        transport.pushSteam(outputDir.getOpposite(), lastExhaustSteam);
-                    }
-                } else if (outputBE instanceof ISteamConsumer consumer) {
-                    if (consumer.canReceive(outputDir.getOpposite())) {
-                        consumer.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
-                    }
+            boolean usedBuffer = false;
+            if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+                if (steamBuffer > 0 && bufferedSteamType != null) {
+                    float bufferPressure = steamBuffer / MAX_STEAM_BUFFER * 3f;
+                    inputSteam = SteamData.of(bufferPressure, bufferedSteamType, 1f, 1f, steamBuffer * BUFFER_DRAIN_RATE);
+                    usedBuffer = true;
                 }
             }
-        } else {
-            turbineSpeed = 0f;
-            lastExhaustSteam = SteamData.of(0, SteamType.REGULAR, 1f, 1f, 0);
+
+            if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
+                inputSteam = SteamData.empty();
+                lastInputSteam = SteamData.empty();
+                turbineSpeed = 0f;
+                lastExhaustSteam = SteamData.empty();
+                if (usedBuffer) {
+                    steamBuffer *= (1f - BUFFER_DRAIN_RATE);
+                    if (steamBuffer < 1f) steamBuffer = 0f;
+                }
+                setChanged();
+                sendData();
+            } else {
+                lastInputSteam = inputSteam.withThroughput(Math.min(inputSteam.getThroughput(), MAX_THROUGHPUT));
+
+                float inputPressure = inputSteam.getPressure();
+                float inputThroughput = inputSteam.getThroughput();
+
+                if (inputPressure >= MIN_PRESSURE_FOR_OPERATION) {
+                    float pressureFactor = Math.min(inputPressure / SteamConstants.MAX_PRESSURE, 1.0f);
+                    turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
+                    float exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
+                    float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
+                    lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
+
+                    Direction outputDir = facing;
+                    BlockPos outputPos = worldPosition.relative(outputDir);
+                    if (level.isLoaded(outputPos)) {
+                        var outputBE = level.getBlockEntity(outputPos);
+                        if (outputBE instanceof PressurizedPipeBlockEntity pipe) {
+                            pipe.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
+                        } else if (outputBE instanceof ISteamTransport transport) {
+                            if (transport.canConnect(outputDir.getOpposite())) {
+                                transport.pushSteam(outputDir.getOpposite(), lastExhaustSteam);
+                            }
+                        } else if (outputBE instanceof ISteamConsumer consumer) {
+                            if (consumer.canReceive(outputDir.getOpposite())) {
+                                consumer.receiveSteam(outputDir.getOpposite(), lastExhaustSteam);
+                            }
+                        }
+                    }
+                } else {
+                    turbineSpeed = 0f;
+                    lastExhaustSteam = SteamData.of(0, SteamType.REGULAR, 1f, 1f, 0);
+                }
+
+                if (usedBuffer) {
+                    steamBuffer *= (1f - BUFFER_DRAIN_RATE);
+                    if (steamBuffer < 1f) steamBuffer = 0f;
+                }
+
+                inputSteam = SteamData.empty();
+
+                setChanged();
+                sendData();
+            }
         }
 
-        if (usedBuffer) {
-            steamBuffer *= (1f - BUFFER_DRAIN_RATE);
-            if (steamBuffer < 1f) steamBuffer = 0f;
+        if (level.isClientSide) {
+            if (turbineSpeed > 0) {
+                if (soundInstance == null || soundInstance.isStopped()) {
+                    soundInstance = new BlockLoopingSoundInstance(STSounds.STEAM_TURBINE.get(), worldPosition, 0.225f);
+                    Minecraft.getInstance().getSoundManager().play(soundInstance);
+                }
+                soundInstance.keepAlive();
+            } else {
+                if (soundInstance != null) {
+                    soundInstance.stopSound();
+                    soundInstance = null;
+                }
+            }
         }
-
-        inputSteam = SteamData.empty();
-
-        setChanged();
-        sendData();
     }
 
     private int countTurbinesBehind(BlockPos start, Direction facing) {

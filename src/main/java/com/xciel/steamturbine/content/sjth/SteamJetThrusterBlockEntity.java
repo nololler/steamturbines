@@ -10,18 +10,23 @@ import dev.ryanhcode.sable.api.physics.force.QueuedForceGroup;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 
+import com.xciel.steamturbine.client.sound.BlockLoopingSoundInstance;
+import com.xciel.steamturbine.registrate.STSounds;
 import com.xciel.steamturbine.steam.SteamData;
 import com.xciel.steamturbine.steam.transfer.IPressurizedConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamConsumer;
 import com.xciel.steamturbine.steam.transfer.ISteamEndpoint;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -49,6 +54,9 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
     private SteamData lastInputSteam = SteamData.empty();
     private double currentThrust = 0d;
 
+    @OnlyIn(Dist.CLIENT)
+    private BlockLoopingSoundInstance soundInstance;
+
     public SteamJetThrusterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
@@ -71,6 +79,11 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
                 pushEntities();
             } else {
                 spawnExhaustParticles();
+                tickAudio();
+            }
+        } else {
+            if (level != null && level.isClientSide) {
+                tickAudio();
             }
         }
     }
@@ -161,6 +174,22 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
             Vec3 push = thrustVec.scale(distanceFactor);
             entity.push(push.x, push.y, push.z);
             entity.fallDistance = 0;
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void tickAudio() {
+        if (isActive()) {
+            if (soundInstance == null || soundInstance.isStopped()) {
+                soundInstance = new BlockLoopingSoundInstance(STSounds.STEAM_THRUSTER.get(), worldPosition, 0.5f);
+                Minecraft.getInstance().getSoundManager().play(soundInstance);
+            }
+            soundInstance.keepAlive();
+        } else {
+            if (soundInstance != null) {
+                soundInstance.stopSound();
+                soundInstance = null;
+            }
         }
     }
 

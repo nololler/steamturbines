@@ -45,6 +45,7 @@ public class SteamTurbine {
         eventBus.addListener(this::doClientStuff);
         eventBus.addListener(this::registerCapabilities);
 
+        STSounds.register(eventBus);
         STBlocks.register();
         STBlockEntityTypes.register();
         STItems.register();
