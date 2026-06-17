@@ -8,7 +8,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -25,6 +27,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
@@ -151,11 +155,42 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
         if (be == null)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
+        ItemStack held = stack;
+
+        if (held.getItem() instanceof BucketItem bucket) {
+            FluidStack bucketContent = new FluidStack(bucket.content, 1000);
+            IFluidHandler fluidHandler = be.getFluidHandler();
+            if (fluidHandler.fill(bucketContent, IFluidHandler.FluidAction.SIMULATE) >= 1000) {
+                fluidHandler.fill(bucketContent, IFluidHandler.FluidAction.EXECUTE);
+                if (!player.isCreative()) {
+                    player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+                }
+                be.setChanged();
+                be.sendData();
+                return ItemInteractionResult.SUCCESS;
+            }
+        }
+
+        if (held.is(Items.BUCKET)) {
+            boolean fromFuel = be.getFuelFluidTank().getFluidAmount() >= 1000;
+            IFluidHandler source = fromFuel ? be.getFuelFluidTank() : be.getFluidHandler();
+            FluidStack drained = source.drain(1000, IFluidHandler.FluidAction.SIMULATE);
+            if (!drained.isEmpty() && drained.getAmount() >= 1000) {
+                source.drain(1000, IFluidHandler.FluidAction.EXECUTE);
+                if (!player.isCreative()) {
+                    player.setItemInHand(hand, new ItemStack(drained.getFluid().getBucket()));
+                }
+                be.setChanged();
+                be.sendData();
+                return ItemInteractionResult.SUCCESS;
+            }
+        }
+
         IItemHandler handler = be.getItemHandler();
         IItemHandlerModifiable modHandler = (IItemHandlerModifiable) handler;
         ItemStack currentSlot = handler.getStackInSlot(0);
 
-        if (stack.isEmpty()) {
+        if (held.isEmpty()) {
             if (!currentSlot.isEmpty()) {
                 ItemStack toGive = currentSlot.copy();
                 modHandler.setStackInSlot(0, ItemStack.EMPTY);
@@ -173,14 +208,14 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
         if (canAccept <= 0)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
-        ItemStack toInsert = stack.copy();
-        toInsert.setCount(Math.min(stack.getCount(), canAccept));
+        ItemStack toInsert = held.copy();
+        toInsert.setCount(Math.min(held.getCount(), canAccept));
 
         ItemStack remainder = ItemHandlerHelper.insertItem(handler, toInsert, false);
-        int inserted = stack.getCount() - remainder.getCount();
+        int inserted = held.getCount() - remainder.getCount();
         if (inserted > 0) {
-            stack.shrink(inserted);
-            player.setItemInHand(hand, stack);
+            held.shrink(inserted);
+            player.setItemInHand(hand, held);
             be.setChanged();
             be.sendData();
             return ItemInteractionResult.SUCCESS;
