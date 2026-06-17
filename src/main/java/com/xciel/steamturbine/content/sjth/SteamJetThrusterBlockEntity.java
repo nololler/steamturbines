@@ -144,7 +144,7 @@ public class SteamJetThrusterBlockEntity extends SmartBlockEntity implements
                 Minecraft.getInstance().getSoundManager().play(soundInstance);
             }
             soundInstance.keepAlive();
-            float targetVolume = Math.min(1.0f, (float)(currentThrust / 200.0));
+            float targetVolume = Math.min(1.0f, (float)(currentThrust / 1000.0));
             soundInstance.setVolume(targetVolume);
         } else {
             if (soundInstance != null) {

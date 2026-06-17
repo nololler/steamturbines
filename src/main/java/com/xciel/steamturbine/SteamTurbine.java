@@ -1,11 +1,14 @@
 package com.xciel.steamturbine;
 
+import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.xciel.steamturbine.client.SteamTurbineClient;
+import com.xciel.steamturbine.content.boiler.SteamBoilerArmInteractionPointType;
 import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.network.SteamTurbinePackets;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -50,6 +53,12 @@ public class SteamTurbine {
         STBlockEntityTypes.register();
         STItems.register();
         STCreativeTabs.register(eventBus);
+
+        Registry.register(
+            CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE,
+            rl("steam_boiler"),
+            SteamBoilerArmInteractionPointType.getInstance()
+        );
 
         LOGGER.info("Steam Turbine Initialized!");
     }
