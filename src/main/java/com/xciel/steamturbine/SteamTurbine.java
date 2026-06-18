@@ -9,7 +9,6 @@ import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.network.SteamTurbinePackets;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -23,6 +22,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.TooltipModifier;
@@ -43,6 +43,13 @@ public class SteamTurbine {
                             .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
             );
 
+    private static final DeferredRegister<com.simibubi.create.content.kinetics.mechanicalArm.ArmInteractionPointType> ARM_INTERACTION_POINT_TYPES =
+            DeferredRegister.create(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE, MOD_ID);
+
+    static {
+        ARM_INTERACTION_POINT_TYPES.register("steam_boiler", SteamBoilerArmInteractionPointType::getInstance);
+    }
+
     public SteamTurbine(IEventBus eventBus, ModContainer modContainer) {
         REGISTRATE.registerEventListeners(eventBus);
 
@@ -56,12 +63,7 @@ public class SteamTurbine {
         STItems.register();
         STFluids.register();
         STCreativeTabs.register(eventBus);
-
-        Registry.register(
-            CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE,
-            rl("steam_boiler"),
-            SteamBoilerArmInteractionPointType.getInstance()
-        );
+        ARM_INTERACTION_POINT_TYPES.register(eventBus);
 
         NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, event ->
             event.addListener(new LiquidFuelManager())

@@ -3,7 +3,7 @@
 		"0": "steamturbine:block/nd/casing1",
 		"1": "steamturbine:block/nd/north-face",
 		"2": "steamturbine:block/nd/panel",
-		"3": "steamturbine:block/nd/shaft-casing-SOUTH",
+		"3": "steamturbine:block/nd/shaft-casing-south",
 		"particle": "steamturbine:block/nd/casing1"
 	},
 	"elements": [
