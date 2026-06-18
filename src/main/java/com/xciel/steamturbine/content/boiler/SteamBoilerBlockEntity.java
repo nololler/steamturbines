@@ -243,6 +243,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private void boostLiquidFuel(Fluid fluid) {
         if (activeFuel != FuelType.NONE) return;
         if (fuelFluidTank.getFluid().getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) return;
+        if (waterTank.getFluidAmount() < WATER_PER_STEAM) return;
 
         LiquidFuelData data = LiquidFuelManager.getData(fluid);
         if (data == null) return;
@@ -266,6 +267,15 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private void dripLiquidFuel(Fluid fluid) {
         if (activeFuel == FuelType.NONE) return;
         if (remainingBurnTime > 0) return;
+        if (waterTank.getFluidAmount() < WATER_PER_STEAM) {
+            activeFuel = FuelType.NONE;
+            liquidFuelActive = false;
+            activeHeatTarget = 0f;
+            fuelConsumptionAccumulator = 0f;
+            setChanged();
+            sendData();
+            return;
+        }
 
         FluidStack current = fuelFluidTank.getFluid();
         if (current.isEmpty() || current.getAmount() < LIQUID_FUEL_CONSUMPTION_UNIT) {

@@ -21,6 +21,7 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final Map<Fluid, LiquidFuelData> FUEL_MAP = new HashMap<>();
+    private static final Map<TagKey<Fluid>, LiquidFuelData> TAG_FUEL_MAP = new HashMap<>();
 
     public LiquidFuelManager() {
         super(GSON, "steamturbine/liquid_fuel");
@@ -29,6 +30,7 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         FUEL_MAP.clear();
+        TAG_FUEL_MAP.clear();
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
             JsonElement json = entry.getValue();
@@ -52,11 +54,7 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
                 ResourceLocation tagId = ResourceLocation.tryParse(tagStr);
                 if (tagId != null) {
                     TagKey<Fluid> tagKey = TagKey.create(Registries.FLUID, tagId);
-                    BuiltInRegistries.FLUID.getTag(tagKey).ifPresent(holders -> {
-                        for (var fluidHolder : holders) {
-                            FUEL_MAP.put(fluidHolder.value(), data);
-                        }
-                    });
+                    TAG_FUEL_MAP.put(tagKey, data);
                 }
             }
 
@@ -74,32 +72,45 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
     }
 
     @Nullable
+    private static LiquidFuelData getTagData(Fluid fluid) {
+        for (var entry : TAG_FUEL_MAP.entrySet()) {
+            if (fluid.is(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public static LiquidFuelData getData(Fluid fluid) {
-        return FUEL_MAP.get(fluid);
+        LiquidFuelData data = FUEL_MAP.get(fluid);
+        if (data != null) return data;
+        return getTagData(fluid);
     }
 
     public static int getBurnTime(Fluid fluid) {
-        LiquidFuelData data = FUEL_MAP.get(fluid);
+        LiquidFuelData data = getData(fluid);
         return data != null ? data.burnTime() : 0;
     }
 
     public static boolean isSuperheated(Fluid fluid) {
-        LiquidFuelData data = FUEL_MAP.get(fluid);
+        LiquidFuelData data = getData(fluid);
         return data != null && data.superheated();
     }
 
     public static float getHeatLevel(Fluid fluid) {
-        LiquidFuelData data = FUEL_MAP.get(fluid);
+        LiquidFuelData data = getData(fluid);
         return data != null && data.hasHeatOverride() ? data.heatLevel() : 0f;
     }
 
     public static float getConsumptionMultiplier(Fluid fluid) {
-        LiquidFuelData data = FUEL_MAP.get(fluid);
+        LiquidFuelData data = getData(fluid);
         return data != null ? data.consumptionMultiplier() : 1.0f;
     }
 
     public static boolean isLiquidFuel(Fluid fluid) {
-        return FUEL_MAP.containsKey(fluid);
+        if (FUEL_MAP.containsKey(fluid)) return true;
+        return getTagData(fluid) != null;
     }
 
     public static int getFuelCount() {
