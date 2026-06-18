@@ -1,0 +1,7 @@
+{
+  "fluid": "tfmg:hydrogen",
+  "burnTime": 12000,
+  "superheated": true,
+  "heatLevel": 4.0,
+  "consumptionMultiplier": 0.5
+}

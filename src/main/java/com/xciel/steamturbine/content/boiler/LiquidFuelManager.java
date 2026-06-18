@@ -5,9 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
@@ -34,23 +36,40 @@ public class LiquidFuelManager extends SimpleJsonResourceReloadListener {
 
             JsonObject obj = json.getAsJsonObject();
 
-            if (!obj.has("fluid") || !obj.has("burnTime")) continue;
+            if ((!obj.has("fluid") && !obj.has("tag")) || !obj.has("burnTime")) continue;
 
-            String fluidStr = obj.get("fluid").getAsString();
             int burnTime = obj.get("burnTime").getAsInt();
+            if (burnTime <= 0) continue;
+
             boolean superheated = obj.has("superheated") && obj.get("superheated").getAsBoolean();
             float heatLevel = obj.has("heatLevel") ? obj.get("heatLevel").getAsFloat() : 0f;
             float consumptionMultiplier = obj.has("consumptionMultiplier") ? obj.get("consumptionMultiplier").getAsFloat() : 1.0f;
 
-            ResourceLocation fluidId = ResourceLocation.tryParse(fluidStr);
-            if (fluidId == null) continue;
+            LiquidFuelData data = new LiquidFuelData(burnTime, superheated, heatLevel, consumptionMultiplier);
 
-            Fluid fluid = BuiltInRegistries.FLUID.get(fluidId);
-            if (fluid == null || fluid == BuiltInRegistries.FLUID.get(BuiltInRegistries.FLUID.getDefaultKey())) continue;
+            if (obj.has("tag")) {
+                String tagStr = obj.get("tag").getAsString();
+                ResourceLocation tagId = ResourceLocation.tryParse(tagStr);
+                if (tagId != null) {
+                    TagKey<Fluid> tagKey = TagKey.create(Registries.FLUID, tagId);
+                    BuiltInRegistries.FLUID.getTag(tagKey).ifPresent(holders -> {
+                        for (var fluidHolder : holders) {
+                            FUEL_MAP.put(fluidHolder.value(), data);
+                        }
+                    });
+                }
+            }
 
-            if (burnTime <= 0) continue;
-
-            FUEL_MAP.put(fluid, new LiquidFuelData(burnTime, superheated, heatLevel, consumptionMultiplier));
+            if (obj.has("fluid")) {
+                String fluidStr = obj.get("fluid").getAsString();
+                ResourceLocation fluidId = ResourceLocation.tryParse(fluidStr);
+                if (fluidId != null) {
+                    Fluid fluid = BuiltInRegistries.FLUID.get(fluidId);
+                    if (fluid != null && fluid != BuiltInRegistries.FLUID.get(BuiltInRegistries.FLUID.getDefaultKey())) {
+                        FUEL_MAP.put(fluid, data);
+                    }
+                }
+            }
         }
     }
 
