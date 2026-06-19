@@ -19,6 +19,8 @@ The code in this codebase is written by AI, I vibe-coded the mod.
 | **Lava Duct Shaft** | Aggregates rotational power from lava duct turbines |
 | **Lava Duct Turbine** | Converts water supplied from the Lava Duct Shaft into steam by using lava thats in contact which turns the turbines and generates power which is sent back to the Lava Duct Shaft |
 | **Directional Analog Gearshift** | Changes RPM and rotation direction based on redstone differential |
+| **Network Diagnoser** | Reads both RPM and SU. But also has configurable Kinetic Stress Impact for Stress Testing |
+| **Steam Jet Thruster** | Uses steam to produce lots of thrust, use pump + compressor for more power |
 
 ## Dependencies
 
