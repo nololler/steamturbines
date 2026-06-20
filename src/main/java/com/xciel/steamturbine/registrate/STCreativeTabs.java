@@ -23,16 +23,16 @@ public class STCreativeTabs {
                     .displayItems((itemDisplayParameters, output) -> {
                         // Blocks
                         output.accept(STBlocks.STEAM_BOILER.get());
-                        output.accept(STBlocks.STEAM_COMPRESSOR.get());
                         output.accept(STBlocks.PRESSURE_PIPE.get());
+                        output.accept(STBlocks.STEAM_PUMP.get());
+                        output.accept(STBlocks.STEAM_COMPRESSOR.get());
                         output.accept(STBlocks.STEAM_TURBINE.get());
                         output.accept(STBlocks.TURBINE_SHAFT.get());
-                        output.accept(STBlocks.STEAM_PUMP.get());
+                        output.accept(STBlocks.STEAM_JET_THRUSTER.get());
                         output.accept(STBlocks.LAVA_DUCT_TURBINE.get());
                         output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
                         output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
                         output.accept(STBlocks.NETWORK_DIAGNOSER.get());
-                        output.accept(STBlocks.STEAM_JET_THRUSTER.get());
                         // Items
                         output.accept(STItems.TURBINE_BLADE.get());
                         output.accept(STItems.TURBINE_FAN.get());
