@@ -103,7 +103,7 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
                     turbineSpeed = MAX_RPM * pressureFactor * stageEfficiency;
                     float exhaustPressure = inputPressure * (1.0f - stageEfficiency * 0.5f);
                     float exhaustThroughput = Math.min(inputThroughput * stageEfficiency, MAX_THROUGHPUT);
-                    lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.REGULAR, 1f, 1f, exhaustThroughput);
+                    lastExhaustSteam = SteamData.of(exhaustPressure, SteamType.EXHAUST, 1f, 1f, exhaustThroughput);
 
                     Direction outputDir = facing;
                     BlockPos outputPos = worldPosition.relative(outputDir);
@@ -279,20 +279,11 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
         turbineSpeed = tag.getFloat("TurbineSpeed");
         stageNumber = tag.getInt("StageNumber");
         stageEfficiency = tag.getFloat("StageEfficiency");
-        if (clientPacket) {
-            if (tag.contains("LastInputSteam")) {
-                lastInputSteam = SteamData.loadFromNBT(tag.getCompound("LastInputSteam"), registries);
-            }
-            if (tag.contains("LastExhaustSteam")) {
-                lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
-            }
-        } else {
-            if (tag.contains("LastInputSteam")) {
-                lastInputSteam = SteamData.loadFromNBT(tag.getCompound("LastInputSteam"), registries);
-            }
-            if (tag.contains("LastExhaustSteam")) {
-                lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
-            }
+        if (tag.contains("LastInputSteam")) {
+            lastInputSteam = SteamData.loadFromNBT(tag.getCompound("LastInputSteam"), registries);
+        }
+        if (tag.contains("LastExhaustSteam")) {
+            lastExhaustSteam = SteamData.loadFromNBT(tag.getCompound("LastExhaustSteam"), registries);
         }
     }
 

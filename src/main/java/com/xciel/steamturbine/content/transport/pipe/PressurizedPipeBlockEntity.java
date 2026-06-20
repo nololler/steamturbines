@@ -299,6 +299,10 @@ public class PressurizedPipeBlockEntity extends SmartBlockEntity implements IPre
                 float toExtract = Math.min(remaining, Math.min(available, MAX_BFS_AMOUNT_PER_NODE));
                 if (toExtract > 0.01f) {
                     pipe.storage -= toExtract;
+                    pipe.setChanged();
+                    if (!isOrigin) {
+                        pipe.sendData();
+                    }
                     if (isOrigin) {
                         pipe.recordOutgoingSteam(requestedFrom, toExtract);
                     }

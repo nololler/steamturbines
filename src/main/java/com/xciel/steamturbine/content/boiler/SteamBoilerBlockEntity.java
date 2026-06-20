@@ -45,8 +45,8 @@ import java.util.List;
 import java.util.Map;
 
 public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEndpoint, ISteamConsumer, ISteamTransport, ISteamProducer, IHaveGoggleInformation {
-    private static final int WATER_TANK_CAPACITY = 2000;
-    private static final int WATER_PER_STEAM = 5;
+    private static final int WATER_TANK_CAPACITY = SteamConstants.WATER_TANK_CAPACITY;
+    private static final int WATER_PER_STEAM = SteamConstants.WATER_PER_STEAM;
     private static final int INFINITE_THRESHOLD = 20 * 3600 * 24 * 30;
     private static final int FUEL_FLUID_CAPACITY = 4000;
     private static final int LIQUID_FUEL_CONSUMPTION_UNIT = 1;
@@ -172,7 +172,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         super.tick();
         if (level.isClientSide) {
             spawnOutputParticles();
-            clientVisualUpdate();
         } else {
             updateFuel();
             updateLiquidFuel();
@@ -314,7 +313,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         }
     }
 
-    @SuppressWarnings("removal")
     private void tryConsumeFuel() {
         if (remainingBurnTime > 0) return;
 
@@ -348,28 +346,21 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         sendData();
     }
 
-    private int getBurnTime(ItemStack stack) {
-        return stack.getBurnTime(net.minecraft.world.item.crafting.RecipeType.SMELTING);
-    }
-
     public boolean isCurrentFuelInfinite() {
         return this.remainingBurnTime >= INFINITE_THRESHOLD;
     }
 
     public boolean isTotalFuelInfinite() {
-        return this.isCurrentFuelInfinite() || getItemBurnTime(this.fuelInventory.getStackInSlot(0)) >= INFINITE_THRESHOLD;
+        return this.isCurrentFuelInfinite() || getFuelBurnTime(this.fuelInventory.getStackInSlot(0)) >= INFINITE_THRESHOLD;
     }
 
     public int getCurrentBurnTime() {
         return this.remainingBurnTime;
     }
 
-    public int getItemBurnTime(ItemStack stack) {
-        return getBurnTime(stack);
-    }
-
     public int getTotalBurnTime() {
-        return this.remainingBurnTime + (this.fuelInventory.getStackInSlot(0).getCount() * getItemBurnTime(this.fuelInventory.getStackInSlot(0)));
+        ItemStack fuel = this.fuelInventory.getStackInSlot(0);
+        return this.remainingBurnTime + (fuel.getCount() * getFuelBurnTime(fuel));
     }
 
     @SuppressWarnings("removal")
@@ -384,7 +375,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
 
         if (AllTags.AllItemTags.BLAZE_BURNER_FUEL_SPECIAL.matches(stack)) return 3200;
 
-        int vanillaBurn = getBurnTime(stack);
+        int vanillaBurn = stack.getBurnTime(net.minecraft.world.item.crafting.RecipeType.SMELTING);
         if (vanillaBurn > 0) return vanillaBurn;
 
         if (AllTags.AllItemTags.BLAZE_BURNER_FUEL_REGULAR.matches(stack)) return 1600;
@@ -468,9 +459,6 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
                 consumer.receiveSteam(outputDir.getOpposite(), toSend);
             }
         }
-    }
-
-    private void clientVisualUpdate() {
     }
 
     public void updateConnectionStates() {

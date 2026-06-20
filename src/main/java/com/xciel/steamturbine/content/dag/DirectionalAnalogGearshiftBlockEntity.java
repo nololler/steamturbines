@@ -1,6 +1,5 @@
 package com.xciel.steamturbine.content.dag;
 
-import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
@@ -35,7 +34,7 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     private static final boolean DIR_DOWN_RIGHT  = false;
 
     private boolean redstoneLocked;
-    private ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
+    private ScrollOptionBehaviour<RedstoneLockMode> movementDirection;
 
     public DirectionalAnalogGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -95,7 +94,7 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
         ValueBoxTransform slot = isVertical ? new DAGDirectionOption.DAGDirectionOptionVertical() : new DAGDirectionOption();
 
         movementDirection = new ScrollOptionBehaviour<>(
-            WindmillBearingBlockEntity.RotationDirection.class,
+            RedstoneLockMode.class,
             Component.translatable("steamturbine.dag.redstone_lock"),
             this,
             slot);
@@ -152,13 +151,6 @@ public class DirectionalAnalogGearshiftBlockEntity extends SplitShaftBlockEntity
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        if (redstoneLocked && !clientPacket) {
-            tag.remove("Speed");
-            tag.remove("Source");
-            tag.remove("Network");
-            tag.remove("Sequence");
-            tag.remove("NeedsSpeedUpdate");
-        }
         tag.putBoolean("RedstoneLocked", redstoneLocked);
     }
 }

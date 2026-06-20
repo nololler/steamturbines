@@ -31,16 +31,12 @@ public class DiagnoserEditPacket extends BlockEntityConfigurationPacket<NetworkD
 
     @Override
     protected void applySettings(ServerPlayer player, NetworkDiagnoserBlockEntity be) {
-        boolean needsUpdate = false;
-
         if (maxTestSU != be.getMaxTestSU()) {
             be.setMaxTestSU(maxTestSU);
-            needsUpdate = true;
         }
 
         if (stressTesting != be.isStressTesting()) {
             be.toggleStressTesting();
-            needsUpdate = true;
         }
     }
 
