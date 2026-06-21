@@ -36,6 +36,9 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
     private static final float[] STAGE_EFFICIENCY = {0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
     private static final float MAX_STEAM_BUFFER = 500f;
     private static final float BUFFER_DRAIN_RATE = 0.2f;
+    private static final float COAST_SPEED_DECAY = 0.97f;
+    private static final float COAST_EXHAUST_DECAY = 0.97f;
+    private static final float COAST_THRESHOLD = 1f;
 
     private SteamData inputSteam = SteamData.empty();
     private float steamBuffer = 0f;
@@ -82,10 +85,19 @@ public class SteamTurbineBlockEntity extends SmartBlockEntity implements IPressu
             }
 
             if (inputSteam.isEmpty() || !inputSteam.shouldPropagate()) {
-                inputSteam = SteamData.empty();
-                lastInputSteam = SteamData.empty();
-                turbineSpeed = 0f;
-                lastExhaustSteam = SteamData.empty();
+                // Coast down gradually instead of instant stop.
+                // This prevents oscillation on reload: the turbine was producing
+                // before chunk unload, and the boiler takes time to restart.
+                // Instant clear would erase lastExhaustSteam immediately, starving
+                // the shaft network walker and causing overstress when the actual
+                // (lower) capacity replaces preserved NBT values.
+                turbineSpeed *= COAST_SPEED_DECAY;
+                lastExhaustSteam = lastExhaustSteam.withDecay();
+                if (turbineSpeed < COAST_THRESHOLD && lastExhaustSteam.isEmpty()) {
+                    turbineSpeed = 0f;
+                    lastInputSteam = SteamData.empty();
+                    lastExhaustSteam = SteamData.empty();
+                }
                 if (usedBuffer) {
                     steamBuffer *= (1f - BUFFER_DRAIN_RATE);
                     if (steamBuffer < 1f) steamBuffer = 0f;

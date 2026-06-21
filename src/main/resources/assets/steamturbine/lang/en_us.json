@@ -9,6 +9,7 @@
   "item.steamturbine.pearlescent_dew_bucket.tooltip.condition1": "Fuel Properties",
   "item.steamturbine.pearlescent_dew_bucket.tooltip.behaviour1": "Burns at heat level 4.0, exceeding superheated limits. Consumes very slowly. Only compatible with the Steam Boiler and incompatible with other engines and blaze burners.",
   "fluid.steamturbine.pearlescent_dew": "Pearlescent Dew",
+  "block.steamturbine.pearlescent_dew": "Pearlescent Dew",
   "block.steamturbine.pressure_pipe": "Pressurized Steam Pipe",
   "block.steamturbine.steam_boiler": "Steam Boiler",
   "block.steamturbine.steam_compressor": "Steam Compressor",
@@ -28,11 +29,11 @@
   "block.steamturbine.directional_analog_gearshift.tooltip.condition3": "Input Direction",
   "block.steamturbine.directional_analog_gearshift.tooltip.behaviour3": "Kinetic input must be supplied from the BACK side (Marked Red). The OPPOSITE side (Marked Blue) is the output.",
 
-  "block.steamturbine.steam_boiler.tooltip.summary": "Produces Steam which can be fed to Steam Turbines, Steam Compressors, and Pressurized Steam Pipes. Make sure to feed it fuel and water!",
+  "block.steamturbine.steam_boiler.tooltip.summary": "Produces Steam which can be fed to Steam Turbines, Steam Pumps, Steam Compressors, and Pressurized Steam Pipes. Make sure to feed it fuel and water!",
 
   "block.steamturbine.pressure_pipe.tooltip.summary": "Holds Steam from other machines. Use it along with a Pressurized Steam Pump to connect machines together.",
 
-  "block.steamturbine.steam_compressor.tooltip.summary": "Uses rotational force to compress Steam to have higher pressure and throughput. Place it between Steam Boilers and Steam Turbines.",
+  "block.steamturbine.steam_compressor.tooltip.summary": "Uses rotational force to compress Steam to have higher pressure and throughput. Place it between Steam Boilers/Steam Pumps and Steam Turbines.",
 
   "block.steamturbine.steam_turbine.tooltip.summary": "Consumes Steam to generate power which is sent to the Steam Turbine Shaft. You can chain 10 of these together for higher SU.",
 
@@ -40,9 +41,9 @@
 
   "block.steamturbine.steam_pump.tooltip.summary": "Pulls steam from all connected Pressurized Steam Pipes into one direction.",
 
-  "block.steamturbine.lava_duct_turbine.tooltip.summary": "Generates SU based on how many faces are touching lava. Each face touching lava produces 475 SU. Place below a Lava Duct Shaft and stack multiple turbines up to 5 max.",
+  "block.steamturbine.lava_duct_turbine.tooltip.summary": "Generates SU based on how many sides are touching lava. Each side touching lava produces 475 SU. Place below a Lava Duct Shaft and stack multiple turbines up to 5 max.",
 
-  "block.steamturbine.lava_duct_shaft.tooltip.summary": "Collects SU from Lava Duct Turbines placed below it. Outputs kinetic power and requires continuous water supply from its EAST face.",
+  "block.steamturbine.lava_duct_shaft.tooltip.summary": "Collects SU from Lava Duct Turbines placed below it. Outputs kinetic power and requires continuous water supply to its copper pipe side.",
 
   "steamturbine.goggles.boiler.header": " Steam Boiler  ",
   "steamturbine.goggles.boiler.status.active": "  Status: Active  ",

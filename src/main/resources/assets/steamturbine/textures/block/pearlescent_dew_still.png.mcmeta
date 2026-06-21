@@ -1,5 +1,8 @@
 {
   "animation": {
     "frametime": 1
+  },
+  "lightness": {
+    "area": [0, 0, 16, 16]
   }
 }

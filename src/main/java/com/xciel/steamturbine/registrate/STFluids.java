@@ -13,7 +13,7 @@ public class STFluids {
         REGISTRATE.fluid("pearlescent_dew",
                 rl("block/pearlescent_dew_still"),
                 rl("block/pearlescent_dew_flow"))
-            .properties(b -> b.viscosity(800).density(800).lightLevel(8))
+            .properties(b -> b.viscosity(800).density(800).lightLevel(15))
             .fluidProperties(p -> p.levelDecreasePerBlock(2).tickRate(10).slopeFindDistance(4))
             .register();
 
