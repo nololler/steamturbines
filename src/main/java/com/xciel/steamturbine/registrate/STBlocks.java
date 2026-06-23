@@ -3,6 +3,7 @@ package com.xciel.steamturbine.registrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
 import com.xciel.steamturbine.content.compressor.SteamCompressorBlock;
+import com.xciel.steamturbine.content.ejector.SteamEjectorBlock;
 import com.xciel.steamturbine.content.nd.NetworkDiagnoserBlock;
 import com.xciel.steamturbine.content.pump.SteamPumpBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
@@ -175,6 +176,21 @@ public class STBlocks {
             .register();
 
     public static final BlockEntry<SteamJetThrusterBlock> STEAM_JET_THRUSTER = REGISTRATE.block("steam_jet_thruster", SteamJetThrusterBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops())
+            .properties(p -> p.noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<SteamEjectorBlock> STEAM_EJECTOR = REGISTRATE.block("steam_ejector", SteamEjectorBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops())
             .properties(p -> p.noOcclusion())

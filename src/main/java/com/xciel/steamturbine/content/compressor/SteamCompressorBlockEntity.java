@@ -4,6 +4,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.xciel.steamturbine.content.boiler.SteamBoilerBlock;
+import com.xciel.steamturbine.content.ejector.SteamEjectorBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlock;
 import com.xciel.steamturbine.content.turbine.SteamTurbineBlockEntity;
@@ -183,6 +184,7 @@ public class SteamCompressorBlockEntity extends KineticBlockEntity implements IS
     private boolean isValidSteamConnection(Block block, Direction dir) {
         if (block instanceof PressurizedPipeBlock) return true;
         if (block instanceof SteamBoilerBlock) return true;
+        if (block instanceof SteamEjectorBlock) return true;
         return false;
     }
 

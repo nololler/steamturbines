@@ -7,6 +7,7 @@ import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.xciel.steamturbine.content.ejector.SteamEjectorBlock;
 import com.xciel.steamturbine.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.steamturbine.steam.SteamConstants;
 import com.xciel.steamturbine.steam.SteamData;
@@ -480,6 +481,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private boolean isValidConnection(Block block, Direction dir) {
         if (block instanceof PressurizedPipeBlock) return true;
         if (block instanceof SteamBoilerBlock) return true;
+        if (block instanceof SteamEjectorBlock) return true;
         return false;
     }
 

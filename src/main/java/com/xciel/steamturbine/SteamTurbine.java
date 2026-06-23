@@ -9,6 +9,7 @@ import com.xciel.steamturbine.content.shaft.LavaDuctShaftBlock;
 import com.xciel.steamturbine.network.SteamTurbinePackets;
 import com.xciel.steamturbine.registrate.*;
 import net.createmod.catnip.lang.FontHelper;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
