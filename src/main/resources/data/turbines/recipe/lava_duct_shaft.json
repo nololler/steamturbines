@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Z": { "item": "create:zinc_ingot" },
+    "F": { "item": "create:fluid_pipe" },
+    "P": { "item": "turbines:pressure_pipe" },
+    "I": { "item": "turbines:pressured_iron_ingot" }
+  },
+  "pattern": [
+    "ZZZ",
+    "FZP",
+    "III"
+  ],
+  "result": { "count": 1, "id": "turbines:lava_duct_shaft" }
+}

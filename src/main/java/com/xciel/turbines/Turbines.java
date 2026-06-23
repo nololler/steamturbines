@@ -1,0 +1,109 @@
+package com.xciel.turbines;
+
+import com.simibubi.create.api.registry.CreateBuiltInRegistries;
+import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.xciel.turbines.client.SteamTurbineClient;
+import com.xciel.turbines.content.boiler.LiquidFuelManager;
+import com.xciel.turbines.content.boiler.SteamBoilerArmInteractionPointType;
+import com.xciel.turbines.content.shaft.LavaDuctShaftBlock;
+import com.xciel.turbines.network.SteamTurbinePackets;
+import com.xciel.turbines.registrate.*;
+import net.createmod.catnip.lang.FontHelper;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import com.simibubi.create.foundation.item.ItemDescription;
+import com.simibubi.create.foundation.item.TooltipModifier;
+import com.simibubi.create.foundation.item.KineticStats;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@Mod(Turbines.MOD_ID)
+public class Turbines {
+    public static final String MOD_ID = "turbines";
+    public static final Logger LOGGER = LogManager.getLogger();
+
+    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID)
+            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null)
+            .setTooltipModifierFactory(item ->
+                    new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
+                            .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
+            );
+
+    private static final DeferredRegister<com.simibubi.create.content.kinetics.mechanicalArm.ArmInteractionPointType> ARM_INTERACTION_POINT_TYPES =
+            DeferredRegister.create(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE, MOD_ID);
+
+    static {
+        ARM_INTERACTION_POINT_TYPES.register("steam_boiler", SteamBoilerArmInteractionPointType::getInstance);
+    }
+
+    public Turbines(IEventBus eventBus, ModContainer modContainer) {
+        REGISTRATE.registerEventListeners(eventBus);
+
+        eventBus.addListener(this::setup);
+        eventBus.addListener(this::doClientStuff);
+        eventBus.addListener(this::registerCapabilities);
+
+        STSounds.register(eventBus);
+        STBlocks.register();
+        STBlockEntityTypes.register();
+        STItems.register();
+        STFluids.register();
+        STCreativeTabs.register(eventBus);
+        ARM_INTERACTION_POINT_TYPES.register(eventBus);
+
+        NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, event ->
+            event.addListener(new LiquidFuelManager())
+        );
+
+        LOGGER.info("Create: Turbines Initialized!");
+    }
+
+    private void setup(final FMLCommonSetupEvent event) {
+        SteamTurbinePackets.register();
+    }
+
+    private void doClientStuff(final FMLClientSetupEvent event) {
+        SteamTurbineClient.addClientListeners(event);
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            AllBlockEntityTypes.STEAM_BOILER.get(),
+            (be, context) -> be.getFluidHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            AllBlockEntityTypes.STEAM_BOILER.get(),
+            (be, context) -> be.getItemHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            AllBlockEntityTypes.LAVA_DUCT_SHAFT.get(),
+            (be, context) -> {
+                if (context == null || LavaDuctShaftBlock.hasPipeTowards(be.getLevel(), be.getBlockPos(), be.getBlockState(), context))
+                    return be.getFluidHandler();
+                return null;
+            }
+        );
+    }
+
+    public static ResourceLocation rl(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+}

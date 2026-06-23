@@ -1,15 +1,15 @@
 {
   "values": [
-    "steamturbine:steam_boiler",
-    "steamturbine:steam_compressor",
-    "steamturbine:pressure_pipe",
-    "steamturbine:steam_turbine",
-    "steamturbine:turbine_shaft",
-    "steamturbine:steam_pump",
-    "steamturbine:lava_duct_turbine",
-    "steamturbine:lava_duct_shaft",
-    "steamturbine:directional_analog_gearshift",
-    "steamturbine:network_diagnoser",
-    "steamturbine:steam_jet_thruster"
+    "turbines:steam_boiler",
+    "turbines:steam_compressor",
+    "turbines:pressure_pipe",
+    "turbines:steam_turbine",
+    "turbines:turbine_shaft",
+    "turbines:steam_pump",
+    "turbines:lava_duct_turbine",
+    "turbines:lava_duct_shaft",
+    "turbines:directional_analog_gearshift",
+    "turbines:network_diagnoser",
+    "turbines:steam_jet_thruster"
   ]
 }

@@ -1,0 +1,52 @@
+{
+  "multipart": [
+    {
+      "when": {"facing": "south", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 0}
+    },
+    {
+      "when": {"facing": "south", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 0}
+    },
+    {
+      "when": {"facing": "north", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 180}
+    },
+    {
+      "when": {"facing": "north", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 180}
+    },
+    {
+      "when": {"facing": "east", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 270}
+    },
+    {
+      "when": {"facing": "east", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 270}
+    },
+    {
+      "when": {"facing": "west", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 90}
+    },
+    {
+      "when": {"facing": "west", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "y": 90}
+    },
+    {
+      "when": {"facing": "up", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "x": -90}
+    },
+    {
+      "when": {"facing": "up", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "x": -90, "y": 90}
+    },
+    {
+      "when": {"facing": "down", "axis_along_first": false},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "x": 90}
+    },
+    {
+      "when": {"facing": "down", "axis_along_first": true},
+      "apply": {"model": "turbines:block/steam_ejector/steam_ejector", "x": 90, "y": 90}
+    }
+  ]
+}

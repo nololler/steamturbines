@@ -1,0 +1,21 @@
+{
+	"credit": "Made with Blockbench",
+	"multipart": [
+		{
+			"when": {"facing": "north"},
+			"apply": {"model": "turbines:block/compressor/steam_compressor", "y": 0}
+		},
+		{
+			"when": {"facing": "south"},
+			"apply": {"model": "turbines:block/compressor/steam_compressor", "y": 180}
+		},
+		{
+			"when": {"facing": "east"},
+			"apply": {"model": "turbines:block/compressor/steam_compressor", "y": 90}
+		},
+		{
+			"when": {"facing": "west"},
+			"apply": {"model": "turbines:block/compressor/steam_compressor", "y": 270}
+		}
+	]
+}

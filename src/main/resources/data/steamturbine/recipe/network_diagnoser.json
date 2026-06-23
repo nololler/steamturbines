@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:crafting_shapeless",
-  "category": "misc",
-  "ingredients": [
-    { "item": "create:brass_casing" },
-    { "item": "minecraft:compass" }
-  ],
-  "result": { "count": 1, "id": "steamturbine:network_diagnoser" }
-}

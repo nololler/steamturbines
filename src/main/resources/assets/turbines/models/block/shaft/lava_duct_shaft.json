@@ -1,0 +1,120 @@
+{
+	"textures": {
+		"6": "turbines:block/lava_duct_shaft/base",
+		"7": "turbines:block/lava_duct_shaft/misc",
+		"8": "turbines:block/lava_duct_shaft/core",
+		"9": "turbines:block/lava_duct_shaft/shaft-casing",
+		"10": "turbines:block/lava_duct_shaft/pressurized-pipe-spout-endcap",
+		"11": "turbines:block/lava_duct_shaft/fluid-pipe-input-spout-endcap",
+		"particle": "turbines:block/lava_duct_shaft/core"
+	},
+	"elements": [
+		{
+			"name": "base-DOWN",
+			"from": [0, 0, 0],
+			"to": [16, 3, 16],
+			"faces": {
+				"north": {"uv": [0, 13, 16, 16], "texture": "#7"},
+				"east": {"uv": [0, 13, 16, 16], "texture": "#7"},
+				"south": {"uv": [0, 13, 16, 16], "texture": "#7"},
+				"west": {"uv": [0, 13, 16, 16], "texture": "#7"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#6"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#6"}
+			}
+		},
+		{
+			"name": "core",
+			"from": [2, 3, 2],
+			"to": [14, 15, 14],
+			"faces": {
+				"north": {"uv": [2, 2, 14, 14], "texture": "#8"},
+				"east": {"uv": [2, 2, 14, 14], "texture": "#8"},
+				"south": {"uv": [2, 2, 14, 14], "texture": "#8"},
+				"west": {"uv": [2, 2, 14, 14], "texture": "#8"},
+				"up": {"uv": [2, 2, 14, 14], "texture": "#8"},
+				"down": {"uv": [2, 2, 14, 14], "texture": "#missing"}
+			}
+		},
+		{
+			"name": "shaftcasing-NORTH",
+			"from": [5, 5, 1],
+			"to": [11, 11, 2],
+			"faces": {
+				"north": {"uv": [5, 5, 11, 11], "texture": "#9"},
+				"east": {"uv": [4, 5, 5, 11], "texture": "#9"},
+				"south": {"uv": [0, 5, 6, 11], "texture": "#missing"},
+				"west": {"uv": [4, 5, 5, 11], "texture": "#9"},
+				"up": {"uv": [5, 4, 11, 5], "texture": "#9"},
+				"down": {"uv": [5, 4, 11, 5], "texture": "#9"}
+			}
+		},
+		{
+			"name": "shaftcasing-SOUTH",
+			"from": [5, 5, 14],
+			"to": [11, 11, 15],
+			"faces": {
+				"north": {"uv": [0, 5, 6, 11], "texture": "#missing"},
+				"east": {"uv": [4, 5, 5, 11], "texture": "#9"},
+				"south": {"uv": [5, 5, 11, 11], "texture": "#9"},
+				"west": {"uv": [4, 5, 5, 11], "texture": "#9"},
+				"up": {"uv": [5, 4, 11, 5], "texture": "#9"},
+				"down": {"uv": [5, 4, 11, 5], "texture": "#9"}
+			}
+		},
+		{
+			"name": "pressurized-spoutendcap-steam-exhaust-WEST",
+			"from": [0, 3, 3],
+			"to": [2, 13, 13],
+			"faces": {
+				"north": {"uv": [1, 3, 3, 13], "texture": "#10"},
+				"south": {"uv": [13, 3, 15, 13], "texture": "#10"},
+				"west": {"uv": [3, 3, 13, 13], "texture": "#10"},
+				"up": {"uv": [13, 3, 15, 13], "texture": "#10"}
+			}
+		},
+		{
+			"name": "fluid-pipe-water-input-spoutendcap-EAST",
+			"from": [14, 3, 3],
+			"to": [16, 13, 13],
+			"faces": {
+				"north": {"uv": [13, 3, 15, 13], "texture": "#11"},
+				"east": {"uv": [3, 3, 13, 13], "texture": "#11"},
+				"south": {"uv": [1, 3, 3, 13], "texture": "#11"},
+				"west": {"uv": [0, 0, 10, 10], "texture": "#missing"},
+				"up": {"uv": [1, 3, 3, 13], "texture": "#11"},
+				"down": {"uv": [0, 0, 2, 10], "texture": "#missing"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [75, 45, 0],
+			"translation": [0, 2.5, 0],
+			"scale": [0.375, 0.375, 0.375]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [75, 45, 0],
+			"translation": [0, 2.5, 0],
+			"scale": [0.375, 0.375, 0.375]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, 45, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, -135, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"ground": {
+			"translation": [0, 3, 0],
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"gui": {
+			"rotation": [30, -135, 0],
+			"scale": [0.625, 0.625, 0.625]
+		},
+		"fixed": {
+			"scale": [0.5, 0.5, 0.5]
+		}
+	}
+}

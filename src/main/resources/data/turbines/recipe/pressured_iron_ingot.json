@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": { "item": "create:iron_sheet" }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "   "
+  ],
+  "result": { "count": 1, "id": "turbines:pressured_iron_ingot" }
+}

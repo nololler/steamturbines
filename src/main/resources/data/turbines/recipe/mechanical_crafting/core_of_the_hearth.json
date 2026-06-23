@@ -1,0 +1,20 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "I": { "item": "turbines:pressured_iron_ingot" },
+    "N": { "item": "minecraft:netherrack" },
+    "H": { "item": "create:empty_blaze_burner" },
+    "S": { "item": "minecraft:netherite_scrap" }
+  },
+  "pattern": [
+    "IIIII",
+    "INSNI",
+    "INHNI",
+    "INSNI",
+    "IIIII"
+  ],
+  "result": { "count": 1, "id": "turbines:core_of_the_hearth" },
+  "show_notification": false
+}

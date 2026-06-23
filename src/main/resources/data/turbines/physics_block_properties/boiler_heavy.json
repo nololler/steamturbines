@@ -1,0 +1,6 @@
+{
+  "selector": "turbines:steam_boiler",
+  "properties": {
+    "sable:mass": 2.0
+  }
+}

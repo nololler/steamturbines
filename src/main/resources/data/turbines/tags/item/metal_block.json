@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "turbines:pressured_iron_ingot",
+    "create:andesite_alloy_block",
+    "create:zinc_block"
+  ]
+}

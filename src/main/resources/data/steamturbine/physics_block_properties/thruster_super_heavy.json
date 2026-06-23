@@ -1,6 +1,0 @@
-{
-  "selector": "steamturbine:steam_jet_thruster",
-  "properties": {
-    "sable:mass": 4.0
-  }
-}

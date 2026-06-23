@@ -4,35 +4,35 @@ license="MIT"
 issueTrackerURL=""
 
 [[mods]]
-modId="steamturbine"
+modId="turbines"
 version="${mod_version}"
-displayName="Create: Steam Turbines"
+displayName="Create: Turbines"
 authors="Xciel"
 description='''Power of Steam to turn Turbines for Create'''
 logoFile = "icon.png"
 
-[[dependencies.steamturbine]]
+[[dependencies.turbines]]
 modId="neoforge"
 type="required"
 versionRange="[21.1.77,)"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.steamturbine]]
+[[dependencies.turbines]]
 modId="minecraft"
 type="required"
 versionRange="[1.21.1]"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.steamturbine]]
+[[dependencies.turbines]]
 modId="create"
 type="required"
 versionRange="[6.0.7,6.1.0)"
 ordering="AFTER"
 side="BOTH"
 
-[[dependencies.steamturbine]]
+[[dependencies.turbines]]
 modId="sable"
 type="required"
 versionRange="[1.2.1,)"

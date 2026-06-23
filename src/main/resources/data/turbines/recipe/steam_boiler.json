@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": { "item": "turbines:pressured_iron_ingot" },
+    "T": { "item": "create:fluid_tank" },
+    "H": { "item": "turbines:core_of_the_hearth" },
+    "P": { "item": "turbines:steam_pump" },
+    "B": { "item": "create:empty_blaze_burner" }
+  },
+  "pattern": [
+    "III",
+    "THP",
+    "BBB"
+  ],
+  "result": { "count": 1, "id": "turbines:steam_boiler" }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "S": { "item": "turbines:pressured_iron_ingot" },
+    "A": { "item": "create:andesite_alloy" },
+    "Z": { "item": "create:zinc_ingot" }
+  },
+  "pattern": [
+    "  A  ",
+    " AZA ",
+    "AZSZA",
+    " AZA ",
+    "  A  "
+  ],
+  "result": { "count": 1, "id": "turbines:turbine_blade" },
+  "show_notification": false
+}

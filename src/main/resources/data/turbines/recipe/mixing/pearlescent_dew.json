@@ -1,0 +1,47 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    { "item": "minecraft:gunpowder" },
+    {
+      "type": "neoforge:single",
+      "amount": 1000,
+      "fluid": "minecraft:lava"
+    }
+  ],
+  "results": [
+    {
+      "id": "turbines:pearlescent_dew",
+      "amount": 1000
+    }
+  ]
+}

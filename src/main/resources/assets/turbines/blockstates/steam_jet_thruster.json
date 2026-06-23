@@ -1,0 +1,28 @@
+{
+  "multipart": [
+    {
+      "when": {"facing": "south"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "y": 0}
+    },
+    {
+      "when": {"facing": "north"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "y": 180}
+    },
+    {
+      "when": {"facing": "east"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "y": 270}
+    },
+    {
+      "when": {"facing": "west"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "y": 90}
+    },
+    {
+      "when": {"facing": "up"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "x": -90}
+    },
+    {
+      "when": {"facing": "down"},
+      "apply": {"model": "turbines:block/sjth/steam_jet_thruster", "x": 90}
+    }
+  ]
+}

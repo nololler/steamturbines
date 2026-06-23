@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "turbines:pressure_pipe" },
+    "S": { "item": "create:shaft" },
+    "T": { "item": "create:fluid_tank" },
+    "Z": { "item": "create:zinc_ingot" }
+  },
+  "pattern": [
+    "ZPZ",
+    "STS",
+    "ZPZ"
+  ],
+  "result": { "count": 1, "id": "turbines:steam_pump" }
+}

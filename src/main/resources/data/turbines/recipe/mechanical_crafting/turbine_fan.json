@@ -1,0 +1,19 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "B": { "item": "turbines:turbine_blade" },
+    "S": { "item": "create:shaft" },
+    "A": { "item": "turbines:pressured_iron_ingot" }
+  },
+  "pattern": [
+    "  B  ",
+    " BSB ",
+    "BSASB",
+    " BSB ",
+    "  B  "
+  ],
+  "result": { "count": 1, "id": "turbines:turbine_fan" },
+  "show_notification": false
+}

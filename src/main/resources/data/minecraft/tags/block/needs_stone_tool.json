@@ -1,9 +1,9 @@
 {
   "values": [
-    "steamturbine:pressure_pipe",
-    "steamturbine:turbine_shaft",
-    "steamturbine:lava_duct_shaft",
-    "steamturbine:directional_analog_gearshift",
-    "steamturbine:network_diagnoser"
+    "turbines:pressure_pipe",
+    "turbines:turbine_shaft",
+    "turbines:lava_duct_shaft",
+    "turbines:directional_analog_gearshift",
+    "turbines:network_diagnoser"
   ]
 }

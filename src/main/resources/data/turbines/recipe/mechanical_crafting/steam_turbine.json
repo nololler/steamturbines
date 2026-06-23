@@ -1,0 +1,20 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "category": "misc",
+  "key": {
+    "Z": { "item": "turbines:pressured_iron_ingot" },
+    "T": { "item": "turbines:turbine_fan" },
+    "U": { "item": "turbines:steam_pump" },
+    "P": { "item": "turbines:pressure_pipe" }
+  },
+  "pattern": [
+    "ZZZZZ",
+    "ZTTTZ",
+    "UPPPU",
+    "ZTTTZ",
+    "ZZZZZ"
+  ],
+  "result": { "count": 1, "id": "turbines:steam_turbine" },
+  "show_notification": false
+}

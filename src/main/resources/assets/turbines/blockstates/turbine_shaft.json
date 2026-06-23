@@ -1,0 +1,20 @@
+{
+  "multipart": [
+    {
+      "when": {"facing": "north"},
+      "apply": {"model": "turbines:block/shaft/turbine_shaft", "y": 0}
+    },
+    {
+      "when": {"facing": "south"},
+      "apply": {"model": "turbines:block/shaft/turbine_shaft", "y": 180}
+    },
+    {
+      "when": {"facing": "east"},
+      "apply": {"model": "turbines:block/shaft/turbine_shaft", "y": 90}
+    },
+    {
+      "when": {"facing": "west"},
+      "apply": {"model": "turbines:block/shaft/turbine_shaft", "y": 270}
+    }
+  ]
+}
