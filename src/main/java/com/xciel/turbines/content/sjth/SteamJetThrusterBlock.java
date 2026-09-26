@@ -3,6 +3,7 @@ package com.xciel.turbines.content.sjth;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.turbines.AllBlockEntityTypes;
+import com.xciel.turbines.content.SteamBlockPlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -31,7 +32,8 @@ public class SteamJetThrusterBlock extends Block implements IBE<SteamJetThruster
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getNearestLookingDirection().getOpposite();
+        Direction facing = SteamBlockPlacement.facing(context,
+            direction -> SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()) ? 1 : 0);
         return defaultBlockState().setValue(BlockStateProperties.FACING, facing);
     }
 

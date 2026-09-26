@@ -3,9 +3,11 @@ package com.xciel.turbines.content.pump;
 import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.foundation.block.IBE;
+import com.xciel.turbines.content.SteamBlockPlacement;
 import com.xciel.turbines.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
@@ -96,6 +98,56 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
         Block.box(5.0, 5.0, 13.0, 11.0, 11.0, 15.0),
         Block.box(5.0, 5.0, 1.0, 11.0, 11.0, 3.0)
     );
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState state = super.getStateForPlacement(context);
+        if (state == null || SteamBlockPlacement.isShiftDown(context))
+            return state;
+
+        Direction preferred = SteamBlockPlacement.preferredFacing(context, state.getValue(FACING), false, direction -> {
+            int score = 0;
+            if (SteamBlockPlacement.hasSteamOutputAt(context, direction))
+                score += 4;
+            if (SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()))
+                score += 3;
+            return score;
+        });
+        if (preferred == null || preferred == state.getValue(FACING))
+            return state;
+
+        Axis currentRotationAxis = getRotationAxis(state);
+        boolean preserveKineticConnection = SteamBlockPlacement.hasKineticConnectionOnAxis(context, currentRotationAxis);
+        Boolean alongFirst = alignmentForAxis(preferred, currentRotationAxis,
+            state.getValue(AXIS_ALONG_FIRST_COORDINATE));
+        if (alongFirst == null) {
+            if (preserveKineticConnection)
+                return state;
+            alongFirst = preferred.getAxis().isVertical()
+                ? context.getHorizontalDirection().getAxis() == Axis.X
+                : preferred.getAxis() == Axis.Z;
+        }
+
+        return state.setValue(FACING, preferred).setValue(AXIS_ALONG_FIRST_COORDINATE, alongFirst);
+    }
+
+    private Boolean alignmentForAxis(Direction facing, Axis targetAxis, boolean currentAlignment) {
+        if (facing.getAxis().isHorizontal()) {
+            BlockState candidate = defaultBlockState()
+                .setValue(FACING, facing)
+                .setValue(AXIS_ALONG_FIRST_COORDINATE, currentAlignment);
+            return getRotationAxis(candidate) == targetAxis ? currentAlignment : null;
+        }
+
+        for (boolean alongFirst : new boolean[] { false, true }) {
+            BlockState candidate = defaultBlockState()
+                .setValue(FACING, facing)
+                .setValue(AXIS_ALONG_FIRST_COORDINATE, alongFirst);
+            if (getRotationAxis(candidate) == targetAxis)
+                return alongFirst;
+        }
+        return null;
+    }
 
     public SteamPumpBlock(Properties properties) {
         super(properties);

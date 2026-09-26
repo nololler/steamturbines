@@ -1,6 +1,7 @@
 package com.xciel.turbines.content.compressor;
 
 import com.xciel.turbines.AllBlockEntityTypes;
+import com.xciel.turbines.content.SteamBlockPlacement;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import net.minecraft.core.BlockPos;
@@ -112,7 +113,17 @@ public class SteamCompressorBlock extends Block implements IBE<SteamCompressorBl
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction facing = SteamBlockPlacement.horizontalFacing(context, direction -> {
+            int score = 0;
+            if (SteamBlockPlacement.hasSteamOutputAt(context, direction))
+                score += 4;
+            if (SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()))
+                score += 3;
+            if (SteamBlockPlacement.hasKineticConnectionOnAxis(context,
+                getRotationAxis(defaultBlockState().setValue(FACING, direction))))
+                score++;
+            return score;
+        });
         return defaultBlockState().setValue(FACING, facing);
     }
 

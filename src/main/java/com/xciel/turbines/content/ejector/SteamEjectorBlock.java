@@ -3,6 +3,7 @@ package com.xciel.turbines.content.ejector;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.turbines.AllBlockEntityTypes;
+import com.xciel.turbines.content.SteamBlockPlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -38,9 +39,16 @@ public class SteamEjectorBlock extends Block implements IBE<SteamEjectorBlockEnt
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getNearestLookingDirection().getOpposite();
-        if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown())
-            facing = facing.getOpposite();
+        Direction facing = SteamBlockPlacement.facing(context, direction -> {
+            int score = 0;
+            if (SteamBlockPlacement.hasFluidHandlerAt(context, direction))
+                score += 4;
+            if (SteamBlockPlacement.hasFluidConnectionAt(context, direction))
+                score += 2;
+            if (SteamBlockPlacement.hasFluidConnectionAt(context, direction.getOpposite()))
+                score++;
+            return score;
+        });
 
         boolean alongFirst = false;
         if (facing.getAxis().isVertical()) {

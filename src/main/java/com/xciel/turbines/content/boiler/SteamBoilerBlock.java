@@ -1,6 +1,7 @@
 package com.xciel.turbines.content.boiler;
 
 import com.xciel.turbines.AllBlockEntityTypes;
+import com.xciel.turbines.content.SteamBlockPlacement;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
@@ -266,7 +267,8 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction facing = SteamBlockPlacement.horizontalFacing(context,
+            side -> SteamBlockPlacement.hasSteamOutputAt(context, side) ? 1 : 0);
         return defaultBlockState().setValue(FACING, facing);
     }
 

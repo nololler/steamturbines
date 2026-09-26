@@ -4,6 +4,8 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.turbines.AllBlockEntityTypes;
+import com.xciel.turbines.content.SteamBlockPlacement;
+import com.xciel.turbines.content.turbine.SteamTurbineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -67,7 +69,14 @@ public class TurbineShaftBlock extends Block implements IBE<TurbineShaftBlockEnt
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction facing = SteamBlockPlacement.horizontalFacing(context, direction -> {
+            int score = SteamBlockPlacement.hasKineticConnectionAt(context, direction) ? 2 : 0;
+            BlockPos turbinePos = context.getClickedPos().relative(direction.getOpposite());
+            if (context.getLevel().isLoaded(turbinePos)
+                && context.getLevel().getBlockState(turbinePos).getBlock() instanceof SteamTurbineBlock)
+                score += 4;
+            return score;
+        });
         return defaultBlockState().setValue(FACING, facing);
     }
 
