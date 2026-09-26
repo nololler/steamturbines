@@ -6,19 +6,24 @@ import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.item.context.BlockPlaceContext;
 
-public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity>, IWrenchable {
+public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBlockEntity>, IWrenchable, SimpleWaterloggedBlock {
 
     public static final BooleanProperty NORTH = BooleanProperty.create("north");
     public static final BooleanProperty SOUTH = BooleanProperty.create("south");
@@ -26,13 +31,15 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
     public static final BooleanProperty WEST = BooleanProperty.create("west");
     public static final BooleanProperty UP = BooleanProperty.create("up");
     public static final BooleanProperty DOWN = BooleanProperty.create("down");
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     private static final VoxelShape PIPE_SHAPE = Shapes.box(4/16.0, 4/16.0, 4/16.0, 12/16.0, 12/16.0, 12/16.0);
 
     public PressurizedPipeBlock(Properties properties) {
         super(properties);
         registerDefaultState(defaultBlockState().setValue(NORTH, false).setValue(SOUTH, false)
-            .setValue(EAST, false).setValue(WEST, false).setValue(UP, false).setValue(DOWN, false));
+            .setValue(EAST, false).setValue(WEST, false).setValue(UP, false).setValue(DOWN, false)
+            .setValue(WATERLOGGED, false));
     }
 
     @Override
@@ -47,7 +54,26 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(NORTH).add(SOUTH).add(EAST).add(WEST).add(UP).add(DOWN);
+        builder.add(NORTH).add(SOUTH).add(EAST).add(WEST).add(UP).add(DOWN).add(WATERLOGGED);
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluid = context.getLevel().getFluidState(context.getClickedPos());
+        return defaultBlockState().setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
+    }
+
+    @Override
+    public FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : Fluids.EMPTY.defaultFluidState();
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighbourState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighbourPos) {
+        if (state.getValue(WATERLOGGED))
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        return state;
     }
 
     @Override
@@ -97,5 +123,3 @@ public class PressurizedPipeBlock extends Block implements IBE<PressurizedPipeBl
         return false;
     }
 }
-
-    
