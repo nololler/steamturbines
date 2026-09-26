@@ -33,7 +33,9 @@ public class SteamJetThrusterBlock extends Block implements IBE<SteamJetThruster
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = SteamBlockPlacement.facing(context,
-            direction -> SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()) ? 1 : 0);
+            candidateFacing -> SteamBlockPlacement.steamFlowScore(context,
+                side -> side == candidateFacing.getOpposite() ? SteamBlockPlacement.SteamPort.INPUT
+                    : SteamBlockPlacement.SteamPort.NONE));
         return defaultBlockState().setValue(BlockStateProperties.FACING, facing);
     }
 

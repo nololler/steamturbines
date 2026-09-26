@@ -114,14 +114,16 @@ public class SteamCompressorBlock extends Block implements IBE<SteamCompressorBl
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = SteamBlockPlacement.horizontalFacing(context, direction -> {
-            int score = 0;
-            if (SteamBlockPlacement.hasSteamOutputAt(context, direction))
-                score += 4;
-            if (SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()))
-                score += 3;
+            int score = SteamBlockPlacement.steamFlowScore(context, side -> {
+                if (side == direction)
+                    return SteamBlockPlacement.SteamPort.OUTPUT;
+                if (side == direction.getOpposite())
+                    return SteamBlockPlacement.SteamPort.INPUT;
+                return SteamBlockPlacement.SteamPort.NONE;
+            });
             if (SteamBlockPlacement.hasKineticConnectionOnAxis(context,
                 getRotationAxis(defaultBlockState().setValue(FACING, direction))))
-                score++;
+                score += 2;
             return score;
         });
         return defaultBlockState().setValue(FACING, facing);

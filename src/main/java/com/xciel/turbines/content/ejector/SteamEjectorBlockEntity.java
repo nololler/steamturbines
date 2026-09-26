@@ -400,11 +400,7 @@ public class SteamEjectorBlockEntity extends SmartBlockEntity implements
     }
 
     private Direction getSteamInputDirection() {
-        Direction facing = getFacing();
-        boolean alongFirst = getBlockState().getValue(SteamEjectorBlock.AXIS_ALONG_FIRST_COORDINATE);
-        if (facing.getAxis().isVertical())
-            return alongFirst ? Direction.NORTH : Direction.EAST;
-        return Direction.fromAxisAndDirection(facing.getClockWise().getAxis(), Direction.AxisDirection.NEGATIVE);
+        return SteamEjectorBlock.getSteamInputDirection(getBlockState());
     }
 
     @Override

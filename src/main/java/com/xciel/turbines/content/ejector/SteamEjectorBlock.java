@@ -39,27 +39,30 @@ public class SteamEjectorBlock extends Block implements IBE<SteamEjectorBlockEnt
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = SteamBlockPlacement.facing(context, direction -> {
-            int score = 0;
-            if (SteamBlockPlacement.hasFluidHandlerAt(context, direction))
-                score += 4;
-            if (SteamBlockPlacement.hasFluidConnectionAt(context, direction))
-                score += 2;
-            if (SteamBlockPlacement.hasFluidConnectionAt(context, direction.getOpposite()))
-                score++;
-            return score;
+        Direction facing = SteamBlockPlacement.facing(context, candidateFacing -> {
+            boolean alongFirst = isAxisAlongFirst(context, candidateFacing);
+            BlockState candidateState = defaultBlockState()
+                .setValue(BlockStateProperties.FACING, candidateFacing)
+                .setValue(AXIS_ALONG_FIRST_COORDINATE, alongFirst);
+            Direction steamInput = getSteamInputDirection(candidateState);
+            int score = SteamBlockPlacement.fluidTransferScore(context, candidateFacing);
+            int steamScore = SteamBlockPlacement.steamFlowScore(context,
+                side -> side == steamInput || side == steamInput.getOpposite()
+                    ? SteamBlockPlacement.SteamPort.INPUT : SteamBlockPlacement.SteamPort.NONE);
+            return score + Math.min(steamScore, 4);
         });
 
-        boolean alongFirst = false;
-        if (facing.getAxis().isVertical()) {
-            alongFirst = context.getHorizontalDirection().getAxis() == Axis.X;
-        } else if (facing.getAxis().isHorizontal()) {
-            alongFirst = facing.getAxis() == Axis.Z;
-        }
+        boolean alongFirst = isAxisAlongFirst(context, facing);
 
         return defaultBlockState()
             .setValue(BlockStateProperties.FACING, facing)
             .setValue(AXIS_ALONG_FIRST_COORDINATE, alongFirst);
+    }
+
+    private static boolean isAxisAlongFirst(BlockPlaceContext context, Direction facing) {
+        if (facing.getAxis().isVertical())
+            return context.getHorizontalDirection().getAxis() == Axis.X;
+        return facing.getAxis() == Axis.Z;
     }
 
     @Override
@@ -67,6 +70,14 @@ public class SteamEjectorBlock extends Block implements IBE<SteamEjectorBlockEnt
         if (rot.ordinal() % 2 == 1)
             state = state.cycle(AXIS_ALONG_FIRST_COORDINATE);
         return state.setValue(BlockStateProperties.FACING, rot.rotate(state.getValue(BlockStateProperties.FACING)));
+    }
+
+    public static Direction getSteamInputDirection(BlockState state) {
+        Direction facing = state.getValue(BlockStateProperties.FACING);
+        boolean alongFirst = state.getValue(AXIS_ALONG_FIRST_COORDINATE);
+        if (facing.getAxis().isVertical())
+            return alongFirst ? Direction.NORTH : Direction.EAST;
+        return Direction.fromAxisAndDirection(facing.getClockWise().getAxis(), Direction.AxisDirection.NEGATIVE);
     }
 
     @Override

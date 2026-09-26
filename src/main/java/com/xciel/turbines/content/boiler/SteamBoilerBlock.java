@@ -268,7 +268,9 @@ public class SteamBoilerBlock extends Block implements IBE<SteamBoilerBlockEntit
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = SteamBlockPlacement.horizontalFacing(context,
-            side -> SteamBlockPlacement.hasSteamOutputAt(context, side) ? 1 : 0);
+            candidateFacing -> SteamBlockPlacement.steamFlowScore(context,
+                side -> side == candidateFacing ? SteamBlockPlacement.SteamPort.OUTPUT
+                    : SteamBlockPlacement.SteamPort.NONE));
         return defaultBlockState().setValue(FACING, facing);
     }
 

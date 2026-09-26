@@ -106,12 +106,13 @@ public class SteamPumpBlock extends DirectionalAxisKineticBlock implements IBE<S
             return state;
 
         Direction preferred = SteamBlockPlacement.preferredFacing(context, state.getValue(FACING), false, direction -> {
-            int score = 0;
-            if (SteamBlockPlacement.hasSteamOutputAt(context, direction))
-                score += 4;
-            if (SteamBlockPlacement.hasSteamInputAt(context, direction.getOpposite()))
-                score += 3;
-            return score;
+            return SteamBlockPlacement.steamFlowScore(context, side -> {
+                if (side == direction)
+                    return SteamBlockPlacement.SteamPort.OUTPUT;
+                if (side == direction.getOpposite())
+                    return SteamBlockPlacement.SteamPort.INPUT;
+                return SteamBlockPlacement.SteamPort.NONE;
+            });
         });
         if (preferred == null || preferred == state.getValue(FACING))
             return state;
