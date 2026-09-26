@@ -76,7 +76,9 @@ public class SteamTurbineBlock extends Block implements IBE<SteamTurbineBlockEnt
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = SteamBlockPlacement.horizontalFacing(context, direction -> {
             return SteamBlockPlacement.steamFlowScore(context,
-                side -> side == direction ? SteamBlockPlacement.SteamPort.OUTPUT : SteamBlockPlacement.SteamPort.INPUT);
+                side -> side == direction ? SteamBlockPlacement.SteamPort.OUTPUT
+                    : side == direction.getOpposite() ? SteamBlockPlacement.SteamPort.INPUT
+                    : SteamBlockPlacement.SteamPort.NONE);
         });
         return defaultBlockState().setValue(FACING, facing);
     }

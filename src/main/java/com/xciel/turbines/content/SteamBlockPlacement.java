@@ -134,8 +134,7 @@ public final class SteamBlockPlacement {
             return directionalPort(state.getValue(SteamPumpBlock.FACING), faceOnNeighbour);
 
         if (state.getBlock() instanceof SteamTurbineBlock)
-            return state.getValue(SteamTurbineBlock.FACING) == faceOnNeighbour
-                ? SteamPort.OUTPUT : SteamPort.INPUT;
+            return directionalPort(state.getValue(SteamTurbineBlock.FACING), faceOnNeighbour);
 
         if (state.getBlock() instanceof SteamJetThrusterBlock)
             return state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
