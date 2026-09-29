@@ -32,6 +32,10 @@ public class STCreativeTabs {
                         output.accept(STBlocks.STEAM_JET_THRUSTER.get());
                         output.accept(STBlocks.LAVA_DUCT_TURBINE.get());
                         output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
+                        output.accept(STBlocks.LARGE_TURBINE.get());
+                        output.accept(STBlocks.REINFORCED_GLASS.get());
+                        output.accept(STBlocks.HYDRO_TURBINE_SHAFT.get());
+                        output.accept(STBlocks.HYDRO_TURBINE_IO.get());
                         output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
                         output.accept(STBlocks.NETWORK_DIAGNOSER.get());
                         // Items

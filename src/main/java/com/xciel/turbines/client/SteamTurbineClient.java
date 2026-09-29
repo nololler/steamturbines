@@ -9,26 +9,35 @@ import com.xciel.turbines.content.pump.SteamPumpVisual;
 import com.xciel.turbines.content.shaft.TurbineShaftRenderer;
 import com.xciel.turbines.content.shaft.TurbineShaftVisual;
 import com.xciel.turbines.content.shaft.LavaDuctShaftRenderer;
+import com.xciel.turbines.content.shaft.HydroTurbineShaftRenderer;
 import com.xciel.turbines.content.dag.DirectionalAnalogGearshiftRenderer;
-import com.xciel.turbines.content.large_turbine.LargeTurbineRenderer;
 import com.xciel.turbines.content.open_air_turbine.OpenAirTurbineRenderer;
+import com.xciel.turbines.registrate.STBlocks;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftVisual;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 public class SteamTurbineClient {
 
     public static void addClientListeners(FMLClientSetupEvent event) {
+        ItemBlockRenderTypes.setRenderLayer(STBlocks.HYDRO_TURBINE.get(), RenderType.cutoutMipped());
+        ItemBlockRenderTypes.setRenderLayer(STBlocks.LARGE_TURBINE.get(), RenderType.cutoutMipped());
+        ItemBlockRenderTypes.setRenderLayer(STBlocks.REINFORCED_GLASS.get(), RenderType.cutoutMipped());
+        ItemBlockRenderTypes.setRenderLayer(STBlocks.HYDRO_TURBINE_SHAFT.get(), RenderType.cutoutMipped());
+        ItemBlockRenderTypes.setRenderLayer(STBlocks.HYDRO_TURBINE_IO.get(), RenderType.cutoutMipped());
+
         SteamCompressorRenderer.register();
         SteamPumpRenderer.register();
         TurbineShaftRenderer.register();
         LavaDuctShaftRenderer.register();
+        HydroTurbineShaftRenderer.register();
 
         DirectionalAnalogGearshiftRenderer.register();
         NetworkDiagnoserRenderer.register();
 
         OpenAirTurbineRenderer.register();
-        LargeTurbineRenderer.register();
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_COMPRESSOR.get())
             .factory(SteamCompressorVisual::new)

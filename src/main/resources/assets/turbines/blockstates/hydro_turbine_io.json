@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "facing=up": { "model": "turbines:block/hydro_turbine_io/hydro_turbine_io" },
+    "facing=down": { "model": "turbines:block/hydro_turbine_io/hydro_turbine_io", "x": 180 }
+  }
+}

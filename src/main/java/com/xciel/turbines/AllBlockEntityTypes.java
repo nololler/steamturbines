@@ -6,6 +6,8 @@ import com.xciel.turbines.content.ejector.SteamEjectorBlockEntity;
 import com.xciel.turbines.content.nd.NetworkDiagnoserBlockEntity;
 import com.xciel.turbines.content.green_nentia_block.GreenNentiaBlockEntity;
 import com.xciel.turbines.content.large_turbine.LargeTurbineBlockEntity;
+import com.xciel.turbines.content.shaft.HydroTurbineShaftBlockEntity;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlockEntity;
 import com.xciel.turbines.content.open_air_turbine.OpenAirTurbineBlockEntity;
 import com.xciel.turbines.content.sjth.SteamJetThrusterBlockEntity;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
@@ -26,6 +28,8 @@ public class AllBlockEntityTypes {
     public static final BlockEntityEntry<GreenNentiaBlockEntity> GREEN_NENTIA_BLOCK = STBlockEntityTypes.GREEN_NENTIA_BLOCK;
     public static final BlockEntityEntry<OpenAirTurbineBlockEntity> OPEN_AIR_TURBINE = STBlockEntityTypes.OPEN_AIR_TURBINE;
     public static final BlockEntityEntry<LargeTurbineBlockEntity> LARGE_TURBINE = STBlockEntityTypes.LARGE_TURBINE;
+    public static final BlockEntityEntry<HydroTurbineShaftBlockEntity> HYDRO_TURBINE_SHAFT = STBlockEntityTypes.HYDRO_TURBINE_SHAFT;
+    public static final BlockEntityEntry<HydroTurbineIOBlockEntity> HYDRO_TURBINE_IO = STBlockEntityTypes.HYDRO_TURBINE_IO;
 
     private AllBlockEntityTypes() {}
 }

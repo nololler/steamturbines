@@ -7,6 +7,9 @@ import com.xciel.turbines.content.nd.NetworkDiagnoserBlock;
 import com.xciel.turbines.content.green_nentia_block.GreenNentiaBlock;
 import com.xciel.turbines.content.large_turbine.LargeTurbineBlock;
 import com.xciel.turbines.content.open_air_turbine.OpenAirTurbineBlock;
+import com.xciel.turbines.content.reinforced_glass.ReinforcedGlassBlock;
+import com.xciel.turbines.content.shaft.HydroTurbineShaftBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlock;
 import com.xciel.turbines.content.sjth.SteamJetThrusterBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +30,9 @@ public class AllBlocks {
     public static final BlockEntry<GreenNentiaBlock> GREEN_NENTIA_BLOCK = STBlocks.GREEN_NENTIA_BLOCK;
     public static final BlockEntry<OpenAirTurbineBlock> OPEN_AIR_TURBINE = STBlocks.OPEN_AIR_TURBINE;
     public static final BlockEntry<LargeTurbineBlock> LARGE_TURBINE = STBlocks.LARGE_TURBINE;
+    public static final BlockEntry<ReinforcedGlassBlock> REINFORCED_GLASS = STBlocks.REINFORCED_GLASS;
+    public static final BlockEntry<HydroTurbineShaftBlock> HYDRO_TURBINE_SHAFT = STBlocks.HYDRO_TURBINE_SHAFT;
+    public static final BlockEntry<HydroTurbineIOBlock> HYDRO_TURBINE_IO = STBlocks.HYDRO_TURBINE_IO;
 
     private AllBlocks() {}
 }

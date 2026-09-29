@@ -7,6 +7,8 @@ import com.xciel.turbines.content.nd.NetworkDiagnoserBlockEntity;
 import com.xciel.turbines.content.pump.SteamPumpBlockEntity;
 import com.xciel.turbines.content.shaft.TurbineShaftBlockEntity;
 import com.xciel.turbines.content.shaft.LavaDuctShaftBlockEntity;
+import com.xciel.turbines.content.shaft.HydroTurbineShaftBlockEntity;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlockEntity;
 import com.xciel.turbines.content.transport.pipe.PressurizedPipeBlockEntity;
 import com.xciel.turbines.content.turbine.SteamTurbineBlockEntity;
 import com.xciel.turbines.content.turbine.LavaDuctTurbineBlockEntity;
@@ -94,6 +96,16 @@ public class STBlockEntityTypes {
     public static final BlockEntityEntry<LargeTurbineBlockEntity> LARGE_TURBINE = REGISTRATE
             .blockEntity("large_turbine", LargeTurbineBlockEntity::new)
             .validBlocks(STBlocks.LARGE_TURBINE)
+            .register();
+
+    public static final BlockEntityEntry<HydroTurbineShaftBlockEntity> HYDRO_TURBINE_SHAFT = REGISTRATE
+            .blockEntity("hydro_shaft", HydroTurbineShaftBlockEntity::new)
+            .validBlocks(STBlocks.HYDRO_TURBINE_SHAFT)
+            .register();
+
+    public static final BlockEntityEntry<HydroTurbineIOBlockEntity> HYDRO_TURBINE_IO = REGISTRATE
+            .blockEntity("hydro_turbine_io", HydroTurbineIOBlockEntity::new)
+            .validBlocks(STBlocks.HYDRO_TURBINE_IO)
             .register();
 
     public static void register() {}

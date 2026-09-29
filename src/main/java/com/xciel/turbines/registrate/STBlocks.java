@@ -9,6 +9,7 @@ import com.xciel.turbines.content.pump.SteamPumpBlock;
 import com.xciel.turbines.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.turbines.content.shaft.TurbineShaftBlock;
 import com.xciel.turbines.content.shaft.LavaDuctShaftBlock;
+import com.xciel.turbines.content.shaft.HydroTurbineShaftBlock;
 import com.xciel.turbines.content.dag.DirectionalAnalogGearshiftBlock;
 import com.xciel.turbines.content.green_nentia_block.GreenNentiaBlock;
 import com.xciel.turbines.content.large_turbine.LargeTurbineBlock;
@@ -16,8 +17,14 @@ import com.xciel.turbines.content.open_air_turbine.OpenAirTurbineBlock;
 import com.xciel.turbines.content.turbine.SteamTurbineBlock;
 import com.xciel.turbines.content.turbine.LavaDuctTurbineBlock;
 import com.xciel.turbines.content.sjth.SteamJetThrusterBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineBlockItem;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbinePartBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlock;
+import com.xciel.turbines.content.reinforced_glass.ReinforcedGlassBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -249,8 +256,67 @@ public class STBlocks {
                             .setRolls(ConstantValue.exactly(1))
                             .add(LootItem.lootTableItem(b))
                             .when(ExplosionCondition.survivesExplosion()))))
-            .onRegister(b -> com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(b, () -> 256.0))
             .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<ReinforcedGlassBlock> REINFORCED_GLASS = REGISTRATE.block("reinforced_glass", ReinforcedGlassBlock::new)
+            .initialProperties(() -> Blocks.GLASS)
+            .properties(p -> p.sound(SoundType.GLASS).strength(1.5f, 1200.0f).noOcclusion())
+            .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<HydroTurbineShaftBlock> HYDRO_TURBINE_SHAFT = REGISTRATE.block("hydro_shaft", HydroTurbineShaftBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops().noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<HydroTurbineIOBlock> HYDRO_TURBINE_IO = REGISTRATE.block("hydro_turbine_io", HydroTurbineIOBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops().noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<HydroTurbinePartBlock> HYDRO_TURBINE_PART = REGISTRATE.block("hydro_turbine_part", HydroTurbinePartBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.noOcclusion().strength(0.5f, 0.5f))
+            .register();
+
+    public static final BlockEntry<HydroTurbineBlock> HYDRO_TURBINE = REGISTRATE.block("hydro_turbine", HydroTurbineBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops().noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item(HydroTurbineBlockItem::new)
             .build()
             .register();
 

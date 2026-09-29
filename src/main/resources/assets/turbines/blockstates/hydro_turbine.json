@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "turbines:block/turbine/hydroturbine", "y": 180 },
+    "facing=south": { "model": "turbines:block/turbine/hydroturbine" },
+    "facing=east": { "model": "turbines:block/turbine/hydroturbine", "y": 270 },
+    "facing=west": { "model": "turbines:block/turbine/hydroturbine", "y": 90 }
+  }
+}

@@ -1,4 +1,4 @@
-package com.xciel.turbines.content.large_turbine;
+package com.xciel.turbines.content.shaft;
 
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -8,13 +8,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
-/**
- * Kinetic placeholder for a Large Turbine stage.
- * Water-driven speed and stress will be supplied by the Hydro chamber implementation.
- */
-public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
+/** Aggregation and Hydro chamber validation will be added with the water-flow system. */
+public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity {
 
-    public LargeTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public HydroTurbineShaftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
