@@ -10,6 +10,10 @@
     "turbines:lava_duct_shaft",
     "turbines:directional_analog_gearshift",
     "turbines:network_diagnoser",
-    "turbines:steam_jet_thruster"
+    "turbines:steam_jet_thruster",
+    "turbines:large_turbine",
+    "turbines:reinforced_glass",
+    "turbines:hydro_shaft",
+    "turbines:hydro_turbine_io"
   ]
 }

@@ -5,6 +5,10 @@
     "turbines:steam_turbine",
     "turbines:steam_pump",
     "turbines:lava_duct_turbine",
-    "turbines:steam_jet_thruster"
+    "turbines:steam_jet_thruster",
+    "turbines:large_turbine",
+    "turbines:reinforced_glass",
+    "turbines:hydro_shaft",
+    "turbines:hydro_turbine_io"
   ]
 }

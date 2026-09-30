@@ -277,7 +277,7 @@ public class STBlocks {
 
     public static final BlockEntry<PressuredSandBlock> PRESSURED_SAND = REGISTRATE.block("pressured_sand", PressuredSandBlock::new)
             .initialProperties(() -> Blocks.SAND)
-            .properties(p -> p.sound(SoundType.SAND).strength(0.5f))
+            .properties(p -> p.sound(SoundType.SAND).strength(1.5f, 6.0f).requiresCorrectToolForDrops())
             .tag(BlockTags.SAND, BlockTags.MINEABLE_WITH_SHOVEL)
             .loot((lt, b) -> lt.add(b, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
