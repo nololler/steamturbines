@@ -35,7 +35,6 @@ Whereas Lava Ducts Turbines are early-game SU generators.
 | **Steam Ejector** | Uses steam to push fluids to great distances |
 | **Directional Analog Gearshift** | Changes RPM and rotation direction based on redstone differential |
 | **Network Diagnoser** | Reads both RPM and SU. But also has configurable Kinetic Stress Impact for Stress Testing |
-| **Hydro Turbine** | Places a 3×3×1 rotor assembly; working Hydro Units use Large Turbine stages, a Hydro Shaft, and Hydro Turbine IO |
 | **Large Turbine** | Horizontal rotor stage for Hydro chambers with 1 to 10 vertical stages |
 | **Hydro Shaft** | Validates the Hydro chamber and outputs power from its turbine stages |
 | **Hydro Turbine IO** | Acts as the water Inlet when facing up and the Exhaust when facing down |
