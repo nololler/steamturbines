@@ -26,5 +26,8 @@ public class STItems {
     public static final ItemEntry<Item> PRESSURED_IRON_INGOT = REGISTRATE.item("pressured_iron_ingot", Item::new)
             .register();
 
+    public static final ItemEntry<Item> PRESSURED_IRON_DUST = REGISTRATE.item("pressured_iron_dust", Item::new)
+            .register();
+
     public static void register() {}
 }

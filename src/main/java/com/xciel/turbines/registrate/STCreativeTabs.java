@@ -34,6 +34,7 @@ public class STCreativeTabs {
                         output.accept(STBlocks.LAVA_DUCT_SHAFT.get());
                         output.accept(STBlocks.LARGE_TURBINE.get());
                         output.accept(STBlocks.REINFORCED_GLASS.get());
+                        output.accept(STBlocks.PRESSURED_SAND.get());
                         output.accept(STBlocks.HYDRO_TURBINE_SHAFT.get());
                         output.accept(STBlocks.HYDRO_TURBINE_IO.get());
                         output.accept(STBlocks.DIRECTIONAL_ANALOG_GEARSHIFT.get());
@@ -43,6 +44,7 @@ public class STCreativeTabs {
                         output.accept(STItems.TURBINE_FAN.get());
                         output.accept(STItems.CORE_OF_THE_HEARTH.get());
                         output.accept(STItems.PRESSURED_IRON_INGOT.get());
+                        output.accept(STItems.PRESSURED_IRON_DUST.get());
                         output.accept(STFluids.PEARLESCENT_DEW.getBucket().get());
                     })
                     .build()

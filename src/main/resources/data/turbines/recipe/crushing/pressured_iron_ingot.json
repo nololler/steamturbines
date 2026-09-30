@@ -1,0 +1,10 @@
+{
+  "type": "create:crushing",
+  "ingredients": [
+    { "item": "turbines:pressured_iron_ingot" }
+  ],
+  "processing_time": 400,
+  "results": [
+    { "id": "turbines:pressured_iron_dust" }
+  ]
+}

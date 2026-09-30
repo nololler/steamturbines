@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.1,
+  "ingredient": { "item": "turbines:pressured_iron_dust" },
+  "result": { "id": "turbines:pressured_sand" }
+}

@@ -25,9 +25,11 @@
   "block.turbines.lava_duct_shaft": "Lava Duct Shaft",
   "block.turbines.large_turbine": "Large Turbine",
   "block.turbines.reinforced_glass": "Reinforced Glass",
+  "block.turbines.pressured_sand": "Pressured Sand",
   "block.turbines.hydro_shaft": "Hydro Shaft",
   "block.turbines.hydro_turbine_io": "Hydro Turbine IO",
   "block.turbines.hydro_turbine": "Hydro Turbine",
+  "item.turbines.pressured_iron_dust": "Pressured Iron Dust",
   "block.turbines.directional_analog_gearshift": "Directional Analog Gearshift",
   "block.turbines.network_diagnoser": "Network Diagnoser",
 

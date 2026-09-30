@@ -22,6 +22,7 @@ import com.xciel.turbines.content.hydro_turbine.HydroTurbineBlockItem;
 import com.xciel.turbines.content.hydro_turbine.HydroTurbinePartBlock;
 import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlock;
 import com.xciel.turbines.content.reinforced_glass.ReinforcedGlassBlock;
+import com.xciel.turbines.content.pressured_sand.PressuredSandBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.Blocks;
@@ -264,6 +265,19 @@ public class STBlocks {
             .initialProperties(() -> Blocks.GLASS)
             .properties(p -> p.sound(SoundType.GLASS).strength(1.5f, 1200.0f).noOcclusion())
             .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+            .loot((lt, b) -> lt.add(b, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(b))
+                            .when(ExplosionCondition.survivesExplosion()))))
+            .item()
+            .build()
+            .register();
+
+    public static final BlockEntry<PressuredSandBlock> PRESSURED_SAND = REGISTRATE.block("pressured_sand", PressuredSandBlock::new)
+            .initialProperties(() -> Blocks.SAND)
+            .properties(p -> p.sound(SoundType.SAND).strength(0.5f))
+            .tag(BlockTags.SAND, BlockTags.MINEABLE_WITH_SHOVEL)
             .loot((lt, b) -> lt.add(b, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
                             .setRolls(ConstantValue.exactly(1))

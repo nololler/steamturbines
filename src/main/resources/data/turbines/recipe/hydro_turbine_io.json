@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "turbines:pressured_iron_ingot" },
+    "W": { "tag": "minecraft:wool" }
+  },
+  "pattern": [
+    "P P",
+    "PWP",
+    "PPP"
+  ],
+  "result": { "count": 1, "id": "turbines:hydro_turbine_io" }
+}
