@@ -248,7 +248,7 @@ public class STBlocks {
 
     public static final BlockEntry<LargeTurbineBlock> LARGE_TURBINE = REGISTRATE.block("large_turbine", LargeTurbineBlock::new)
             .initialProperties(SharedProperties::softMetal)
-            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(3.0f, 6.0f).requiresCorrectToolForDrops())
+            .properties(p -> p.sound(SoundType.NETHERITE_BLOCK).strength(5.0f, 6.0f).requiresCorrectToolForDrops())
             .properties(p -> p.noOcclusion())
             .tag(BlockTags.NEEDS_IRON_TOOL)
             .transform(pickaxeOnly())
@@ -263,8 +263,9 @@ public class STBlocks {
 
     public static final BlockEntry<ReinforcedGlassBlock> REINFORCED_GLASS = REGISTRATE.block("reinforced_glass", ReinforcedGlassBlock::new)
             .initialProperties(() -> Blocks.GLASS)
-            .properties(p -> p.sound(SoundType.GLASS).strength(1.5f, 1200.0f).noOcclusion())
-            .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+            .properties(p -> p.sound(SoundType.GLASS).strength(1.5f, 6.0f).requiresCorrectToolForDrops().noOcclusion())
+            .tag(BlockTags.NEEDS_IRON_TOOL)
+            .transform(pickaxeOnly())
             .loot((lt, b) -> lt.add(b, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
                             .setRolls(ConstantValue.exactly(1))

@@ -1,5 +1,6 @@
 package com.xciel.turbines.content.reinforced_glass;
 
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -9,7 +10,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class ReinforcedGlassBlock extends TransparentBlock {
+public class ReinforcedGlassBlock extends TransparentBlock implements IWrenchable {
 
     public ReinforcedGlassBlock(Properties properties) {
         super(properties);

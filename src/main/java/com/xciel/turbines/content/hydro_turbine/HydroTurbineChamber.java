@@ -151,27 +151,27 @@ public final class HydroTurbineChamber {
 
     public static List<String> playerChecklist() {
         return List.of(
-            "Stack 1–10 Large Turbine stages vertically.",
-            "Keep the 3×3 area around each turbine free of solid blocks; air or water is fine.",
-            "Build the 5×5 side walls from Reinforced Glass or full, nonflammable blocks at least as hard as stone; corners may be open.",
-            "Use full, opaque, nonflammable roof blocks; bottom-half stone-hard, nonflammable slabs are okay on the roof.",
-            "Use full, opaque, nonflammable floor blocks; slabs are not allowed on the floor.",
-            "Place one Hydro Turbine IO facing up at the roof and one facing down at the floor.",
-            "Place a Hydro Shaft at the top, bottom, or both; the top faces up and the bottom faces down."
+            "block.turbines.hydro_shaft.checklist.stages",
+            "block.turbines.hydro_shaft.checklist.clearance",
+            "block.turbines.hydro_shaft.checklist.walls",
+            "block.turbines.hydro_shaft.checklist.roof",
+            "block.turbines.hydro_shaft.checklist.floor",
+            "block.turbines.hydro_shaft.checklist.io",
+            "block.turbines.hydro_shaft.checklist.shafts"
         );
     }
 
     public static Result inspect(LevelReader level, BlockPos shaftPos) {
         if (!level.hasChunkAt(shaftPos))
-            return Result.invalid("I can't check this part yet. Load the whole chamber and try again.");
+            return Result.invalid("block.turbines.hydro_shaft.status.not_loaded");
 
         BlockState shaftState = level.getBlockState(shaftPos);
         if (!(shaftState.getBlock() instanceof HydroTurbineShaftBlock))
-            return Result.invalid("Add a Hydro Shaft at the top or bottom of the chamber.");
+            return Result.invalid("block.turbines.hydro_shaft.status.missing_shaft");
 
         Direction facing = shaftState.getValue(HydroTurbineShaftBlock.FACING);
         if (facing != Direction.UP && facing != Direction.DOWN)
-            return Result.invalid("Turn the Hydro Shaft so it faces straight up or down.");
+            return Result.invalid("block.turbines.hydro_shaft.status.shaft_vertical");
 
         boolean startsAtTop = facing == Direction.UP;
         Direction towardStages = startsAtTop ? Direction.DOWN : Direction.UP;
@@ -179,21 +179,21 @@ public final class HydroTurbineChamber {
         for (int index = 1; index <= MAX_STAGES + 1; index++) {
             BlockPos candidate = shaftPos.relative(towardStages, index);
             if (!level.hasChunkAt(candidate))
-                return Result.invalid("I can't check this part yet. Load the whole chamber and try again.");
+                return Result.invalid("block.turbines.hydro_shaft.status.not_loaded");
 
             if (!(level.getBlockState(candidate).getBlock() instanceof LargeTurbineBlock))
                 break;
             if (index > MAX_STAGES)
-                return Result.invalid("Use no more than 10 Large Turbine stages.");
+                return Result.invalid("block.turbines.hydro_shaft.status.too_many_stages");
             stages.add(candidate);
         }
 
         if (stages.isEmpty())
-            return Result.invalid("Add 1–10 Large Turbines in a vertical stack beside the Hydro Shaft.");
+            return Result.invalid("block.turbines.hydro_shaft.status.missing_stages");
 
         BlockPos oppositeCap = shaftPos.relative(towardStages, stages.size() + 1);
         if (!level.hasChunkAt(oppositeCap))
-            return Result.invalid("I can't check this part yet. Load the whole chamber and try again.");
+            return Result.invalid("block.turbines.hydro_shaft.status.not_loaded");
 
         BlockPos topShaft = startsAtTop ? shaftPos : null;
         BlockPos bottomShaft = startsAtTop ? null : shaftPos;
@@ -201,7 +201,7 @@ public final class HydroTurbineChamber {
         if (oppositeState.getBlock() instanceof HydroTurbineShaftBlock) {
             Direction expected = startsAtTop ? Direction.DOWN : Direction.UP;
             if (oppositeState.getValue(HydroTurbineShaftBlock.FACING) != expected)
-                return Result.invalid("If both shafts are installed, point the top one up and the bottom one down.");
+                return Result.invalid("block.turbines.hydro_shaft.status.dual_shaft_facing");
             if (startsAtTop)
                 bottomShaft = oppositeCap;
             else
@@ -213,29 +213,24 @@ public final class HydroTurbineChamber {
         CapIO topIO = findIO(level, topCap, Direction.UP);
         CapIO bottomIO = findIO(level, bottomCap, Direction.DOWN);
         if (!topIO.valid())
-            return Result.invalid("Place one Hydro Turbine IO at the roof, facing up for the Inlet.");
+            return Result.invalid("block.turbines.hydro_shaft.status.missing_inlet");
         if (!bottomIO.valid())
-            return Result.invalid("Place one Hydro Turbine IO at the floor, facing down for the Exhaust.");
+            return Result.invalid("block.turbines.hydro_shaft.status.missing_exhaust");
 
         if (!validateCap(level, topCap, topShaft != null, topIO.pos(), true))
-            return Result.invalid("The roof needs full, opaque, nonflammable blocks. Bottom-half stone-hard, nonflammable slabs are okay here; leave the shaft/IO openings and corners.");
+            return Result.invalid("block.turbines.hydro_shaft.status.roof_blocks");
         if (!validateCap(level, bottomCap, bottomShaft != null, bottomIO.pos(), false))
-            return Result.invalid("The floor needs full, opaque, nonflammable blocks; slabs are not allowed on the floor. Leave the shaft/IO openings and corners.");
+            return Result.invalid("block.turbines.hydro_shaft.status.floor_blocks");
 
         for (BlockPos turbinePos : stages)
             if (!validateStageLayer(level, turbinePos))
-                return Result.invalid("Side walls must be full blocks, not slabs: use nonflammable blocks at least as hard as stone, or Reinforced Glass. Keep the 3×3 middle clear; corners can be open.");
+                return Result.invalid("block.turbines.hydro_shaft.status.stage_walls");
 
         int water = countSourceWaterAbove(level, topIO.pos());
         int sourceRequirement = minimumSourceWater(stages.size());
         int tankRequirement = minimumTankNetworkWater(stages.size());
-        String status = water > 0
-            ? "Water is available; " + sourceRequirement + " source blocks or " + tankRequirement
-                + " mB in the Create network gives full output."
-            : "Add water above the Inlet or connect a Create tank network. Full output takes "
-                + sourceRequirement + " source blocks or " + tankRequirement + " mB of water.";
-        if (topShaft != null && bottomShaft != null)
-            status += " (shared dual-shaft output)";
+        String status = water > 0 ? "block.turbines.hydro_shaft.status.water_available"
+            : "block.turbines.hydro_shaft.status.water_needed";
 
         return new Result(true, status, stages.size(), water, topShaft, bottomShaft,
             topIO.pos(), bottomIO.pos(), List.copyOf(stages));

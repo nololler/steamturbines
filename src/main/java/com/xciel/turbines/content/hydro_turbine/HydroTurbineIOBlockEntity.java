@@ -578,41 +578,45 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             boolean sourceMode = !tankMode && sourceWaterBlocks > 0;
             boolean tankNetworkPopulated = fluidNetworkInfo.tankCapacity() > 0 || fluidNetworkInfo.waterAmount() > 0
                 || fluidNetworkInfo.sharedHydroUnit() || fluidNetworkInfo.unresolvedHydroUnit();
-            boolean showTankNetwork = tankMode || (!sourceMode && tankNetworkPopulated);
+        boolean showTankNetwork = tankMode || (!sourceMode && tankNetworkPopulated);
 
             if (showTankNetwork) {
-                tooltip.add(Component.literal("    Create network water: " + fluidNetworkInfo.waterAmount()
-                    + " / " + fluidNetworkInfo.requiredTankWater() + " mB for full SU")
-                    .withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.literal("    Connected tank capacity: " + fluidNetworkInfo.tankCapacity() + " mB")
-                    .withStyle(ChatFormatting.GRAY));
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.network_water", fluidNetworkInfo.waterAmount(),
+                        fluidNetworkInfo.requiredTankWater()).withStyle(ChatFormatting.GRAY)));
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.network_capacity", fluidNetworkInfo.tankCapacity())
+                    .withStyle(ChatFormatting.GRAY)));
                 if (fluidNetworkInfo.sharedHydroUnit())
-                    tooltip.add(Component.literal("    Fluid network is shared with another Hydro Unit")
-                        .withStyle(ChatFormatting.RED));
+                    tooltip.add(Component.literal("    ").append(Component.translatable(
+                        "block.turbines.hydro_turbine_io.goggles.shared_network").withStyle(ChatFormatting.RED)));
                 else if (fluidNetworkInfo.unresolvedHydroUnit())
-                    tooltip.add(Component.literal("    Hydro chamber/fluid network could not be fully validated")
-                        .withStyle(ChatFormatting.RED));
+                    tooltip.add(Component.literal("    ").append(Component.translatable(
+                        "block.turbines.hydro_turbine_io.goggles.network_unresolved").withStyle(ChatFormatting.RED)));
                 else if (tankMode)
-                    tooltip.add(Component.literal("    Inlet mode: Create fluid network")
-                        .withStyle(ChatFormatting.AQUA));
+                    tooltip.add(Component.literal("    ").append(Component.translatable(
+                        "block.turbines.hydro_turbine_io.goggles.inlet_mode_network").withStyle(ChatFormatting.AQUA)));
             } else {
-                tooltip.add(Component.literal("    Source water: " + sourceWaterBlocks + " / "
-                    + fluidNetworkInfo.requiredTankWater() / 1000 + " blocks for full SU")
-                    .withStyle(sourceMode ? ChatFormatting.AQUA : ChatFormatting.GRAY));
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.source_water", sourceWaterBlocks,
+                        fluidNetworkInfo.requiredTankWater() / 1000)
+                    .withStyle(sourceMode ? ChatFormatting.AQUA : ChatFormatting.GRAY)));
                 if (sourceMode)
-                    tooltip.add(Component.literal("    Inlet mode: source-water pool")
-                        .withStyle(ChatFormatting.AQUA));
+                    tooltip.add(Component.literal("    ").append(Component.translatable(
+                        "block.turbines.hydro_turbine_io.goggles.inlet_mode_source").withStyle(ChatFormatting.AQUA)));
                 else
-                    tooltip.add(Component.literal("    Add water to either inlet source to run the Hydro Unit.")
-                        .withStyle(ChatFormatting.GRAY));
+                    tooltip.add(Component.literal("    ").append(Component.translatable(
+                        "block.turbines.hydro_turbine_io.goggles.add_water").withStyle(ChatFormatting.GRAY)));
             }
         } else {
             long wait = Math.max(0, nextExhaustOutputTick - (level == null ? 0 : level.getGameTime()));
-            tooltip.add(Component.literal("    Exhaust buffer: " + exhaustBuffer.getFluidAmount() + " / "
-                + EXHAUST_BUFFER_CAPACITY + " mB").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_turbine_io.goggles.exhaust_buffer", exhaustBuffer.getFluidAmount(),
+                    EXHAUST_BUFFER_CAPACITY).withStyle(ChatFormatting.GRAY)));
             if (wait > 0)
-                tooltip.add(Component.literal("    Next source in: " + String.format("%.1f", wait / 20f) + " s")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.next_source", (wait + 19) / 20)
+                    .withStyle(ChatFormatting.DARK_GRAY)));
         }
         return true;
     }

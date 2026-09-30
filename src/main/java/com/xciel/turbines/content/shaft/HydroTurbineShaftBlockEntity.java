@@ -28,7 +28,7 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
     private static final int TANK_WATER_LOSS_AMOUNT = 1_000;
 
     private HydroTurbineChamber.Result chamber;
-    private String chamberStatus = "Checking the Hydro chamber.";
+    private String chamberStatus = "block.turbines.hydro_shaft.status.checking";
     private int scanCooldown;
     private int stages;
     private int renderedStageCount;
@@ -323,68 +323,77 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-        tooltip.add(Component.literal("    Hydro Shaft:").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("    ").append(Component.translatable(
+            "block.turbines.hydro_shaft.goggles.title")).withStyle(ChatFormatting.GOLD));
         boolean invalidChamber = !structureValid;
         if (invalidChamber)
-            tooltip.add(Component.literal("    The chamber build didn't pass; some blocks don't match the Hydro layout.")
-                .withStyle(ChatFormatting.RED));
-        tooltip.add(Component.literal("    Stages: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(stages + " / " + HydroTurbineChamber.MAX_STAGES)
-                .withStyle(structureValid ? ChatFormatting.WHITE : ChatFormatting.RED)));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.structure_invalid").withStyle(ChatFormatting.RED)));
+        tooltip.add(Component.literal("    ").append(Component.translatable(
+            "block.turbines.hydro_shaft.goggles.stages", stages, HydroTurbineChamber.MAX_STAGES)
+            .withStyle(structureValid ? ChatFormatting.GRAY : ChatFormatting.RED)));
         boolean sourceMode = !tankMode && sourceWaterBlocks > 0;
         boolean tankNetworkPopulated = tankNetworkCapacity > 0 || tankNetworkWater > 0
             || sharedFluidNetwork || unresolvedFluidNetwork;
         boolean showTankNetwork = tankMode || (!sourceMode && tankNetworkPopulated);
         boolean showSourceWater = !tankMode && !showTankNetwork;
         if (showSourceWater)
-            tooltip.add(Component.literal("    Source water: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(sourceWaterBlocks + " / " + HydroTurbineChamber.minimumSourceWater(stages)
-                    + " for full SU")
-                    .withStyle(sourceWaterBlocks > 0 ? ChatFormatting.WHITE : ChatFormatting.RED)));
-        tooltip.add(Component.literal("    Water flow: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(flowRate + " mB/t").withStyle(ChatFormatting.AQUA)));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.source_water", sourceWaterBlocks,
+                    HydroTurbineChamber.minimumSourceWater(stages))
+                .withStyle(sourceWaterBlocks > 0 ? ChatFormatting.WHITE : ChatFormatting.RED)));
+        tooltip.add(Component.literal("    ").append(Component.translatable(
+            "block.turbines.hydro_shaft.goggles.water_flow", flowRate).withStyle(ChatFormatting.AQUA)));
         if (isPlayerSneaking)
-            tooltip.add(Component.literal("    Water visuals: " + (waterVisualsVisible
-                ? "enabled (transparent side walls)" : "off (opaque side walls)")
-                ).withStyle(waterVisualsVisible ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("    ").append(Component.translatable(waterVisualsVisible
+                ? "block.turbines.hydro_shaft.goggles.water_visuals_visible"
+                : "block.turbines.hydro_shaft.goggles.water_visuals_hidden")
+                .withStyle(waterVisualsVisible ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY)));
         if (showTankNetwork)
-            tooltip.add(Component.literal("    Tank network: " + tankNetworkWater + " / "
-                + tankNetworkRequirement + " mB water for full SU; " + tankNetworkCapacity + " mB capacity")
-                .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.tank_network", tankNetworkWater,
+                    tankNetworkRequirement, tankNetworkCapacity).withStyle(ChatFormatting.GRAY)));
         boolean createTankNetworkAvailable = !sharedFluidNetwork && !unresolvedFluidNetwork
             && tankNetworkCapacity > 0 && tankNetworkWater > 0;
         if (invalidChamber) {
-            tooltip.add(Component.literal("    Hydro Unit checklist:").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.checklist").withStyle(ChatFormatting.GOLD)));
             for (String item : HydroTurbineChamber.playerChecklist())
-                tooltip.add(Component.literal("      • " + item).withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.literal("    Current snag: " + chamberStatus).withStyle(ChatFormatting.RED));
+                tooltip.add(Component.literal("      • ").append(Component.translatable(item).withStyle(ChatFormatting.GRAY)));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.current_snag", Component.translatable(chamberStatus))
+                .withStyle(ChatFormatting.RED)));
         } else if (showTankNetwork && sharedFluidNetwork) {
-            tooltip.add(Component.literal("    This fluid network is already used by another Hydro Unit. Use a separate network.")
-                .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.shared_network").withStyle(ChatFormatting.RED)));
         } else if (showTankNetwork && unresolvedFluidNetwork) {
-            tooltip.add(Component.literal("    I couldn't validate the whole fluid network. Load the connected pipes and tanks.")
-                .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.network_unresolved").withStyle(ChatFormatting.RED)));
         } else if (tankMode) {
-            tooltip.add(Component.literal("    Inlet mode: Create fluid network").withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.inlet_mode_network").withStyle(ChatFormatting.AQUA)));
             long ticksUntilLoss = Math.max(0, TANK_WATER_LOSS_INTERVAL - tankNetworkRunningTicks);
-            tooltip.add(Component.literal("    Network upkeep: 1,000 mB per active hour (next in "
-                + String.format("%.1f", ticksUntilLoss / 20f / 60f) + " min)")
-                .withStyle(ChatFormatting.DARK_GRAY));
+            long minutesUntilLoss = (ticksUntilLoss + 1_199L) / 1_200L;
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.network_upkeep", TANK_WATER_LOSS_AMOUNT,
+                    minutesUntilLoss).withStyle(ChatFormatting.DARK_GRAY)));
         } else if (sourceWaterBlocks > 0) {
-            tooltip.add(Component.literal("    Inlet mode: source-water pool").withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.inlet_mode_source").withStyle(ChatFormatting.AQUA)));
         } else if (structureValid && showTankNetwork && createTankNetworkAvailable && !tankMode) {
-            tooltip.add(Component.literal("    Create network water is available; output scales with the water amount.")
-                .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.network_water_available").withStyle(ChatFormatting.GRAY)));
         } else if (structureValid && showTankNetwork && !createTankNetworkAvailable && !sharedFluidNetwork
             && !unresolvedFluidNetwork) {
-            tooltip.add(Component.literal("    Add water to this Create network to run; output scales with the amount available.")
-                .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.network_water_needed").withStyle(ChatFormatting.RED)));
         } else if (structureValid && showSourceWater && !createTankNetworkAvailable
             && sourceWaterBlocks <= 0) {
-            tooltip.add(Component.literal("    Add any water to run; the displayed amounts are targets for full SU.")
-                .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.source_water_needed").withStyle(ChatFormatting.RED)));
         } else if (structureValid && !outputOwner)
-            tooltip.add(Component.literal("    Shared output shaft").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("    ").append(Component.translatable(
+                "block.turbines.hydro_shaft.goggles.shared_output").withStyle(ChatFormatting.DARK_GRAY)));
         return true;
     }
 
@@ -412,8 +421,8 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         tankMode = tag.getBoolean("TankMode");
         waterVisualsVisible = tag.getBoolean("WaterVisualsVisible");
         chamberStatus = tag.getString("ChamberStatus");
-        if (chamberStatus.isBlank())
-            chamberStatus = "The chamber blocks don't match the Hydro Unit layout.";
+        if (!chamberStatus.startsWith("block.turbines.hydro_shaft.status."))
+            chamberStatus = "block.turbines.hydro_shaft.status.missing_stages";
         if (level != null && level.isClientSide) {
             boolean nextWaterActive = structureValid && outputOwner && flowRate > 0 && activeWaterFactor > 0;
             if (!wasInitialized || previousWaterVisualsVisible != waterVisualsVisible) {

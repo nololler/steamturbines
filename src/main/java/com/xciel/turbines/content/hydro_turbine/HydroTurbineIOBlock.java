@@ -1,5 +1,6 @@
 package com.xciel.turbines.content.hydro_turbine;
 
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.turbines.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -14,7 +15,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 /** Upright is the water inlet; upside-down is the water exhaust. */
-public class HydroTurbineIOBlock extends Block implements IBE<HydroTurbineIOBlockEntity> {
+public class HydroTurbineIOBlock extends Block implements IBE<HydroTurbineIOBlockEntity>, IWrenchable {
 
     public static final EnumProperty<Direction> FACING = EnumProperty.create(
         "facing", Direction.class, Direction.UP, Direction.DOWN);
