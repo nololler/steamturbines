@@ -11,6 +11,7 @@ import com.xciel.turbines.content.shaft.TurbineShaftVisual;
 import com.xciel.turbines.content.shaft.LavaDuctShaftRenderer;
 import com.xciel.turbines.content.shaft.HydroTurbineShaftRenderer;
 import com.xciel.turbines.content.dag.DirectionalAnalogGearshiftRenderer;
+import com.xciel.turbines.content.large_turbine.LargeTurbineRenderer;
 import com.xciel.turbines.content.open_air_turbine.OpenAirTurbineRenderer;
 import com.xciel.turbines.registrate.STBlocks;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftVisual;
@@ -38,6 +39,7 @@ public class SteamTurbineClient {
         NetworkDiagnoserRenderer.register();
 
         OpenAirTurbineRenderer.register();
+        LargeTurbineRenderer.register();
 
         SimpleBlockEntityVisualizer.builder(AllBlockEntityTypes.STEAM_COMPRESSOR.get())
             .factory(SteamCompressorVisual::new)

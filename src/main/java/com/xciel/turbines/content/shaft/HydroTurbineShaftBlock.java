@@ -78,6 +78,7 @@ public class HydroTurbineShaftBlock extends Block implements IBE<HydroTurbineSha
 
     @Override
     public boolean hasShaftTowards(LevelReader level, BlockPos pos, BlockState state, Direction face) {
+        // The facing side is the visible output halfshaft; the opposite vertical end couples into the rotor stack.
         return face.getAxis() == Axis.Y;
     }
 

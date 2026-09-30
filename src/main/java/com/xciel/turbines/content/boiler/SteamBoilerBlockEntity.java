@@ -8,6 +8,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.xciel.turbines.content.ejector.SteamEjectorBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlock;
+import com.xciel.turbines.content.hydro_turbine.HydroTurbineIOBlockEntity;
 import com.xciel.turbines.content.transport.pipe.PressurizedPipeBlock;
 import com.xciel.turbines.steam.SteamConstants;
 import com.xciel.turbines.steam.SteamData;
@@ -69,6 +71,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
     private float heatLevel;
     private boolean boilerActive;
     private int fuelSyncCooldown;
+    private int fluidSyncCooldown;
     private float activeHeatTarget;
     private float fuelConsumptionAccumulator;
 
@@ -174,6 +177,9 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (level.isClientSide) {
             spawnOutputParticles();
         } else {
+            if (fluidSyncCooldown > 0)
+                fluidSyncCooldown--;
+            pullWaterFromHydroExhaust();
             updateFuel();
             updateLiquidFuel();
             updateHeat();
@@ -184,6 +190,45 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
                 receivedSteam.put(dir, SteamData.empty());
             }
         }
+    }
+
+    /** Pull water directly from a Hydro Exhaust placed immediately above this boiler. */
+    private void pullWaterFromHydroExhaust() {
+        BlockPos exhaustPos = worldPosition.above();
+        if (!level.hasChunkAt(exhaustPos))
+            return;
+        BlockState exhaustState = level.getBlockState(exhaustPos);
+        if (!(exhaustState.getBlock() instanceof HydroTurbineIOBlock)
+            || exhaustState.getValue(HydroTurbineIOBlock.FACING) != Direction.DOWN
+            || !(level.getBlockEntity(exhaustPos) instanceof HydroTurbineIOBlockEntity exhaust))
+            return;
+
+        int room = waterTank.getCapacity() - waterTank.getFluidAmount();
+        if (room <= 0)
+            return;
+        FluidStack simulated = exhaust.simulateDrainWaterForBoiler(
+            Math.min(HydroTurbineIOBlockEntity.MAX_FLUID_TRANSFER_PER_TICK, room));
+        if (simulated.isEmpty())
+            return;
+
+        int accepted = waterTank.fill(simulated, IFluidHandler.FluidAction.SIMULATE);
+        if (accepted <= 0)
+            return;
+        FluidStack drained = exhaust.drainWaterForBoiler(accepted);
+        if (drained.isEmpty())
+            return;
+        int stored = waterTank.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+        if (stored > 0) {
+            setChanged();
+            syncFluidContentsIfDue();
+        }
+    }
+
+    public void syncFluidContentsIfDue() {
+        if (fluidSyncCooldown > 0)
+            return;
+        sendData();
+        fluidSyncCooldown = 10;
     }
 
     private void spawnOutputParticles() {

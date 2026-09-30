@@ -1,7 +1,7 @@
 package com.xciel.turbines.content.large_turbine;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.xciel.turbines.Turbines;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.createmod.catnip.animation.AnimationTickHolder;
@@ -10,31 +10,26 @@ import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
 
-public class LargeTurbineRenderer extends SafeBlockEntityRenderer<LargeTurbineBlockEntity> {
+public class LargeTurbineRenderer extends KineticBlockEntityRenderer<LargeTurbineBlockEntity> {
 
-    private static final PartialModel BLADES = PartialModel.of(Turbines.rl("block/large_turbine/blades"));
-
-    private static final float SPEED = 18f;
+    private static final PartialModel ROTOR = PartialModel.of(Turbines.rl("block/turbine/large_turbine_rotor"));
 
     public LargeTurbineRenderer(BlockEntityRendererProvider.Context context) {
+        super(context);
     }
 
     @Override
     protected void renderSafe(LargeTurbineBlockEntity be, float partialTicks, PoseStack ms,
                               MultiBufferSource buffer, int light, int overlay) {
-        BlockState state = be.getBlockState();
-
+        SuperByteBuffer rotor = CachedBuffers.partial(ROTOR, be.getBlockState());
+        var axis = KineticBlockEntityRenderer.getRotationAxisOf(be);
         float time = AnimationTickHolder.getRenderTime(be.getLevel());
-        float angle = (time * SPEED) % 360f;
-
-        SuperByteBuffer bladeBuffer = CachedBuffers.partial(BLADES, state);
-        float rad = angle * ((float) Math.PI / 180f);
-        bladeBuffer.rotateCentered(rad, Direction.UP);
-        bladeBuffer.light(light);
-        bladeBuffer.renderInto(ms, buffer.getBuffer(RenderType.solid()));
+        float offset = KineticBlockEntityRenderer.getRotationOffsetForPosition(be, be.getBlockPos(), axis);
+        float speed = be.getSpeed() * be.getRotorSpeedMultiplier();
+        float angle = ((time * speed * 3f / 10 + offset) % 360) / 180 * (float) Math.PI;
+        KineticBlockEntityRenderer.kineticRotationTransform(rotor, be, axis, angle, light)
+            .renderInto(ms, buffer.getBuffer(RenderType.cutoutMipped()));
     }
 
     public static void register() {

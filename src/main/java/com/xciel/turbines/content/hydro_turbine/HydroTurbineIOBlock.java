@@ -2,10 +2,12 @@ package com.xciel.turbines.content.hydro_turbine;
 
 import com.simibubi.create.foundation.block.IBE;
 import com.xciel.turbines.AllBlockEntityTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -47,6 +49,14 @@ public class HydroTurbineIOBlock extends Block implements IBE<HydroTurbineIOBloc
     @Override
     public BlockState rotate(BlockState state, Rotation rotation) {
         return state;
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block otherBlock,
+                                BlockPos neighborPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, otherBlock, neighborPos, isMoving);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HydroTurbineIOBlockEntity io)
+            io.onNeighborChanged();
     }
 
     @Override

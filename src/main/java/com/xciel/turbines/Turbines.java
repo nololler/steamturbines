@@ -64,6 +64,7 @@ public class Turbines {
         STItems.register();
         STFluids.register();
         STCreativeTabs.register(eventBus);
+        STParticleTypes.register(eventBus);
         ARM_INTERACTION_POINT_TYPES.register(eventBus);
 
         NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, event ->
@@ -100,6 +101,11 @@ public class Turbines {
                     return be.getFluidHandler();
                 return null;
             }
+        );
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            AllBlockEntityTypes.HYDRO_TURBINE_IO.get(),
+            (be, context) -> be.getFluidHandler(context)
         );
     }
 

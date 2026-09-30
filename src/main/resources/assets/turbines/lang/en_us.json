@@ -67,7 +67,7 @@
 
   "block.turbines.steam_jet_thruster.tooltip.summary": "Consumes Steam to produce directed thrust. Connect a compressor along with a pump for increased efficiency and power.",
   "block.turbines.steam_ejector.tooltip.summary": "Consumes Steam to pump fluids up to 80 blocks away at 10 pressure and 3 Steam/t. Lower pressure or throughput reduces range, but transfer speed stays at 1 bucket per second.",
-  "block.turbines.large_turbine.tooltip.summary": "A horizontal rotor stage designed for Hydro Turbine chambers with 1 to 5 vertical stages.",
+  "block.turbines.large_turbine.tooltip.summary": "A horizontal rotor stage designed for Hydro Turbine chambers with 1 to 10 vertical stages.",
   "block.turbines.hydro_turbine_io.goggles.inlet": "Hydro Turbine Inlet",
   "block.turbines.hydro_turbine_io.goggles.exhaust": "Hydro Turbine Exhaust",
   "block.turbines.lava_duct_turbine.tooltip.summary": "Generates SU based on how many sides are touching lava. Each side touching lava produces 475 SU. Place below a Lava Duct Shaft and stack multiple turbines up to 5 max.",

@@ -5,6 +5,7 @@
 		"0": "turbines:block/large_turbine/fins",
 		"1": "turbines:block/large_turbine/base",
 		"2": "turbines:block/large_turbine/core",
+		"missing": "turbines:block/large_turbine/core",
 		"particle": "turbines:block/large_turbine/fins"
 	},
 	"elements": [
