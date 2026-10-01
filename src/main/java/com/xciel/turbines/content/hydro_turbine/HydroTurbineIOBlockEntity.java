@@ -34,11 +34,12 @@ import java.util.Map;
 
 public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
 
-    public static final int INLET_BUFFER_CAPACITY = 8_000;
-    public static final int EXHAUST_BUFFER_CAPACITY = 32_000;
+    public static final int MAX_NETWORK_INPUT_PER_TICK = 100;
+    public static final int MAX_EXHAUST_TRANSFER_PER_TICK = 50;
+    public static final int INLET_BUFFER_CAPACITY = MAX_NETWORK_INPUT_PER_TICK * 20 + 1_000;
+    public static final int EXHAUST_BUFFER_CAPACITY = 100_000;
     public static final int EXHAUST_SOURCE_AMOUNT = 1_000;
     public static final long EXHAUST_SOURCE_INTERVAL = 100;
-    public static final int MAX_FLUID_TRANSFER_PER_TICK = 50;
 
     private final FluidTank inletBuffer;
     private final FluidTank exhaustBuffer;
@@ -49,8 +50,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
     private Level lastFluidTopologyLevel;
 
     private OpenEndedPipe poolIntakePipe;
-    private HydroTurbineChamber.FluidNetworkInfo fluidNetworkInfo =
-        new HydroTurbineChamber.FluidNetworkInfo(0, 0, false, true);
     private int sourceWaterBlocks;
     private long nextExhaustOutputTick;
     private long lastExternalExhaustDrainTick = Long.MIN_VALUE;
@@ -62,11 +61,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
     private int lastSyncedSourceWater = -1;
     private int lastSyncedInletBuffer = -1;
     private int lastSyncedExhaustBuffer = -1;
-    private int lastSyncedNetworkWater = -1;
-    private int lastSyncedNetworkCapacity = -1;
-    private int lastSyncedNetworkRequirement = -1;
-    private boolean lastSyncedNetworkShared;
-    private boolean lastSyncedNetworkUnresolved;
 
     public HydroTurbineIOBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -99,7 +93,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             return;
         refreshAdjacentFluidTopology();
         updateSourceWaterCount();
-        updateFluidNetworkInfo();
         syncGoggleStateIfChanged();
     }
 
@@ -139,7 +132,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             return;
         refreshAdjacentFluidTopology();
         updateSourceWaterCount();
-        updateFluidNetworkInfo();
         syncGoggleStateIfChanged();
     }
 
@@ -182,34 +174,14 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         sourceWaterBlocks = next;
     }
 
-    private void updateFluidNetworkInfo() {
-        if (level == null)
-            return;
-        HydroTurbineChamber.FluidNetworkInfo next = HydroTurbineChamber.connectedFluidNetwork(level, worldPosition);
-        if (!next.equals(fluidNetworkInfo)) {
-            fluidNetworkInfo = next;
-            setChanged();
-        }
-    }
-
     private void syncGoggleStateIfChanged() {
         if (lastSyncedSourceWater == sourceWaterBlocks
             && lastSyncedInletBuffer == inletBuffer.getFluidAmount()
-            && lastSyncedExhaustBuffer == exhaustBuffer.getFluidAmount()
-            && lastSyncedNetworkWater == fluidNetworkInfo.waterAmount()
-            && lastSyncedNetworkCapacity == fluidNetworkInfo.tankCapacity()
-            && lastSyncedNetworkRequirement == fluidNetworkInfo.requiredTankWater()
-            && lastSyncedNetworkShared == fluidNetworkInfo.sharedHydroUnit()
-            && lastSyncedNetworkUnresolved == fluidNetworkInfo.unresolvedHydroUnit())
+            && lastSyncedExhaustBuffer == exhaustBuffer.getFluidAmount())
             return;
         lastSyncedSourceWater = sourceWaterBlocks;
         lastSyncedInletBuffer = inletBuffer.getFluidAmount();
         lastSyncedExhaustBuffer = exhaustBuffer.getFluidAmount();
-        lastSyncedNetworkWater = fluidNetworkInfo.waterAmount();
-        lastSyncedNetworkCapacity = fluidNetworkInfo.tankCapacity();
-        lastSyncedNetworkRequirement = fluidNetworkInfo.requiredTankWater();
-        lastSyncedNetworkShared = fluidNetworkInfo.sharedHydroUnit();
-        lastSyncedNetworkUnresolved = fluidNetworkInfo.unresolvedHydroUnit();
         setChanged();
         sendData();
     }
@@ -220,7 +192,7 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             inletTransferTick = gameTime;
             inletTransferredThisTick = 0;
         }
-        return Math.max(0, MAX_FLUID_TRANSFER_PER_TICK - inletTransferredThisTick);
+        return Math.max(0, MAX_NETWORK_INPUT_PER_TICK - inletTransferredThisTick);
     }
 
     private int remainingExhaustTransfer() {
@@ -229,7 +201,7 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             exhaustTransferTick = gameTime;
             exhaustTransferredThisTick = 0;
         }
-        return Math.max(0, MAX_FLUID_TRANSFER_PER_TICK - exhaustTransferredThisTick);
+        return Math.max(0, MAX_EXHAUST_TRANSFER_PER_TICK - exhaustTransferredThisTick);
     }
 
     private void recordExhaustTransfer(int amount) {
@@ -247,12 +219,8 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         return inletBuffer.getFluidAmount();
     }
 
-    public int getBufferedWaterAmount() {
-        return inletBuffer.getFluidAmount() + exhaustBuffer.getFluidAmount();
-    }
-
-    public HydroTurbineChamber.FluidNetworkInfo getFluidNetworkInfo() {
-        return fluidNetworkInfo;
+    public boolean isNetworkInputMode() {
+        return inletBuffer.getFluidAmount() > 0 || sourceWaterBlocks <= 0;
     }
 
     public IFluidHandler getFluidHandler(Direction context) {
@@ -273,14 +241,11 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         return provider == null ? null : provider.getCapability();
     }
 
-    public FluidStack simulateDrainWater(int amount, boolean tankMode) {
+    public FluidStack simulateDrainWater(int amount, boolean networkMode) {
         if (getBlockState().getValue(HydroTurbineIOBlock.FACING) != Direction.UP || amount <= 0)
             return FluidStack.EMPTY;
-        if (tankMode) {
-            if (!inletBuffer.isEmpty())
-                return inletBuffer.drain(amount, IFluidHandler.FluidAction.SIMULATE);
-            return simulateDrainConnectedTanks(amount);
-        }
+        if (networkMode)
+            return inletBuffer.drain(amount, IFluidHandler.FluidAction.SIMULATE);
 
         IFluidHandler handler = getPoolIntakeHandler();
         if (handler == null)
@@ -289,14 +254,12 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         return simulated.getFluid() == Fluids.WATER ? simulated : FluidStack.EMPTY;
     }
 
-    public FluidStack drainWater(int amount, boolean tankMode) {
-        FluidStack simulated = simulateDrainWater(amount, tankMode);
+    public FluidStack drainWater(int amount, boolean networkMode) {
+        FluidStack simulated = simulateDrainWater(amount, networkMode);
         if (simulated.isEmpty())
             return FluidStack.EMPTY;
-        if (tankMode && !inletBuffer.isEmpty())
+        if (networkMode)
             return inletBuffer.drain(simulated, IFluidHandler.FluidAction.EXECUTE);
-        if (tankMode)
-            return drainConnectedTanks(simulated.getAmount());
 
         IFluidHandler handler = getPoolIntakeHandler();
         if (handler == null)
@@ -305,112 +268,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         if (!drained.isEmpty())
             setChanged();
         return drained;
-    }
-
-    private FluidStack simulateDrainConnectedTanks(int amount) {
-        if (level == null || !fluidNetworkInfo.satisfiesTankInput())
-            return FluidStack.EMPTY;
-        int remaining = Math.min(amount, remainingInletTransfer());
-        int total = 0;
-        for (BlockPos controller : fluidNetworkInfo.tankControllers()) {
-            IFluidHandler handler = getTankHandler(controller);
-            if (handler == null)
-                continue;
-            FluidStack simulated = handler.drain(new FluidStack(Fluids.WATER, remaining - total),
-                IFluidHandler.FluidAction.SIMULATE);
-            if (!simulated.isEmpty() && simulated.getFluid() == Fluids.WATER)
-                total += Math.min(remaining - total, simulated.getAmount());
-            if (total >= remaining)
-                break;
-        }
-        return total == 0 ? FluidStack.EMPTY : new FluidStack(Fluids.WATER, total);
-    }
-
-    private FluidStack drainConnectedTanks(int amount) {
-        if (level == null || !fluidNetworkInfo.satisfiesTankInput())
-            return FluidStack.EMPTY;
-        int remaining = Math.min(amount, remainingInletTransfer());
-        int total = 0;
-        for (BlockPos controller : fluidNetworkInfo.tankControllers()) {
-            IFluidHandler handler = getTankHandler(controller);
-            if (handler == null)
-                continue;
-            FluidStack simulated = handler.drain(new FluidStack(Fluids.WATER, remaining - total),
-                IFluidHandler.FluidAction.SIMULATE);
-            if (simulated.isEmpty() || simulated.getFluid() != Fluids.WATER)
-                continue;
-            FluidStack drained = handler.drain(new FluidStack(Fluids.WATER,
-                Math.min(remaining - total, simulated.getAmount())), IFluidHandler.FluidAction.EXECUTE);
-            if (!drained.isEmpty() && drained.getFluid() == Fluids.WATER)
-                total += drained.getAmount();
-            if (total >= remaining)
-                break;
-        }
-        if (total <= 0)
-            return FluidStack.EMPTY;
-        inletTransferredThisTick += total;
-        setChanged();
-        return new FluidStack(Fluids.WATER, total);
-    }
-
-    /** Remove the Hydro Unit's slow maintenance loss from its connected Create tank network. */
-    public int discardConnectedTankWater(int amount) {
-        if (level == null || amount <= 0)
-            return 0;
-        int remaining = amount;
-        int total = 0;
-        for (BlockPos controller : fluidNetworkInfo.tankControllers()) {
-            IFluidHandler handler = getTankHandler(controller);
-            if (handler == null)
-                continue;
-            FluidStack simulated = handler.drain(new FluidStack(Fluids.WATER, remaining),
-                IFluidHandler.FluidAction.SIMULATE);
-            if (simulated.isEmpty() || simulated.getFluid() != Fluids.WATER)
-                continue;
-            FluidStack drained = handler.drain(new FluidStack(Fluids.WATER,
-                Math.min(remaining, simulated.getAmount())), IFluidHandler.FluidAction.EXECUTE);
-            if (drained.isEmpty() || drained.getFluid() != Fluids.WATER)
-                continue;
-            total += drained.getAmount();
-            remaining -= drained.getAmount();
-            if (remaining <= 0)
-                break;
-        }
-
-        if (remaining > 0) {
-            FluidStack buffered = inletBuffer.drain(remaining, IFluidHandler.FluidAction.EXECUTE);
-            total += buffered.getAmount();
-        }
-        if (total > 0) {
-            setChanged();
-            sendData();
-        }
-        return total;
-    }
-
-    public int discardBufferedExhaustWater(int amount) {
-        if (amount <= 0)
-            return 0;
-        int discarded = exhaustBuffer.drain(amount, IFluidHandler.FluidAction.EXECUTE).getAmount();
-        if (discarded > 0) {
-            setChanged();
-            sendData();
-        }
-        return discarded;
-    }
-
-    private IFluidHandler getTankHandler(BlockPos controller) {
-        if (!level.hasChunkAt(controller))
-            return null;
-        IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, controller, null);
-        if (handler != null)
-            return handler;
-        for (Direction direction : Direction.values()) {
-            handler = level.getCapability(Capabilities.FluidHandler.BLOCK, controller, direction);
-            if (handler != null)
-                return handler;
-        }
-        return null;
     }
 
     public int simulateAcceptWater(FluidStack water) {
@@ -533,10 +390,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         sourceWaterBlocks = tag.getInt("SourceWaterBlocks");
         exhaustBlocked = tag.getBoolean("ExhaustBlocked");
         nextExhaustOutputTick = tag.getLong("NextExhaustOutputTick");
-        fluidNetworkInfo = new HydroTurbineChamber.FluidNetworkInfo(
-            tag.getInt("TankNetworkCapacity"), tag.getInt("TankNetworkWater"),
-            tag.getBoolean("TankNetworkShared"), tag.getBoolean("TankNetworkUnresolved"), List.of(),
-            tag.getInt("TankNetworkRequirement"));
         if (tag.contains("InletBuffer"))
             inletBuffer.readFromNBT(registries, tag.getCompound("InletBuffer"));
         if (tag.contains("ExhaustBuffer"))
@@ -551,11 +404,6 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
         tag.putInt("SourceWaterBlocks", sourceWaterBlocks);
         tag.putBoolean("ExhaustBlocked", exhaustBlocked);
         tag.putLong("NextExhaustOutputTick", nextExhaustOutputTick);
-        tag.putInt("TankNetworkCapacity", fluidNetworkInfo.tankCapacity());
-        tag.putInt("TankNetworkWater", fluidNetworkInfo.waterAmount());
-        tag.putBoolean("TankNetworkShared", fluidNetworkInfo.sharedHydroUnit());
-        tag.putBoolean("TankNetworkUnresolved", fluidNetworkInfo.unresolvedHydroUnit());
-        tag.putInt("TankNetworkRequirement", fluidNetworkInfo.requiredTankWater());
         CompoundTag inletTag = new CompoundTag();
         inletBuffer.writeToNBT(registries, inletTag);
         tag.put("InletBuffer", inletTag);
@@ -573,40 +421,28 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
             : "block.turbines.hydro_turbine_io.goggles.exhaust";
         tooltip.add(Component.literal("    ").append(Component.translatable(key)).withStyle(ChatFormatting.GOLD));
         if (inlet) {
-            boolean tankMode = fluidNetworkInfo.satisfiesTankInput()
-                && (inletBuffer.getFluidAmount() > 0 || !fluidNetworkInfo.tankControllers().isEmpty());
-            boolean sourceMode = !tankMode && sourceWaterBlocks > 0;
-            boolean tankNetworkPopulated = fluidNetworkInfo.tankCapacity() > 0 || fluidNetworkInfo.waterAmount() > 0
-                || fluidNetworkInfo.sharedHydroUnit() || fluidNetworkInfo.unresolvedHydroUnit();
-        boolean showTankNetwork = tankMode || (!sourceMode && tankNetworkPopulated);
-
-            if (showTankNetwork) {
+            boolean networkMode = isNetworkInputMode();
+            if (networkMode) {
                 tooltip.add(Component.literal("    ").append(Component.translatable(
-                    "block.turbines.hydro_turbine_io.goggles.network_water", fluidNetworkInfo.waterAmount(),
-                        fluidNetworkInfo.requiredTankWater()).withStyle(ChatFormatting.GRAY)));
+                    "block.turbines.hydro_turbine_io.goggles.inlet_buffer", inletBuffer.getFluidAmount(),
+                        INLET_BUFFER_CAPACITY).withStyle(ChatFormatting.GRAY)));
                 tooltip.add(Component.literal("    ").append(Component.translatable(
-                    "block.turbines.hydro_turbine_io.goggles.network_capacity", fluidNetworkInfo.tankCapacity())
-                    .withStyle(ChatFormatting.GRAY)));
-                if (fluidNetworkInfo.sharedHydroUnit())
+                    "block.turbines.hydro_turbine_io.goggles.network_rate", MAX_NETWORK_INPUT_PER_TICK,
+                        MAX_NETWORK_INPUT_PER_TICK * 20).withStyle(ChatFormatting.AQUA)));
+                if (inletBuffer.isEmpty())
                     tooltip.add(Component.literal("    ").append(Component.translatable(
-                        "block.turbines.hydro_turbine_io.goggles.shared_network").withStyle(ChatFormatting.RED)));
-                else if (fluidNetworkInfo.unresolvedHydroUnit())
-                    tooltip.add(Component.literal("    ").append(Component.translatable(
-                        "block.turbines.hydro_turbine_io.goggles.network_unresolved").withStyle(ChatFormatting.RED)));
-                else if (tankMode)
-                    tooltip.add(Component.literal("    ").append(Component.translatable(
-                        "block.turbines.hydro_turbine_io.goggles.inlet_mode_network").withStyle(ChatFormatting.AQUA)));
-            } else {
-                tooltip.add(Component.literal("    ").append(Component.translatable(
-                    "block.turbines.hydro_turbine_io.goggles.source_water", sourceWaterBlocks,
-                        fluidNetworkInfo.requiredTankWater() / 1000)
-                    .withStyle(sourceMode ? ChatFormatting.AQUA : ChatFormatting.GRAY)));
-                if (sourceMode)
-                    tooltip.add(Component.literal("    ").append(Component.translatable(
-                        "block.turbines.hydro_turbine_io.goggles.inlet_mode_source").withStyle(ChatFormatting.AQUA)));
+                        "block.turbines.hydro_turbine_io.goggles.network_supply_needed")
+                        .withStyle(ChatFormatting.RED)));
                 else
                     tooltip.add(Component.literal("    ").append(Component.translatable(
-                        "block.turbines.hydro_turbine_io.goggles.add_water").withStyle(ChatFormatting.GRAY)));
+                        "block.turbines.hydro_turbine_io.goggles.inlet_mode_network")
+                        .withStyle(ChatFormatting.AQUA)));
+            } else {
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.source_water", sourceWaterBlocks)
+                    .withStyle(ChatFormatting.AQUA)));
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_turbine_io.goggles.inlet_mode_source").withStyle(ChatFormatting.AQUA)));
             }
         } else {
             long wait = Math.max(0, nextExhaustOutputTick - (level == null ? 0 : level.getGameTime()));
@@ -629,7 +465,7 @@ public class HydroTurbineIOBlockEntity extends SmartBlockEntity implements IHave
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (!isFluidValid(0, resource) || !fluidNetworkInfo.satisfiesTankInput())
+            if (!isFluidValid(0, resource) || getBlockState().getValue(HydroTurbineIOBlock.FACING) != Direction.UP)
                 return 0;
             int amount = Math.min(resource.getAmount(), remainingInletTransfer());
             if (amount <= 0)

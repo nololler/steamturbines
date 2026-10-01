@@ -207,7 +207,7 @@ public class SteamBoilerBlockEntity extends SmartBlockEntity implements ISteamEn
         if (room <= 0)
             return;
         FluidStack simulated = exhaust.simulateDrainWaterForBoiler(
-            Math.min(HydroTurbineIOBlockEntity.MAX_FLUID_TRANSFER_PER_TICK, room));
+            Math.min(HydroTurbineIOBlockEntity.MAX_EXHAUST_TRANSFER_PER_TICK, room));
         if (simulated.isEmpty())
             return;
 

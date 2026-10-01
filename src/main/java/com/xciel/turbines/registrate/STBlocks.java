@@ -1,6 +1,11 @@
 package com.xciel.turbines.registrate;
 
 import com.simibubi.create.foundation.data.SharedProperties;
+import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.block.connected.AllCTTypes;
+import com.simibubi.create.foundation.block.connected.CTSpriteShifter;
+import com.simibubi.create.foundation.block.connected.SimpleCTBehaviour;
+import com.xciel.turbines.Turbines;
 import com.xciel.turbines.content.boiler.SteamBoilerBlock;
 import com.xciel.turbines.content.compressor.SteamCompressorBlock;
 import com.xciel.turbines.content.ejector.SteamEjectorBlock;
@@ -266,6 +271,10 @@ public class STBlocks {
             .properties(p -> p.sound(SoundType.GLASS).strength(1.5f, 6.0f).requiresCorrectToolForDrops().noOcclusion())
             .tag(BlockTags.NEEDS_IRON_TOOL)
             .transform(pickaxeOnly())
+            .onRegister(CreateRegistrate.connectedTextures(() -> new SimpleCTBehaviour(
+                    CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
+                            Turbines.rl("block/reinforced_glass/ass"),
+                            Turbines.rl("block/reinforced_glass/ass_connected")))))
             .loot((lt, b) -> lt.add(b, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
                             .setRolls(ConstantValue.exactly(1))

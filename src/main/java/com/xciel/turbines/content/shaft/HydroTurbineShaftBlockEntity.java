@@ -17,15 +17,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity implements IHaveGoggleInformation {
 
-    private static final int MAX_FLOW_PER_TICK = 50;
+    private static final int MAX_NETWORK_FLOW_PER_TICK = 100;
+    private static final int MAX_SOURCE_POOL_FLOW_PER_TICK = 50;
+    private static final int NETWORK_FLOW_SMOOTHING_TICKS = 20;
     private static final float MAX_RPM = 256;
     private static final float MAX_SU_AT_FULL_SETUP = 2_000_000;
-    private static final long TANK_WATER_LOSS_INTERVAL = 20L * 60 * 60;
-    private static final int TANK_WATER_LOSS_AMOUNT = 1_000;
 
     private HydroTurbineChamber.Result chamber;
     private String chamberStatus = "block.turbines.hydro_shaft.status.checking";
@@ -35,17 +36,15 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
     private int sourceWaterBlocks;
     private int flowRate;
     private int pendingExhaustWater;
-    private int tankNetworkCapacity;
-    private int tankNetworkWater;
-    private int tankNetworkRequirement;
-    private long tankNetworkRunningTicks;
-    private int pendingTankWaterLoss;
+    private int networkBuffer;
+    private final int[] recentNetworkFlows = new int[NETWORK_FLOW_SMOOTHING_TICKS];
+    private int networkFlowSampleCount;
+    private int networkFlowSampleIndex;
+    private int networkFlowSampleTotal;
     private float activeWaterFactor;
     private boolean structureValid;
     private boolean outputOwner;
-    private boolean sharedFluidNetwork;
-    private boolean unresolvedFluidNetwork;
-    private boolean tankMode;
+    private boolean networkMode;
     private boolean waterVisualsVisible;
     private boolean clientWaterActive;
     private boolean clientWaterStateInitialized;
@@ -72,15 +71,28 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         if (--scanCooldown <= 0)
             refreshChamber();
 
+        boolean previousNetworkMode = networkMode;
         float previousWaterFactor = activeWaterFactor;
-        int nextFlowRate = transferWater();
-        if (flowRate != nextFlowRate || Math.abs(previousWaterFactor - activeWaterFactor) > 0.0001f) {
-            flowRate = nextFlowRate;
+        int previousFlowRate = flowRate;
+        int actualFlowRate = transferWater();
+        if (!structureValid || !outputOwner) {
+            resetNetworkFlowAverage();
+            activeWaterFactor = 0;
+            flowRate = 0;
+        } else if (networkMode) {
+            if (!previousNetworkMode)
+                resetNetworkFlowAverage();
+            flowRate = averageNetworkFlow(actualFlowRate);
+            activeWaterFactor = Math.min(1f, (float) flowRate / MAX_NETWORK_FLOW_PER_TICK);
+        } else {
+            resetNetworkFlowAverage();
+            flowRate = actualFlowRate;
+        }
+        if (previousFlowRate != flowRate || Math.abs(previousWaterFactor - activeWaterFactor) > 0.0001f) {
             updateGeneratedRotation();
             setChanged();
             sendData();
         }
-        processTankWaterMaintenance();
     }
 
     @Override
@@ -110,23 +122,13 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
             ? HydroTurbineChamber.hasTransparentWalls(level, next) : waterVisualsVisible;
         HydroTurbineIOBlockEntity inlet = next.inlet() != null
             && level.getBlockEntity(next.inlet()) instanceof HydroTurbineIOBlockEntity io ? io : null;
-        HydroTurbineChamber.FluidNetworkInfo networkInfo = inlet == null
-            ? new HydroTurbineChamber.FluidNetworkInfo(0, 0, false, true)
-            : inlet.getFluidNetworkInfo();
-        int nextTankCapacity = networkInfo.tankCapacity();
-        int nextTankWater = networkInfo.waterAmount();
-        int nextTankRequirement = networkInfo.requiredTankWater();
-        boolean nextSharedNetwork = networkInfo.sharedHydroUnit();
-        boolean nextUnresolvedNetwork = networkInfo.unresolvedHydroUnit();
-        boolean nextTankMode = networkInfo.satisfiesTankInput() && inlet != null
-            && (inlet.getInletBufferAmount() > 0 || !networkInfo.tankControllers().isEmpty());
+        int nextNetworkBuffer = inlet == null ? 0 : inlet.getInletBufferAmount();
+        boolean nextNetworkMode = inlet != null && inlet.isNetworkInputMode();
         boolean changed = chamber == null || !chamber.equals(next) || stages != nextStages
             || renderedStageCount != nextRenderedStages
             || sourceWaterBlocks != nextWater || structureValid != nextValid || outputOwner != nextOwner
-            || tankNetworkCapacity != nextTankCapacity || tankNetworkWater != nextTankWater
-            || tankNetworkRequirement != nextTankRequirement
-            || sharedFluidNetwork != nextSharedNetwork || unresolvedFluidNetwork != nextUnresolvedNetwork
-            || tankMode != nextTankMode || waterVisualsVisible != nextWaterVisualsVisible;
+            || networkBuffer != nextNetworkBuffer || networkMode != nextNetworkMode
+            || waterVisualsVisible != nextWaterVisualsVisible;
 
         chamber = next;
         chamberStatus = next.status();
@@ -135,12 +137,8 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         sourceWaterBlocks = nextWater;
         structureValid = nextValid;
         outputOwner = nextOwner;
-        tankNetworkCapacity = nextTankCapacity;
-        tankNetworkWater = nextTankWater;
-        tankNetworkRequirement = nextTankRequirement;
-        sharedFluidNetwork = nextSharedNetwork;
-        unresolvedFluidNetwork = nextUnresolvedNetwork;
-        tankMode = nextTankMode;
+        networkBuffer = nextNetworkBuffer;
+        networkMode = nextNetworkMode;
         waterVisualsVisible = nextWaterVisualsVisible;
 
         if (changed) {
@@ -152,12 +150,16 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
     }
 
     private int transferWater() {
-        if (chamber == null || chamber.exhaust() == null)
+        if (chamber == null || chamber.exhaust() == null) {
+            activeWaterFactor = 0;
             return 0;
+        }
 
         var exhaustEntity = level.getBlockEntity(chamber.exhaust());
-        if (!(exhaustEntity instanceof HydroTurbineIOBlockEntity exhaust))
+        if (!(exhaustEntity instanceof HydroTurbineIOBlockEntity exhaust)) {
+            activeWaterFactor = 0;
             return 0;
+        }
 
         exhaust.flushBufferedWater();
         int delivered = 0;
@@ -168,8 +170,10 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
             delivered += accepted;
             if (accepted > 0)
                 setChanged();
-            if (pendingExhaustWater > 0)
+            if (pendingExhaustWater > 0) {
+                activeWaterFactor = 0;
                 return delivered;
+            }
         }
 
         if (!structureValid || !outputOwner) {
@@ -183,76 +187,76 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
             return delivered;
         }
 
-        HydroTurbineChamber.FluidNetworkInfo networkInfo = inlet.getFluidNetworkInfo();
-        boolean useTankMode = networkInfo.satisfiesTankInput()
-            && (inlet.getInletBufferAmount() > 0 || !networkInfo.tankControllers().isEmpty());
+        int currentNetworkBuffer = inlet.getInletBufferAmount();
+        boolean useNetworkMode = currentNetworkBuffer > 0 || chamber.sourceWaterBlocks() <= 0;
+        if (networkBuffer != currentNetworkBuffer || networkMode != useNetworkMode) {
+            networkBuffer = currentNetworkBuffer;
+            networkMode = useNetworkMode;
+            setChanged();
+            sendData();
+        }
         int requiredPoolWater = HydroTurbineChamber.minimumSourceWater(chamber.stages());
-        boolean usePoolMode = !useTankMode && chamber.sourceWaterBlocks() > 0;
-        if (!useTankMode && !usePoolMode) {
+        boolean usePoolMode = !useNetworkMode && chamber.sourceWaterBlocks() > 0;
+        if (!useNetworkMode && !usePoolMode) {
             activeWaterFactor = 0;
             return delivered;
         }
 
-        activeWaterFactor = useTankMode
-            ? Math.min(1f, (float) networkInfo.waterAmount() / Math.max(1, networkInfo.requiredTankWater()))
-            : Math.min(1f, (float) chamber.sourceWaterBlocks() / requiredPoolWater);
-        int requested = calculateFlowRate(activeWaterFactor);
-        FluidStack available = inlet.simulateDrainWater(requested, useTankMode);
-        if (available.isEmpty())
+        float poolWaterFactor = Math.min(1f, (float) chamber.sourceWaterBlocks() / requiredPoolWater);
+        int requested = calculateFlowRate(useNetworkMode ? 1f : poolWaterFactor, useNetworkMode);
+        FluidStack available = inlet.simulateDrainWater(requested, useNetworkMode);
+        if (available.isEmpty()) {
+            activeWaterFactor = 0;
             return delivered;
+        }
 
         int fillable = exhaust.simulateAcceptWater(available);
         int amount = Math.min(available.getAmount(), fillable);
-        if (amount <= 0)
+        if (amount <= 0) {
+            activeWaterFactor = 0;
             return delivered;
+        }
 
-        FluidStack drained = inlet.drainWater(amount, useTankMode);
-        if (drained.isEmpty())
+        FluidStack drained = inlet.drainWater(amount, useNetworkMode);
+        if (drained.isEmpty()) {
+            activeWaterFactor = 0;
             return delivered;
+        }
 
         int accepted = Math.min(drained.getAmount(), exhaust.acceptWater(drained));
         if (accepted < drained.getAmount()) {
             pendingExhaustWater += drained.getAmount() - accepted;
             setChanged();
         }
+        activeWaterFactor = useNetworkMode
+            ? Math.min(1f, (float) drained.getAmount() / MAX_NETWORK_FLOW_PER_TICK) : poolWaterFactor;
         return delivered + accepted;
     }
 
-    private int calculateFlowRate(float waterFactor) {
+    private int calculateFlowRate(float waterFactor, boolean networkMode) {
         if (stages <= 0 || waterFactor <= 0)
             return 0;
-        return MAX_FLOW_PER_TICK;
+        return networkMode ? MAX_NETWORK_FLOW_PER_TICK : MAX_SOURCE_POOL_FLOW_PER_TICK;
     }
 
-    private void processTankWaterMaintenance() {
-        if (structureValid && outputOwner && tankMode && flowRate > 0) {
-            tankNetworkRunningTicks++;
-            if (tankNetworkRunningTicks >= TANK_WATER_LOSS_INTERVAL) {
-                tankNetworkRunningTicks -= TANK_WATER_LOSS_INTERVAL;
-                pendingTankWaterLoss += TANK_WATER_LOSS_AMOUNT;
-                setChanged();
-            }
+    private int averageNetworkFlow(int flow) {
+        int sample = Math.max(0, Math.min(MAX_NETWORK_FLOW_PER_TICK, flow));
+        if (networkFlowSampleCount == recentNetworkFlows.length) {
+            networkFlowSampleTotal -= recentNetworkFlows[networkFlowSampleIndex];
+        } else {
+            networkFlowSampleCount++;
         }
+        recentNetworkFlows[networkFlowSampleIndex] = sample;
+        networkFlowSampleTotal += sample;
+        networkFlowSampleIndex = (networkFlowSampleIndex + 1) % recentNetworkFlows.length;
+        return Math.round((float) networkFlowSampleTotal / networkFlowSampleCount);
+    }
 
-        if (pendingTankWaterLoss <= 0 || chamber == null || chamber.inlet() == null)
-            return;
-        if (!(level.getBlockEntity(chamber.inlet()) instanceof HydroTurbineIOBlockEntity inlet))
-            return;
-
-        int discarded = inlet.discardConnectedTankWater(pendingTankWaterLoss);
-        pendingTankWaterLoss -= discarded;
-        int totalDiscarded = discarded;
-        if (pendingTankWaterLoss > 0 && chamber.exhaust() != null
-            && level.getBlockEntity(chamber.exhaust()) instanceof HydroTurbineIOBlockEntity exhaust) {
-            int exhaustDiscarded = exhaust.discardBufferedExhaustWater(pendingTankWaterLoss);
-            pendingTankWaterLoss -= exhaustDiscarded;
-            totalDiscarded += exhaustDiscarded;
-        }
-
-        if (totalDiscarded > 0 || pendingTankWaterLoss == 0) {
-            setChanged();
-            sendData();
-        }
+    private void resetNetworkFlowAverage() {
+        Arrays.fill(recentNetworkFlows, 0);
+        networkFlowSampleCount = 0;
+        networkFlowSampleIndex = 0;
+        networkFlowSampleTotal = 0;
     }
 
     private float stageFactor() {
@@ -332,11 +336,8 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         tooltip.add(Component.literal("    ").append(Component.translatable(
             "block.turbines.hydro_shaft.goggles.stages", stages, HydroTurbineChamber.MAX_STAGES)
             .withStyle(structureValid ? ChatFormatting.GRAY : ChatFormatting.RED)));
-        boolean sourceMode = !tankMode && sourceWaterBlocks > 0;
-        boolean tankNetworkPopulated = tankNetworkCapacity > 0 || tankNetworkWater > 0
-            || sharedFluidNetwork || unresolvedFluidNetwork;
-        boolean showTankNetwork = tankMode || (!sourceMode && tankNetworkPopulated);
-        boolean showSourceWater = !tankMode && !showTankNetwork;
+        boolean sourceMode = !networkMode && sourceWaterBlocks > 0;
+        boolean showSourceWater = !networkMode;
         if (showSourceWater)
             tooltip.add(Component.literal("    ").append(Component.translatable(
                 "block.turbines.hydro_shaft.goggles.source_water", sourceWaterBlocks,
@@ -349,48 +350,35 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
                 ? "block.turbines.hydro_shaft.goggles.water_visuals_visible"
                 : "block.turbines.hydro_shaft.goggles.water_visuals_hidden")
                 .withStyle(waterVisualsVisible ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY)));
-        if (showTankNetwork)
+        if (networkMode)
             tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.tank_network", tankNetworkWater,
-                    tankNetworkRequirement, tankNetworkCapacity).withStyle(ChatFormatting.GRAY)));
-        boolean createTankNetworkAvailable = !sharedFluidNetwork && !unresolvedFluidNetwork
-            && tankNetworkCapacity > 0 && tankNetworkWater > 0;
+                "block.turbines.hydro_shaft.goggles.network_buffer", networkBuffer,
+                    HydroTurbineIOBlockEntity.INLET_BUFFER_CAPACITY).withStyle(ChatFormatting.GRAY)));
         if (invalidChamber) {
-            tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.checklist").withStyle(ChatFormatting.GOLD)));
-            for (String item : HydroTurbineChamber.playerChecklist())
-                tooltip.add(Component.literal("      • ").append(Component.translatable(item).withStyle(ChatFormatting.GRAY)));
+            if (isPlayerSneaking) {
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_shaft.goggles.checklist").withStyle(ChatFormatting.GOLD)));
+                for (String item : HydroTurbineChamber.playerChecklist())
+                    tooltip.add(Component.literal("      • ").append(Component.translatable(item).withStyle(ChatFormatting.GRAY)));
+            }
             tooltip.add(Component.literal("    ").append(Component.translatable(
                 "block.turbines.hydro_shaft.goggles.current_snag", Component.translatable(chamberStatus))
                 .withStyle(ChatFormatting.RED)));
-        } else if (showTankNetwork && sharedFluidNetwork) {
-            tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.shared_network").withStyle(ChatFormatting.RED)));
-        } else if (showTankNetwork && unresolvedFluidNetwork) {
-            tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.network_unresolved").withStyle(ChatFormatting.RED)));
-        } else if (tankMode) {
+        } else if (networkMode) {
             tooltip.add(Component.literal("    ").append(Component.translatable(
                 "block.turbines.hydro_shaft.goggles.inlet_mode_network").withStyle(ChatFormatting.AQUA)));
-            long ticksUntilLoss = Math.max(0, TANK_WATER_LOSS_INTERVAL - tankNetworkRunningTicks);
-            long minutesUntilLoss = (ticksUntilLoss + 1_199L) / 1_200L;
             tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.network_upkeep", TANK_WATER_LOSS_AMOUNT,
-                    minutesUntilLoss).withStyle(ChatFormatting.DARK_GRAY)));
-        } else if (sourceWaterBlocks > 0) {
+                "block.turbines.hydro_shaft.goggles.network_rate", MAX_NETWORK_FLOW_PER_TICK,
+                    MAX_NETWORK_FLOW_PER_TICK * 20).withStyle(ChatFormatting.DARK_GRAY)));
+            if (networkBuffer <= 0)
+                tooltip.add(Component.literal("    ").append(Component.translatable(
+                    "block.turbines.hydro_shaft.goggles.network_supply_needed").withStyle(ChatFormatting.RED)));
+        } else if (sourceMode) {
             tooltip.add(Component.literal("    ").append(Component.translatable(
                 "block.turbines.hydro_shaft.goggles.inlet_mode_source").withStyle(ChatFormatting.AQUA)));
-        } else if (structureValid && showTankNetwork && createTankNetworkAvailable && !tankMode) {
+        } else if (structureValid && sourceWaterBlocks <= 0) {
             tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.network_water_available").withStyle(ChatFormatting.GRAY)));
-        } else if (structureValid && showTankNetwork && !createTankNetworkAvailable && !sharedFluidNetwork
-            && !unresolvedFluidNetwork) {
-            tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.network_water_needed").withStyle(ChatFormatting.RED)));
-        } else if (structureValid && showSourceWater && !createTankNetworkAvailable
-            && sourceWaterBlocks <= 0) {
-            tooltip.add(Component.literal("    ").append(Component.translatable(
-                "block.turbines.hydro_shaft.goggles.source_water_needed").withStyle(ChatFormatting.RED)));
+                "block.turbines.hydro_shaft.goggles.network_supply_needed").withStyle(ChatFormatting.RED)));
         } else if (structureValid && !outputOwner)
             tooltip.add(Component.literal("    ").append(Component.translatable(
                 "block.turbines.hydro_shaft.goggles.shared_output").withStyle(ChatFormatting.DARK_GRAY)));
@@ -408,17 +396,11 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         sourceWaterBlocks = tag.getInt("SourceWaterBlocks");
         flowRate = tag.getInt("FlowRate");
         pendingExhaustWater = tag.getInt("PendingExhaustWater");
-        tankNetworkCapacity = tag.getInt("TankNetworkCapacity");
-        tankNetworkWater = tag.getInt("TankNetworkWater");
-        tankNetworkRequirement = tag.getInt("TankNetworkRequirement");
-        tankNetworkRunningTicks = tag.getLong("TankNetworkRunningTicks");
-        pendingTankWaterLoss = tag.getInt("PendingTankWaterLoss");
+        networkBuffer = tag.getInt("NetworkBuffer");
+        networkMode = tag.contains("NetworkMode") ? tag.getBoolean("NetworkMode") : tag.getBoolean("TankMode");
         activeWaterFactor = tag.getFloat("ActiveWaterFactor");
         structureValid = tag.getBoolean("StructureValid");
         outputOwner = tag.getBoolean("OutputOwner");
-        sharedFluidNetwork = tag.getBoolean("SharedFluidNetwork");
-        unresolvedFluidNetwork = tag.getBoolean("UnresolvedFluidNetwork");
-        tankMode = tag.getBoolean("TankMode");
         waterVisualsVisible = tag.getBoolean("WaterVisualsVisible");
         chamberStatus = tag.getString("ChamberStatus");
         if (!chamberStatus.startsWith("block.turbines.hydro_shaft.status."))
@@ -451,17 +433,11 @@ public class HydroTurbineShaftBlockEntity extends GeneratingKineticBlockEntity i
         tag.putInt("SourceWaterBlocks", sourceWaterBlocks);
         tag.putInt("FlowRate", flowRate);
         tag.putInt("PendingExhaustWater", pendingExhaustWater);
-        tag.putInt("TankNetworkCapacity", tankNetworkCapacity);
-        tag.putInt("TankNetworkWater", tankNetworkWater);
-        tag.putInt("TankNetworkRequirement", tankNetworkRequirement);
-        tag.putLong("TankNetworkRunningTicks", tankNetworkRunningTicks);
-        tag.putInt("PendingTankWaterLoss", pendingTankWaterLoss);
+        tag.putInt("NetworkBuffer", networkBuffer);
+        tag.putBoolean("NetworkMode", networkMode);
         tag.putFloat("ActiveWaterFactor", activeWaterFactor);
         tag.putBoolean("StructureValid", structureValid);
         tag.putBoolean("OutputOwner", outputOwner);
-        tag.putBoolean("SharedFluidNetwork", sharedFluidNetwork);
-        tag.putBoolean("UnresolvedFluidNetwork", unresolvedFluidNetwork);
-        tag.putBoolean("TankMode", tankMode);
         tag.putBoolean("WaterVisualsVisible", waterVisualsVisible);
         tag.putString("ChamberStatus", chamberStatus);
     }

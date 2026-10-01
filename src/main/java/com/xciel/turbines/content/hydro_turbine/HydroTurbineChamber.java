@@ -3,49 +3,36 @@ package com.xciel.turbines.content.hydro_turbine;
 import com.xciel.turbines.content.large_turbine.LargeTurbineBlock;
 import com.xciel.turbines.content.reinforced_glass.ReinforcedGlassBlock;
 import com.xciel.turbines.content.shaft.HydroTurbineShaftBlock;
-import com.simibubi.create.content.fluids.FluidPropagator;
-import com.simibubi.create.content.fluids.FluidTransportBehaviour;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
-/** Shared structure and intake-water discovery for Hydro Turbine chambers. */
+/** Shared structure and source-water discovery for Hydro Turbine chambers. */
 public final class HydroTurbineChamber {
 
     public static final int MIN_STAGES = 1;
     public static final int MAX_STAGES = 10;
     public static final int SOURCE_WATER_PER_STAGE = 9;
-    public static final int TANK_WATER_PER_STAGE = 9_000;
     public static final int MAX_SOURCE_WATER = SOURCE_WATER_PER_STAGE * MAX_STAGES;
-    public static final int MAX_TANK_NETWORK_WATER = TANK_WATER_PER_STAGE * MAX_STAGES;
 
     private static final int CHAMBER_RADIUS = 2;
     private static final int MAX_WATER_POSITIONS_VISITED = 512;
-    private static final int MAX_FLUID_NETWORK_NODES = 4096;
 
     private HydroTurbineChamber() {}
 
@@ -68,38 +55,10 @@ public final class HydroTurbineChamber {
         }
     }
 
-    public record FluidNetworkInfo(int tankCapacity, int waterAmount, boolean sharedHydroUnit,
-                                   boolean unresolvedHydroUnit, List<BlockPos> tankControllers,
-                                   int requiredTankWater) {
-        public FluidNetworkInfo(int tankCapacity, int waterAmount, boolean sharedHydroUnit,
-                                boolean unresolvedHydroUnit) {
-            this(tankCapacity, waterAmount, sharedHydroUnit, unresolvedHydroUnit, List.of(), MAX_TANK_NETWORK_WATER);
-        }
-
-        public FluidNetworkInfo(int tankCapacity, int waterAmount, boolean sharedHydroUnit,
-                                boolean unresolvedHydroUnit, List<BlockPos> tankControllers) {
-            this(tankCapacity, waterAmount, sharedHydroUnit, unresolvedHydroUnit, tankControllers,
-                MAX_TANK_NETWORK_WATER);
-        }
-
-        public FluidNetworkInfo {
-            tankControllers = List.copyOf(tankControllers);
-        }
-
-        public boolean satisfiesTankInput() {
-            return tankCapacity > 0 && waterAmount > 0
-                && !sharedHydroUnit && !unresolvedHydroUnit;
-        }
-    }
-
     public record StageVisualInfo(float rotorSpeedMultiplier, boolean transparentWalls) {}
 
     public static int minimumSourceWater(int stages) {
         return SOURCE_WATER_PER_STAGE * Math.max(MIN_STAGES, Math.min(MAX_STAGES, stages));
-    }
-
-    public static int minimumTankNetworkWater(int stages) {
-        return TANK_WATER_PER_STAGE * Math.max(MIN_STAGES, Math.min(MAX_STAGES, stages));
     }
 
     /** Stage 1 is nearest the roof; each stage below it spins 5% slower. */
@@ -227,8 +186,6 @@ public final class HydroTurbineChamber {
                 return Result.invalid("block.turbines.hydro_shaft.status.stage_walls");
 
         int water = countSourceWaterAbove(level, topIO.pos());
-        int sourceRequirement = minimumSourceWater(stages.size());
-        int tankRequirement = minimumTankNetworkWater(stages.size());
         String status = water > 0 ? "block.turbines.hydro_shaft.status.water_available"
             : "block.turbines.hydro_shaft.status.water_needed";
 
@@ -268,160 +225,6 @@ public final class HydroTurbineChamber {
             }
         }
         return Math.min(sourceCount, MAX_SOURCE_WATER);
-    }
-
-    /**
-     * Measures an attached Create fluid network by walking pipes, pumps, tank handlers, and
-     * multiblock tanks. Water stored in the two Hydro IO buffers is included as circulating water.
-     */
-    public static FluidNetworkInfo connectedFluidNetwork(Level level, BlockPos startIOPos) {
-        if (level == null || !level.hasChunkAt(startIOPos))
-            return new FluidNetworkInfo(0, 0, false, true);
-
-        Set<BlockPos> hydroUnits = new HashSet<>();
-        BlockPos startUnit = chamberKeyForIO(level, startIOPos);
-        boolean unresolvedHydroIO = startUnit == null;
-        int requiredTankWater = MAX_TANK_NETWORK_WATER;
-        if (startUnit != null)
-            hydroUnits.add(startUnit);
-        if (startUnit != null) {
-            Result startChamber = inspect(level, startUnit);
-            if (startChamber.structureValid())
-                requiredTankWater = minimumTankNetworkWater(startChamber.stages());
-            else
-                unresolvedHydroIO = true;
-        }
-
-        long totalCapacity = 0;
-        long totalWater = 0;
-        boolean networkIncomplete = false;
-        List<BlockPos> tankControllers = new ArrayList<>();
-        BlockEntity startEntity = level.getBlockEntity(startIOPos);
-        if (startEntity instanceof HydroTurbineIOBlockEntity io)
-            totalWater += io.getBufferedWaterAmount();
-
-        Deque<FluidNetworkNode> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-        Set<IFluidHandler> countedHandlers = Collections.newSetFromMap(new IdentityHashMap<>());
-        visited.add(startIOPos);
-        for (Direction direction : Direction.values())
-            enqueueFluidNeighbor(level, queue, visited, startIOPos.relative(direction), direction.getOpposite());
-
-        int nodesVisited = 0;
-        while (!queue.isEmpty() && nodesVisited++ < MAX_FLUID_NETWORK_NODES
-            && totalCapacity < Integer.MAX_VALUE && totalWater < Integer.MAX_VALUE) {
-            FluidNetworkNode node = queue.removeFirst();
-            BlockPos pos = node.pos();
-            if (!level.hasChunkAt(pos))
-                continue;
-
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof HydroTurbineIOBlockEntity io) {
-                BlockPos unit = chamberKeyForIO(level, pos);
-                if (unit == null)
-                    unresolvedHydroIO = true;
-                else
-                    hydroUnits.add(unit);
-                totalWater += io.getBufferedWaterAmount();
-                continue;
-            }
-
-            IFluidHandler handler = fluidHandlerAt(level, pos, node.entryFace());
-            if (handler != null && countedHandlers.add(handler)) {
-                for (int tank = 0; tank < handler.getTanks(); tank++) {
-                    totalCapacity += Math.max(0, handler.getTankCapacity(tank));
-                    FluidStack fluid = handler.getFluidInTank(tank);
-                    if (!fluid.isEmpty() && fluid.getFluid() == Fluids.WATER)
-                        totalWater += fluid.getAmount();
-                }
-                if (blockEntity instanceof FluidTankBlockEntity tankBlockEntity) {
-                    BlockPos controller = tankBlockEntity.getController();
-                    if (!tankControllers.contains(controller))
-                        tankControllers.add(controller);
-                }
-            }
-
-            FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pos);
-            if (pipe != null) {
-                BlockState state = level.getBlockState(pos);
-                for (Direction direction : FluidPropagator.getPipeConnections(state, pipe)) {
-                    BlockPos next = pos.relative(direction);
-                    if (!level.hasChunkAt(next)) {
-                        networkIncomplete = true;
-                        continue;
-                    }
-                    enqueueFluidNeighbor(level, queue, visited, next, direction.getOpposite());
-                }
-            }
-
-            if (handler != null) {
-                enqueueConnectedPipesAroundHandler(level, queue, visited, pos);
-                if (blockEntity instanceof FluidTankBlockEntity tank) {
-                    BlockPos controller = tank.getController();
-                    for (Direction direction : Direction.values()) {
-                        BlockPos adjacent = pos.relative(direction);
-                        if (!level.hasChunkAt(adjacent))
-                            continue;
-                        BlockEntity adjacentEntity = level.getBlockEntity(adjacent);
-                        if (adjacentEntity instanceof FluidTankBlockEntity adjacentTank
-                            && controller.equals(adjacentTank.getController()))
-                            enqueueFluidNeighbor(level, queue, visited, adjacent, direction.getOpposite());
-                    }
-                }
-            }
-        }
-
-        networkIncomplete |= !queue.isEmpty();
-        return new FluidNetworkInfo((int) Math.min(Integer.MAX_VALUE, totalCapacity),
-            (int) Math.min(Integer.MAX_VALUE, totalWater), hydroUnits.size() > 1,
-            unresolvedHydroIO || networkIncomplete, tankControllers, requiredTankWater);
-    }
-
-    private static void enqueueFluidNeighbor(Level level, Deque<FluidNetworkNode> queue, Set<BlockPos> visited,
-                                             BlockPos pos, Direction entryFace) {
-        if (visited.contains(pos) || !level.hasChunkAt(pos))
-            return;
-        FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pos);
-        boolean pipeConnected = pipe != null && pipe.canHaveFlowToward(level.getBlockState(pos), entryFace);
-        if (pipeConnected
-            || level.getBlockEntity(pos) instanceof HydroTurbineIOBlockEntity
-            || fluidHandlerAt(level, pos, entryFace) != null) {
-            visited.add(pos);
-            queue.addLast(new FluidNetworkNode(pos, entryFace));
-        }
-    }
-
-    private static void enqueueConnectedPipesAroundHandler(Level level, Deque<FluidNetworkNode> queue,
-                                                            Set<BlockPos> visited, BlockPos handlerPos) {
-        for (Direction direction : Direction.values()) {
-            BlockPos pipePos = handlerPos.relative(direction);
-            if (visited.contains(pipePos) || !level.hasChunkAt(pipePos))
-                continue;
-            FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pipePos);
-            if (pipe == null || !pipe.canHaveFlowToward(level.getBlockState(pipePos), direction.getOpposite()))
-                continue;
-            enqueueFluidNeighbor(level, queue, visited, pipePos, direction.getOpposite());
-        }
-    }
-
-    private static IFluidHandler fluidHandlerAt(Level level, BlockPos pos, Direction side) {
-        return level.getCapability(Capabilities.FluidHandler.BLOCK, pos, side);
-    }
-
-    private static BlockPos chamberKeyForIO(LevelReader level, BlockPos ioPos) {
-        for (int dy = -MAX_STAGES - 1; dy <= MAX_STAGES + 1; dy++) {
-            for (Direction horizontal : List.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)) {
-                BlockPos candidate = ioPos.relative(horizontal).offset(0, dy, 0);
-                if (!level.hasChunkAt(candidate)
-                    || !(level.getBlockState(candidate).getBlock() instanceof HydroTurbineShaftBlock))
-                    continue;
-                Result result = inspect(level, candidate);
-                if (!result.structureValid() || (!ioPos.equals(result.inlet()) && !ioPos.equals(result.exhaust())))
-                    continue;
-                return result.topShaft() != null ? result.topShaft() : result.bottomShaft();
-            }
-        }
-        return null;
     }
 
     private static boolean validateStageLayer(LevelReader level, BlockPos turbinePos) {
@@ -542,5 +345,4 @@ public final class HydroTurbineChamber {
     }
 
     private record CapIO(boolean valid, BlockPos pos) {}
-    private record FluidNetworkNode(BlockPos pos, Direction entryFace) {}
 }
