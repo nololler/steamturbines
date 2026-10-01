@@ -95,7 +95,7 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
         HydroTurbineChamber.StageVisualInfo visual = HydroTurbineChamber.stageVisualInfo(level, worldPosition);
         float next = visual.rotorSpeedMultiplier();
         boolean nextWaterVisible = visual.transparentWalls();
-        boolean nextSoundSource = visual.centerStage() && visual.hydroGenerating();
+        boolean nextSoundSource = visual.hydroGenerating();
         if (Math.abs(next - rotorSpeedMultiplier) < 0.0001f && waterParticlesVisible == nextWaterVisible
             && hydroSoundSource == nextSoundSource)
             return;

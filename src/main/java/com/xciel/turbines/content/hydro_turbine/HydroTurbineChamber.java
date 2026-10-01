@@ -19,7 +19,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -57,8 +56,7 @@ public final class HydroTurbineChamber {
         }
     }
 
-    public record StageVisualInfo(float rotorSpeedMultiplier, boolean transparentWalls,
-                                  boolean centerStage, boolean hydroGenerating) {}
+    public record StageVisualInfo(float rotorSpeedMultiplier, boolean transparentWalls, boolean hydroGenerating) {}
 
     public static int minimumSourceWater(int stages) {
         return SOURCE_WATER_PER_STAGE * Math.max(MIN_STAGES, Math.min(MAX_STAGES, stages));
@@ -79,16 +77,13 @@ public final class HydroTurbineChamber {
                 continue;
             int topStageY = chamber.turbinePositions().stream().mapToInt(BlockPos::getY).max().orElse(turbinePos.getY());
             int stageFromRoof = topStageY - turbinePos.getY();
-            List<BlockPos> orderedStages = chamber.turbinePositions().stream()
-                .sorted(Comparator.comparingInt(BlockPos::getY)).toList();
-            BlockPos centerStage = orderedStages.get(orderedStages.size() / 2);
             BlockPos ownerShaft = chamber.topShaft() != null ? chamber.topShaft() : chamber.bottomShaft();
             boolean hydroGenerating = level.getBlockEntity(ownerShaft) instanceof HydroTurbineShaftBlockEntity shaft
                 && Math.abs(shaft.getGeneratedSpeed()) > 0.001f;
             return new StageVisualInfo(Math.max(0.05f, 1f - stageFromRoof * 0.05f),
-                hasTransparentWalls(level, chamber), centerStage.equals(turbinePos), hydroGenerating);
+                hasTransparentWalls(level, chamber), hydroGenerating);
         }
-        return new StageVisualInfo(1f, false, false, false);
+        return new StageVisualInfo(1f, false, false);
     }
 
     public static float rotorSpeedMultiplier(LevelReader level, BlockPos turbinePos) {
