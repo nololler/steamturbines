@@ -2,7 +2,9 @@ package com.xciel.turbines.content.large_turbine;
 
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.xciel.turbines.client.sound.BlockEntitySoundHandler;
 import com.xciel.turbines.content.hydro_turbine.HydroTurbineChamber;
+import com.xciel.turbines.registrate.STSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -18,6 +20,7 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
 
     private float rotorSpeedMultiplier = 1f;
     private boolean waterParticlesVisible;
+    private boolean hydroSoundSource;
 
     public LargeTurbineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -31,8 +34,11 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
     @Override
     public void tick() {
         super.tick();
-        if (level == null || !level.isClientSide || !waterParticlesVisible || Math.abs(getSpeed()) < 1
-            || level.random.nextFloat() > 0.5f)
+        if (level == null || !level.isClientSide)
+            return;
+
+        tickHydroSound();
+        if (!waterParticlesVisible || Math.abs(getSpeed()) < 1 || level.random.nextFloat() > 0.5f)
             return;
 
         float spinFactor = getRotorSpeedMultiplier();
@@ -54,6 +60,22 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
         }
     }
 
+    private void tickHydroSound() {
+        if (!hydroSoundSource || Math.abs(getSpeed()) < 1) {
+            BlockEntitySoundHandler.stop(this);
+            return;
+        }
+        BlockEntitySoundHandler.playLooping(this, STSounds.HYDRO_TURBINE.get());
+        BlockEntitySoundHandler.setVolume(this, 0.08f);
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        if (level != null && level.isClientSide)
+            BlockEntitySoundHandler.stop(this);
+    }
+
     @Override
     public float getGeneratedSpeed() {
         return 0;
@@ -73,10 +95,13 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
         HydroTurbineChamber.StageVisualInfo visual = HydroTurbineChamber.stageVisualInfo(level, worldPosition);
         float next = visual.rotorSpeedMultiplier();
         boolean nextWaterVisible = visual.transparentWalls();
-        if (Math.abs(next - rotorSpeedMultiplier) < 0.0001f && waterParticlesVisible == nextWaterVisible)
+        boolean nextSoundSource = visual.centerStage() && visual.hydroGenerating();
+        if (Math.abs(next - rotorSpeedMultiplier) < 0.0001f && waterParticlesVisible == nextWaterVisible
+            && hydroSoundSource == nextSoundSource)
             return;
         rotorSpeedMultiplier = next;
         waterParticlesVisible = nextWaterVisible;
+        hydroSoundSource = nextSoundSource;
         setChanged();
         sendData();
     }
@@ -90,6 +115,7 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
         super.read(tag, registries, clientPacket);
         rotorSpeedMultiplier = tag.getFloat("RotorSpeedMultiplier");
         waterParticlesVisible = tag.getBoolean("WaterParticlesVisible");
+        hydroSoundSource = tag.getBoolean("HydroSoundSource");
         if (rotorSpeedMultiplier <= 0)
             rotorSpeedMultiplier = 1f;
     }
@@ -99,6 +125,7 @@ public class LargeTurbineBlockEntity extends GeneratingKineticBlockEntity {
         super.write(tag, registries, clientPacket);
         tag.putFloat("RotorSpeedMultiplier", rotorSpeedMultiplier);
         tag.putBoolean("WaterParticlesVisible", waterParticlesVisible);
+        tag.putBoolean("HydroSoundSource", hydroSoundSource);
     }
 
     @Override

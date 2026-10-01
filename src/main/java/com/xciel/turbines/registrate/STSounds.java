@@ -17,6 +17,7 @@ public class STSounds {
     public static final Supplier<SoundEvent> LAVA_DUCT_SHAFT = register("lava_duct_shaft");
     public static final Supplier<SoundEvent> STEAM_TURBINE = register("steam_turbine");
     public static final Supplier<SoundEvent> STEAM_THRUSTER = register("steam_thruster");
+    public static final Supplier<SoundEvent> HYDRO_TURBINE = register("hydro_turbine");
 
     private static Supplier<SoundEvent> register(String name) {
         ResourceLocation id = Turbines.rl(name);

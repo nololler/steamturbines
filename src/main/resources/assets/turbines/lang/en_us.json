@@ -193,5 +193,6 @@
 
   "subtitles.turbines.lava_duct_shaft": "Lava Duct Shaft rumbles",
   "subtitles.turbines.steam_turbine": "Steam Turbine spins",
+  "subtitles.turbines.hydro_turbine": "Hydro Turbine spins",
   "subtitles.turbines.steam_thruster": "Steam Jet Thruster fires"
 }

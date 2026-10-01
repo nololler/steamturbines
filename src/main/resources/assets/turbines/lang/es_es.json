@@ -193,5 +193,6 @@
 
   "subtitles.turbines.lava_duct_shaft": "Retumba el eje del conducto de lava",
   "subtitles.turbines.steam_turbine": "La turbina de vapor gira",
+  "subtitles.turbines.hydro_turbine": "La turbina hidráulica gira",
   "subtitles.turbines.steam_thruster": "Se activa el propulsor de chorro de vapor"
 }
